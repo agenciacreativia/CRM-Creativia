@@ -1,0 +1,37 @@
+{
+  "login": {
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "signing_in": "Signing in...",
+    "email_required": "Email is required",
+    "password_min": "Minimum 8 characters",
+    "error_invalid_credentials": "Invalid email or password"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "empresas": "Companies",
+    "contactos": "Contacts",
+    "oportunidades": "Opportunities",
+    "admin": "Admin",
+    "sign_out": "Sign out"
+  },
+  "dashboard": {
+    "greeting": "Hello, {{nombre}}",
+    "tenant_context": "You're working in {{tenant}}"
+  },
+  "kpi": {
+    "opportunities_active": "Active opportunities",
+    "pipeline_value": "Pipeline value",
+    "win_rate": "Win rate",
+    "pending_activities": "Pending activities"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "loading": "Loading..."
+  }
+}

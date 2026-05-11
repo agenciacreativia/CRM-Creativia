@@ -1,0 +1,29 @@
+{
+  "name": "crm-turistea",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-tenant CRM SaaS — Next.js 15 + Supabase + RLS",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@crm/web",
+    "build": "npm run build --workspace=@crm/web",
+    "start": "npm run start --workspace=@crm/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:diff": "supabase db diff",
+    "db:seed": "supabase db reset --linked"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/node": "^22.9.0"
+  }
+}
