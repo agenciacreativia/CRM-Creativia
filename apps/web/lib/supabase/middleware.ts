@@ -5,7 +5,8 @@ import { env } from "@/lib/env";
 
 /**
  * Refreshes the Supabase session on every request so cookies don't go stale.
- * Called from middleware.ts.
+ * Returns the user, the response, and (when authenticated) the access_token so
+ * the caller can decode its claims (tenant_id, rol).
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -25,8 +26,12 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Important: touching getUser() refreshes the access token if needed.
-  const { data } = await supabase.auth.getUser();
+  // Refresh/validate the token if needed
+  const { data: { user } } = await supabase.auth.getUser();
 
-  return { response, supabase, user: data.user };
+  // Get the (possibly refreshed) access_token so middleware can read custom claims
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token ?? null;
+
+  return { response, supabase, user, accessToken };
 }

@@ -4,41 +4,37 @@
 -- Required: enable this hook in Supabase Dashboard → Auth → Hooks.
 -- ============================================================
 
+-- IMPORTANT: SECURITY DEFINER is REQUIRED on Supabase Cloud for the auth hook
+-- to be able to read public.usuario from supabase_auth_admin's context.
+-- Without it, Supabase Auth invokes the hook but the query returns no rows.
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
 RETURNS jsonb
 LANGUAGE plpgsql
-STABLE
+VOLATILE
+SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
-  user_row    record;
-  claims      jsonb;
+  user_row record;
+  claims   jsonb;
 BEGIN
-  -- Look up the user's tenant + rol + locale from `usuario`
+  claims := event -> 'claims';
+
   SELECT tenant_id, rol, activo, idioma_preferido, nombre
     INTO user_row
     FROM public.usuario
    WHERE id = (event ->> 'user_id')::uuid;
 
-  claims := event -> 'claims';
-
-  IF user_row IS NULL THEN
-    -- Authenticated user without a usuario row → block access by leaving claims clean
-    -- (no tenant_id means RLS policies fail closed)
-    RETURN event;
+  IF user_row IS NOT NULL AND user_row.activo THEN
+    claims := jsonb_set(claims, '{tenant_id}', to_jsonb(user_row.tenant_id::text));
+    claims := jsonb_set(claims, '{rol}',       to_jsonb(user_row.rol));
+    claims := jsonb_set(claims, '{idioma}',    to_jsonb(user_row.idioma_preferido));
+    claims := jsonb_set(claims, '{nombre}',    to_jsonb(user_row.nombre));
   END IF;
 
-  IF NOT user_row.activo THEN
-    -- Soft-deleted users can't get a tenant scope either
-    RETURN event;
-  END IF;
-
-  claims := jsonb_set(claims, '{tenant_id}', to_jsonb(user_row.tenant_id::text));
-  claims := jsonb_set(claims, '{rol}',       to_jsonb(user_row.rol));
-  claims := jsonb_set(claims, '{idioma}',    to_jsonb(user_row.idioma_preferido));
-  claims := jsonb_set(claims, '{nombre}',    to_jsonb(user_row.nombre));
-
-  event := jsonb_set(event, '{claims}', claims);
-  RETURN event;
+  -- Users with no `usuario` row, or marked inactive, get the event unchanged.
+  -- The missing tenant_id makes RLS fail closed (no rows visible).
+  RETURN jsonb_set(event, '{claims}', claims);
 END;
 $$;
 

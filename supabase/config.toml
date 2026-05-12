@@ -1,5 +1,6 @@
-# Supabase local development config
-# Run `supabase start` to spin up a local stack matching this configuration.
+# Supabase local development config.
+# Used by `supabase` CLI commands. Most settings only affect `supabase start`
+# (local Docker stack). For Cloud, configure via the dashboard.
 
 project_id = "crm-turistea"
 
@@ -28,7 +29,6 @@ additional_redirect_urls = [
   "http://globex.localhost:3000/auth/callback"
 ]
 jwt_expiry = 3600
-refresh_token_rotation_enabled = true
 enable_signup = false
 enable_anonymous_sign_ins = false
 
