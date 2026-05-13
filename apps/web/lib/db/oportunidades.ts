@@ -205,13 +205,22 @@ export async function listPipelinesForPicker() {
   return data ?? [];
 }
 
-export async function listOportunidades(opts: { q?: string; estado?: string; pipeline_id?: string } = {}): Promise<OportunidadListItem[]> {
+export async function listOportunidades(opts: {
+  q?: string;
+  estado?: string;
+  pipeline_id?: string;
+  asignado_id?: string;
+  cierre_desde?: string;
+  cierre_hasta?: string;
+  valor_min?: number;
+  valor_max?: number;
+} = {}): Promise<OportunidadListItem[]> {
   const supabase = await createServerSupabase();
 
   let query = supabase
     .from("oportunidad")
     .select(
-      "id, nombre, valor, moneda, estado, empresa_id, fecha_esperada_cierre, creado_en, empresa(nombre), contacto(nombre), pipeline(nombre), etapa_pipeline(nombre), usuario(nombre)",
+      "id, nombre, valor, moneda, estado, empresa_id, asignado_id, fecha_esperada_cierre, creado_en, empresa(nombre), contacto(nombre), pipeline(nombre), etapa_pipeline(nombre), usuario(nombre)",
     )
     .order("creado_en", { ascending: false })
     .limit(200);
@@ -225,11 +234,30 @@ export async function listOportunidades(opts: { q?: string; estado?: string; pip
   if (opts.pipeline_id) {
     query = query.eq("pipeline_id", opts.pipeline_id);
   }
+  if (opts.asignado_id) {
+    if (opts.asignado_id === "_unassigned") {
+      query = query.is("asignado_id", null);
+    } else {
+      query = query.eq("asignado_id", opts.asignado_id);
+    }
+  }
+  if (opts.cierre_desde) {
+    query = query.gte("fecha_esperada_cierre", opts.cierre_desde);
+  }
+  if (opts.cierre_hasta) {
+    query = query.lte("fecha_esperada_cierre", opts.cierre_hasta);
+  }
+  if (opts.valor_min != null && Number.isFinite(opts.valor_min)) {
+    query = query.gte("valor", opts.valor_min);
+  }
+  if (opts.valor_max != null && Number.isFinite(opts.valor_max)) {
+    query = query.lte("valor", opts.valor_max);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data ?? []).map((row: { id: string; nombre: string; valor: number | null; moneda: string; estado: "activo" | "ganado" | "perdido" | "eliminado"; empresa_id: string; fecha_esperada_cierre: string | null; creado_en: string; empresa: { nombre: string } | { nombre: string }[] | null; contacto: { nombre: string } | { nombre: string }[] | null; pipeline: { nombre: string } | { nombre: string }[] | null; etapa_pipeline: { nombre: string } | { nombre: string }[] | null; usuario: { nombre: string } | { nombre: string }[] | null }) => {
+  return (data ?? []).map((row: { id: string; nombre: string; valor: number | null; moneda: string; estado: "activo" | "ganado" | "perdido" | "eliminado"; empresa_id: string; asignado_id: string | null; fecha_esperada_cierre: string | null; creado_en: string; empresa: { nombre: string } | { nombre: string }[] | null; contacto: { nombre: string } | { nombre: string }[] | null; pipeline: { nombre: string } | { nombre: string }[] | null; etapa_pipeline: { nombre: string } | { nombre: string }[] | null; usuario: { nombre: string } | { nombre: string }[] | null }) => {
     const oneOf = <T extends { nombre: string }>(v: T | T[] | null): T | null =>
       Array.isArray(v) ? v[0] ?? null : v;
     return {

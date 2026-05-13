@@ -5,6 +5,7 @@ import { getTenantFromHeaders } from "@/lib/tenant";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { NavLinks } from "@/components/nav-links";
+import { SearchModal } from "@/components/search/search-modal";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [user, tenant] = await Promise.all([
@@ -29,6 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </span>
           </div>
           <div className="flex items-center gap-3 order-3 sm:order-2 ml-auto">
+            <SearchModal />
             <LanguageSwitcher />
             <span className="text-sm text-gray-600 hidden md:inline whitespace-nowrap">
               {user.nombre}

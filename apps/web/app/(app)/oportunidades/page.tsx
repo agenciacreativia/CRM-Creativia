@@ -1,9 +1,22 @@
 import Link from "next/link";
 import { listOportunidades } from "@/lib/db/oportunidades";
+import { loadPickerData } from "@/lib/db/picker-data";
+import { getSessionUser } from "@/lib/auth";
 import { SearchInput, FilterSelect } from "@/components/list-toolbar";
+import { OportunidadFilters } from "./filters";
 import { Badge } from "@/components/ui/badge";
 
-type SearchParams = Promise<{ q?: string; estado?: string }>;
+type SearchParams = Promise<{
+  q?: string;
+  estado?: string;
+  asignado?: string;
+  pipeline?: string;
+  cierre_desde?: string;
+  cierre_hasta?: string;
+  valor_min?: string;
+  valor_max?: string;
+  mine?: string;
+}>;
 
 const ESTADO_BADGE: Record<string, "info" | "success" | "warn" | "danger" | "default"> = {
   activo: "info",
@@ -19,16 +32,41 @@ function formatCurrency(value: number | null, moneda: string): string {
 
 export default async function OportunidadesPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const rows = await listOportunidades({ q: params.q, estado: params.estado });
+  const user = await getSessionUser();
+
+  const asignado = params.mine === "1" && user ? user.id : params.asignado;
+  const valorMin = params.valor_min ? Number(params.valor_min) : undefined;
+  const valorMax = params.valor_max ? Number(params.valor_max) : undefined;
+
+  const [rows, picker] = await Promise.all([
+    listOportunidades({
+      q: params.q,
+      estado: params.estado,
+      pipeline_id: params.pipeline,
+      asignado_id: asignado,
+      cierre_desde: params.cierre_desde,
+      cierre_hasta: params.cierre_hasta,
+      valor_min: Number.isFinite(valorMin as number) ? valorMin : undefined,
+      valor_max: Number.isFinite(valorMax as number) ? valorMax : undefined,
+    }),
+    loadPickerData(),
+  ]);
+
+  const totalValor = rows
+    .filter((r) => r.estado === "activo")
+    .reduce((s, r) => s + (r.valor ?? 0), 0);
+  const monedaPrincipal = rows[0]?.moneda ?? "USD";
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold">Oportunidades</h1>
-          <p className="text-xs text-gray-500 mt-1">{rows.length} resultados</p>
+          <p className="text-xs text-gray-500 mt-1">
+            {rows.length} resultados · {formatCurrency(totalValor, monedaPrincipal)} activos
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/oportunidades/kanban"
             className="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100 border border-gray-200"
@@ -44,7 +82,7 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
         </div>
       </header>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <SearchInput placeholder="Buscar por nombre..." />
         <FilterSelect
           name="estado"
@@ -55,6 +93,11 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
             { value: "perdido", label: "Perdidas" },
             { value: "eliminado", label: "Eliminadas" },
           ]}
+        />
+        <OportunidadFilters
+          usuarios={picker.usuarios}
+          pipelines={picker.pipelines}
+          currentUserId={user?.id ?? null}
         />
       </div>
 
@@ -74,10 +117,7 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="text-center text-gray-500 py-8">
-                  No hay oportunidades todavía.{" "}
-                  <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">
-                    Importar →
-                  </Link>
+                  No hay oportunidades con esos filtros.
                 </td>
               </tr>
             )}

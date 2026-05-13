@@ -49,18 +49,67 @@ export default async function ContactoDetailPage({ params }: { params: Params })
 
       <section className="bg-white border border-gray-200 rounded-lg p-6">
         <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">Datos del contacto</h2>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {c.email && (
+            <a
+              href={`mailto:${c.email}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-brand-primary text-white hover:bg-blue-700 transition-colors"
+            >
+              ✉️ Email
+            </a>
+          )}
+          {c.telefono && (
+            <a
+              href={`tel:${cleanPhone(c.telefono)}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              📞 Llamar
+            </a>
+          )}
+          {c.telefono_whatsapp && (
+            <a
+              href={`https://wa.me/${cleanPhone(c.telefono_whatsapp)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+            >
+              💬 WhatsApp
+            </a>
+          )}
+        </div>
+
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <div>
             <dt className="text-xs uppercase text-gray-500">Email</dt>
-            <dd className="text-gray-800">{c.email}</dd>
+            <dd className="text-gray-800">
+              {c.email ? (
+                <a href={`mailto:${c.email}`} className="text-brand-primary hover:underline">{c.email}</a>
+              ) : "—"}
+            </dd>
           </div>
           <div>
             <dt className="text-xs uppercase text-gray-500">Teléfono</dt>
-            <dd className="text-gray-800">{c.telefono ?? "—"}</dd>
+            <dd className="text-gray-800">
+              {c.telefono ? (
+                <a href={`tel:${cleanPhone(c.telefono)}`} className="text-brand-primary hover:underline">{c.telefono}</a>
+              ) : "—"}
+            </dd>
           </div>
           <div>
             <dt className="text-xs uppercase text-gray-500">WhatsApp</dt>
-            <dd className="text-gray-800">{c.telefono_whatsapp ?? "—"}</dd>
+            <dd className="text-gray-800">
+              {c.telefono_whatsapp ? (
+                <a
+                  href={`https://wa.me/${cleanPhone(c.telefono_whatsapp)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-primary hover:underline"
+                >
+                  {c.telefono_whatsapp}
+                </a>
+              ) : "—"}
+            </dd>
           </div>
           <div>
             <dt className="text-xs uppercase text-gray-500">Origen</dt>
@@ -105,4 +154,11 @@ export default async function ContactoDetailPage({ params }: { params: Params })
       )}
     </div>
   );
+}
+
+/** Strip non-digit characters for tel:/wa.me: links (keeps leading +). */
+function cleanPhone(s: string): string {
+  const trimmed = s.trim();
+  const plus = trimmed.startsWith("+") ? "+" : "";
+  return plus + trimmed.replace(/\D+/g, "");
 }
