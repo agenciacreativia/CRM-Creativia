@@ -27,6 +27,18 @@ export default async function AdminDatosPage() {
           status="available"
         />
         <Card
+          href="/admin/motivos-perdida"
+          title="Motivos de pérdida"
+          description="Gestioná los motivos que aparecen al marcar una oportunidad como perdida."
+          status="available"
+        />
+        <Card
+          href="/admin/campos"
+          title="Campos personalizados"
+          description="Definí campos adicionales para empresas, contactos y oportunidades."
+          status="available"
+        />
+        <Card
           href="#"
           title="Exportar datos"
           description="Backup completo en JSON o CSV. Disponible en Sprint 6."

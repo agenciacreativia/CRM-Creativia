@@ -4,11 +4,13 @@ import { getOportunidad } from "@/lib/db/oportunidades";
 import { listActividades } from "@/lib/db/actividades";
 import { listNotas } from "@/lib/db/notas";
 import { listHistorialOportunidad } from "@/lib/db/historial";
+import { listCampos } from "@/lib/db/campos";
 import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { ActividadesSection } from "@/components/oportunidad/actividades-section";
 import { NotasSection } from "@/components/notas/notas-section";
 import { HistorialSection } from "@/components/oportunidad/historial-section";
+import { CamposCustomSection } from "@/components/campos/campos-custom-section";
 
 type Params = Promise<{ id: string }>;
 
@@ -35,10 +37,11 @@ export default async function OportunidadDetailPage({ params }: { params: Params
   if (!o) notFound();
   const canEdit = user?.rol === "admin" || user?.id === o.asignado_id;
 
-  const [actividades, notas, historial] = await Promise.all([
+  const [actividades, notas, historial, campos] = await Promise.all([
     listActividades(id),
     listNotas({ tipo: "oportunidad", entity_id: id }),
     listHistorialOportunidad(id),
+    listCampos("oportunidad"),
   ]);
 
   const diasEnEtapa = Math.floor(
@@ -118,6 +121,14 @@ export default async function OportunidadDetailPage({ params }: { params: Params
           <p className="text-sm text-gray-800 whitespace-pre-wrap">{o.descripcion}</p>
         </section>
       )}
+
+      <CamposCustomSection
+        tipo_entidad="oportunidad"
+        entity_id={id}
+        campos={campos}
+        values={o.campos_custom}
+        canEdit={canEdit}
+      />
 
       <ActividadesSection oportunidadId={id} initial={actividades} />
 

@@ -4,10 +4,12 @@ import { getEmpresa } from "@/lib/db/empresas";
 import { listContactos } from "@/lib/db/contactos";
 import { listNotas } from "@/lib/db/notas";
 import { listSedes } from "@/lib/db/sedes";
+import { listCampos } from "@/lib/db/campos";
 import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { NotasSection } from "@/components/notas/notas-section";
 import { SedesSection } from "@/components/sedes/sedes-section";
+import { CamposCustomSection } from "@/components/campos/campos-custom-section";
 
 type Params = Promise<{ id: string }>;
 
@@ -23,10 +25,11 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
   if (!empresa) notFound();
   const canEdit = user?.rol === "admin";
 
-  const [contactos, notas, sedes] = await Promise.all([
+  const [contactos, notas, sedes, campos] = await Promise.all([
     listContactos({ empresa_id: id }),
     listNotas({ tipo: "empresa", entity_id: id }),
     listSedes(id),
+    listCampos("empresa"),
   ]);
 
   return (
@@ -78,19 +81,13 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
         )}
       </section>
 
-      {Object.keys(empresa.campos_custom).length > 0 && (
-        <section className="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">Campos personalizados</h2>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-            {Object.entries(empresa.campos_custom).map(([k, v]) => (
-              <div key={k}>
-                <dt className="text-xs text-gray-500">{k}</dt>
-                <dd className="text-gray-800">{String(v ?? "—")}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
+      <CamposCustomSection
+        tipo_entidad="empresa"
+        entity_id={id}
+        campos={campos}
+        values={empresa.campos_custom}
+        canEdit={canEdit}
+      />
 
       <SedesSection empresaId={id} initial={sedes} canWrite={canEdit} />
 

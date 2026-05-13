@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getContacto } from "@/lib/db/contactos";
 import { listNotas } from "@/lib/db/notas";
+import { listCampos } from "@/lib/db/campos";
 import { getSessionUser } from "@/lib/auth";
 import { NotasSection } from "@/components/notas/notas-section";
+import { CamposCustomSection } from "@/components/campos/campos-custom-section";
 
 type Params = Promise<{ id: string }>;
 
@@ -12,7 +14,10 @@ export default async function ContactoDetailPage({ params }: { params: Params })
   const [c, user] = await Promise.all([getContacto(id), getSessionUser()]);
   if (!c) notFound();
   const canEdit = user?.rol === "admin";
-  const notas = await listNotas({ tipo: "contacto", entity_id: id });
+  const [notas, campos] = await Promise.all([
+    listNotas({ tipo: "contacto", entity_id: id }),
+    listCampos("contacto"),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -82,19 +87,13 @@ export default async function ContactoDetailPage({ params }: { params: Params })
         )}
       </section>
 
-      {Object.keys(c.campos_custom).length > 0 && (
-        <section className="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">Campos personalizados</h2>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-            {Object.entries(c.campos_custom).map(([k, v]) => (
-              <div key={k}>
-                <dt className="text-xs text-gray-500">{k}</dt>
-                <dd className="text-gray-800">{String(v ?? "—")}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
+      <CamposCustomSection
+        tipo_entidad="contacto"
+        entity_id={id}
+        campos={campos}
+        values={c.campos_custom}
+        canEdit={canEdit}
+      />
 
       {user && (
         <NotasSection

@@ -484,3 +484,100 @@ export async function deleteSede(id: string) {
   const { error } = await supabase.from("sede").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+// ---------- Motivos de pérdida (admin) ----------
+export async function createMotivoPerdida(nombre: string): Promise<string> {
+  const user = await ensureWriter();
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("motivo_perdida")
+    .insert({ tenant_id: user.tenantId, nombre, creado_por: user.id })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+
+export async function updateMotivoPerdida(id: string, nombre: string) {
+  await ensureWriter();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("motivo_perdida").update({ nombre }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteMotivoPerdida(id: string) {
+  await ensureWriter();
+  const supabase = await createServerSupabase();
+  const { count } = await supabase
+    .from("oportunidad")
+    .select("id", { count: "exact", head: true })
+    .eq("motivo_perdida_id", id);
+  if ((count ?? 0) > 0) {
+    throw new Error("No se puede eliminar: hay oportunidades usando este motivo");
+  }
+  const { error } = await supabase.from("motivo_perdida").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Campos personalizados (admin) ----------
+type NewCampoPersonalizado = {
+  tipo_entidad: "empresa" | "contacto" | "oportunidad";
+  clave: string;
+  etiqueta: string;
+  etiqueta_en: string | null;
+  tipo: "texto" | "numero" | "moneda" | "fecha" | "seleccion" | "checkbox" | "textarea";
+  opciones: string[] | null;
+  requerido: boolean;
+  orden: number;
+};
+
+export async function createCampoPersonalizado(input: NewCampoPersonalizado): Promise<string> {
+  const user = await ensureWriter();
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("campo_personalizado")
+    .insert({ ...input, tenant_id: user.tenantId })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+
+export async function updateCampoPersonalizado(id: string, patch: Partial<NewCampoPersonalizado>) {
+  await ensureWriter();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("campo_personalizado").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteCampoPersonalizado(id: string) {
+  await ensureWriter();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("campo_personalizado").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Patches the campos_custom JSONB column on a single entity row.
+ * Merges with existing values (does not replace the whole object).
+ */
+export async function updateCamposCustom(args: {
+  tipo_entidad: "empresa" | "contacto" | "oportunidad";
+  entity_id: string;
+  values: Record<string, unknown>;
+}) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("No autenticado");
+  const supabase = await createServerSupabase();
+  const table = args.tipo_entidad;
+
+  const { data: current } = await supabase
+    .from(table)
+    .select("campos_custom")
+    .eq("id", args.entity_id)
+    .maybeSingle();
+  const next = { ...((current?.campos_custom as Record<string, unknown> | null) ?? {}), ...args.values };
+
+  const { error } = await supabase.from(table).update({ campos_custom: next }).eq("id", args.entity_id);
+  if (error) throw new Error(error.message);
+}
