@@ -26,11 +26,22 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Oportunidades</h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Vista tabla. El Kanban viene en Sprint 3.
-          </p>
+          <p className="text-xs text-gray-500 mt-1">{rows.length} resultados</p>
         </div>
-        <p className="text-sm text-gray-500">{rows.length} resultados</p>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/oportunidades/kanban"
+            className="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100 border border-gray-200"
+          >
+            Vista Kanban
+          </Link>
+          <Link
+            href="/oportunidades/nueva"
+            className="inline-flex items-center justify-center rounded-md font-medium px-4 py-2 text-sm bg-brand-primary text-white hover:bg-blue-700 transition-colors"
+          >
+            + Nueva
+          </Link>
+        </div>
       </header>
 
       <div className="flex items-center gap-3">
@@ -73,7 +84,9 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
             {rows.map((o) => (
               <tr key={o.id} className="border-t border-gray-100 hover:bg-gray-50">
                 <Td>
-                  <span className="font-medium text-gray-900">{o.nombre}</span>
+                  <Link href={`/oportunidades/${o.id}`} className="font-medium text-brand-primary hover:underline">
+                    {o.nombre}
+                  </Link>
                 </Td>
                 <Td>
                   <Link href={`/empresas/${o.empresa_id}`} className="text-brand-primary hover:underline">

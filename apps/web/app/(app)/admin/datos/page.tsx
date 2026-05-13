@@ -21,6 +21,12 @@ export default async function AdminDatosPage() {
           status="available"
         />
         <Card
+          href="/admin/pipelines"
+          title="Pipelines y etapas"
+          description="Personalizá tus embudos de venta, ordená etapas y configurá alertas de tiempo."
+          status="available"
+        />
+        <Card
           href="#"
           title="Exportar datos"
           description="Backup completo en JSON o CSV. Disponible en Sprint 6."
