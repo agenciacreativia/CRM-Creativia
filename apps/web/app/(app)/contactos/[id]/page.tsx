@@ -1,21 +1,33 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getContacto } from "@/lib/db/contactos";
+import { getSessionUser } from "@/lib/auth";
 
 type Params = Promise<{ id: string }>;
 
 export default async function ContactoDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const c = await getContacto(id);
+  const [c, user] = await Promise.all([getContacto(id), getSessionUser()]);
   if (!c) notFound();
+  const canEdit = user?.rol === "admin";
 
   return (
     <div className="space-y-6">
       <Link href="/contactos" className="text-sm text-brand-primary hover:underline">← Contactos</Link>
 
-      <header>
-        <h1 className="text-3xl font-bold">{c.nombre}</h1>
-        {c.cargo && <p className="text-sm text-gray-500 mt-1">{c.cargo}</p>}
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">{c.nombre}</h1>
+          {c.cargo && <p className="text-sm text-gray-500 mt-1">{c.cargo}</p>}
+        </div>
+        {canEdit && (
+          <Link
+            href={`/contactos/${c.id}/editar`}
+            className="inline-flex items-center justify-center rounded-md font-medium px-4 py-2 text-sm bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            Editar
+          </Link>
+        )}
       </header>
 
       <section className="bg-white border border-gray-200 rounded-lg p-6">

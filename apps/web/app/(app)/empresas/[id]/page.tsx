@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getEmpresa } from "@/lib/db/empresas";
 import { listContactos } from "@/lib/db/contactos";
+import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 
 type Params = Promise<{ id: string }>;
@@ -14,8 +15,9 @@ const ESTADO_BADGE: Record<string, "info" | "success" | "default"> = {
 
 export default async function EmpresaDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const empresa = await getEmpresa(id);
+  const [empresa, user] = await Promise.all([getEmpresa(id), getSessionUser()]);
   if (!empresa) notFound();
+  const canEdit = user?.rol === "admin";
 
   const contactos = await listContactos({ empresa_id: id });
 
@@ -25,7 +27,7 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
         <Link href="/empresas" className="text-sm text-brand-primary hover:underline">← Empresas</Link>
       </div>
 
-      <header className="flex items-start justify-between">
+      <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">{empresa.nombre}</h1>
           <div className="flex items-center gap-2 mt-2">
@@ -33,6 +35,14 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
             {empresa.origen && <Badge>{empresa.origen}</Badge>}
           </div>
         </div>
+        {canEdit && (
+          <Link
+            href={`/empresas/${empresa.id}/editar`}
+            className="inline-flex items-center justify-center rounded-md font-medium px-4 py-2 text-sm bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            Editar
+          </Link>
+        )}
       </header>
 
       <section className="bg-white border border-gray-200 rounded-lg p-6">
