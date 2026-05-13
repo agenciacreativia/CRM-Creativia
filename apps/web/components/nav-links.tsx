@@ -18,6 +18,7 @@ export function NavLinks({ rol }: Props) {
     { href: "/empresas", label: t("nav.empresas") },
     { href: "/contactos", label: t("nav.contactos") },
     { href: "/oportunidades", label: t("nav.oportunidades") },
+    { href: "/agenda", label: t("nav.agenda") },
   ];
 
   const adminLinks =

@@ -10,6 +10,8 @@ import { env } from "@/lib/env";
 
 const PUBLIC_PATHS = new Set<string>([
   "/login",
+  "/forgot-password",
+  "/reset-password",
   "/auth/callback",
   "/auth/error",
   "/landing",

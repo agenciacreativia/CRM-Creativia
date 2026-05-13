@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -78,6 +79,12 @@ export function LoginForm() {
       <Button type="submit" disabled={submitting} className="w-full">
         {submitting ? t("login.signing_in") : t("login.submit")}
       </Button>
+
+      <div className="text-center">
+        <Link href="/forgot-password" className="text-sm text-gray-500 hover:text-brand-primary hover:underline">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
     </form>
   );
 }
