@@ -13,7 +13,7 @@ export default async function AdminDatosPage() {
         <p className="text-sm text-gray-500 mt-1">Importar, exportar y administrar los datos del CRM.</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card
           href="/admin/datos/importar"
           title="Importar datos"
@@ -39,10 +39,10 @@ export default async function AdminDatosPage() {
           status="available"
         />
         <Card
-          href="#"
+          href="/admin/datos/exportar"
           title="Exportar datos"
-          description="Backup completo en JSON o CSV. Disponible en Sprint 6."
-          status="coming"
+          description="Backup completo en JSON o exportar una entidad a CSV. Historial incluido."
+          status="available"
         />
       </div>
     </div>

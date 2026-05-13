@@ -31,7 +31,7 @@ export function NavLinks({ rol }: Props) {
   const links = [...baseLinks, ...adminLinks];
 
   return (
-    <nav className="hidden md:flex items-center gap-1">
+    <nav className="flex items-center gap-0.5 overflow-x-auto -mx-1 px-1">
       {links.map((link) => {
         const active = pathname.startsWith(link.href);
         return (
@@ -39,7 +39,7 @@ export function NavLinks({ rol }: Props) {
             key={link.href}
             href={link.href}
             className={cn(
-              "px-3 py-1.5 text-sm rounded-md transition-colors",
+              "px-3 py-1.5 text-sm rounded-md transition-colors whitespace-nowrap",
               active
                 ? "bg-blue-50 text-brand-primary font-medium"
                 : "text-gray-600 hover:bg-gray-100",
