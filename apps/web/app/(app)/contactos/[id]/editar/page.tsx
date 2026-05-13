@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { getContacto } from "@/lib/db/contactos";
-import { listEmpresas } from "@/lib/db/empresas";
+import { loadPickerData } from "@/lib/db/picker-data";
 import { ContactoForm } from "./contacto-form";
 
 type Params = Promise<{ id: string }>;
@@ -12,10 +12,7 @@ export default async function EditContactoPage({ params }: { params: Params }) {
   if (user?.rol !== "admin") redirect("/contactos");
 
   const { id } = await params;
-  const [contacto, empresas] = await Promise.all([
-    getContacto(id),
-    listEmpresas(),
-  ]);
+  const [contacto, picker] = await Promise.all([getContacto(id), loadPickerData()]);
   if (!contacto) notFound();
 
   return (
@@ -32,7 +29,8 @@ export default async function EditContactoPage({ params }: { params: Params }) {
       <section className="bg-white border border-gray-200 rounded-lg p-6">
         <ContactoForm
           contacto={contacto}
-          empresas={empresas.map((e) => ({ id: e.id, nombre: e.nombre }))}
+          empresas={picker.empresas}
+          usuarios={picker.usuarios}
         />
       </section>
     </div>

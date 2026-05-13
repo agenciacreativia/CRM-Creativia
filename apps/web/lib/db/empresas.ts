@@ -10,6 +10,8 @@ export type EmpresaListItem = {
   pais: string | null;
   estado_empresa: "prospecto" | "cliente" | "inactivo";
   origen: string | null;
+  asignado_id: string | null;
+  asignado_nombre: string | null;
   creado_en: string;
   contactos_count: number;
   oportunidades_count: number;
@@ -22,12 +24,32 @@ export type EmpresaDetail = EmpresaListItem & {
   campos_custom: Record<string, unknown>;
 };
 
+type RawEmpresaRow = {
+  id: string;
+  nombre: string;
+  email: string | null;
+  telefono: string | null;
+  ciudad: string | null;
+  pais: string | null;
+  estado_empresa: "prospecto" | "cliente" | "inactivo";
+  origen: string | null;
+  asignado_id: string | null;
+  asignado: { nombre: string } | { nombre: string }[] | null;
+  creado_en: string;
+  contacto?: { count: number }[];
+  oportunidad?: { count: number }[];
+};
+
+function oneOf<T>(v: T | T[] | null | undefined): T | null {
+  return Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
+}
+
 export async function listEmpresas(opts: { q?: string; estado?: string } = {}): Promise<EmpresaListItem[]> {
   const supabase = await createServerSupabase();
 
   let query = supabase
     .from("empresa")
-    .select("id, nombre, email, telefono, ciudad, pais, estado_empresa, origen, creado_en, contacto(count), oportunidad(count)")
+    .select("id, nombre, email, telefono, ciudad, pais, estado_empresa, origen, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, contacto(count), oportunidad(count)")
     .order("nombre", { ascending: true })
     .limit(200);
 
@@ -42,7 +64,7 @@ export async function listEmpresas(opts: { q?: string; estado?: string } = {}): 
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data ?? []).map((row) => ({
+  return ((data ?? []) as RawEmpresaRow[]).map((row) => ({
     id: row.id,
     nombre: row.nombre,
     email: row.email,
@@ -51,6 +73,8 @@ export async function listEmpresas(opts: { q?: string; estado?: string } = {}): 
     pais: row.pais,
     estado_empresa: row.estado_empresa,
     origen: row.origen,
+    asignado_id: row.asignado_id,
+    asignado_nombre: oneOf<{ nombre: string }>(row.asignado)?.nombre ?? null,
     creado_en: row.creado_en,
     contactos_count: row.contacto?.[0]?.count ?? 0,
     oportunidades_count: row.oportunidad?.[0]?.count ?? 0,
@@ -61,7 +85,7 @@ export async function getEmpresa(id: string): Promise<EmpresaDetail | null> {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("empresa")
-    .select("*, contacto(count), oportunidad(count)")
+    .select("*, asignado:usuario!empresa_asignado_id_fkey(nombre), contacto(count), oportunidad(count)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -75,6 +99,8 @@ export async function getEmpresa(id: string): Promise<EmpresaDetail | null> {
     pais: data.pais,
     estado_empresa: data.estado_empresa,
     origen: data.origen,
+    asignado_id: data.asignado_id,
+    asignado_nombre: oneOf<{ nombre: string }>(data.asignado)?.nombre ?? null,
     creado_en: data.creado_en,
     sitio_web: data.sitio_web,
     direccion: data.direccion,

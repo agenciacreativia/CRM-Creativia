@@ -21,6 +21,7 @@ const schema = z.object({
     (v) => (v === "" || v == null ? null : v),
     z.enum(["web", "referencia", "cold_call", "evento", "otro"]).nullable(),
   ),
+  asignado_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
 });
 
 export type EmpresaFormState = { ok: boolean; fieldErrors?: Record<string, string>; error?: string };

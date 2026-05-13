@@ -27,6 +27,7 @@ type EmpresaUpdate = {
   descripcion: string | null;
   estado_empresa: "prospecto" | "cliente" | "inactivo";
   origen: "web" | "referencia" | "cold_call" | "evento" | "otro" | null;
+  asignado_id: string | null;
 };
 
 export async function updateEmpresa(id: string, patch: EmpresaUpdate) {
@@ -45,6 +46,7 @@ type ContactoUpdate = {
   telefono_whatsapp: string | null;
   descripcion: string | null;
   origen: "empresa" | "linkedin" | "cold_call" | "evento" | "otro" | null;
+  asignado_id: string | null;
 };
 
 export async function updateContacto(id: string, patch: ContactoUpdate) {
@@ -425,4 +427,60 @@ export async function updateUsuario(id: string, patch: UsuarioUpdate) {
   await admin.auth.admin.updateUserById(id, {
     user_metadata: { nombre: patch.nombre, tenant_id: caller.tenantId, rol: patch.rol },
   });
+}
+
+// ---------- Sedes ----------
+type SedeInput = {
+  empresa_id: string;
+  nombre: string;
+  direccion: string | null;
+  ciudad: string | null;
+  pais: string | null;
+  telefono: string | null;
+  email: string | null;
+  es_principal: boolean;
+};
+
+export async function createSede(input: SedeInput): Promise<string> {
+  const user = await ensureWriter();
+  const supabase = await createServerSupabase();
+  // Ensure at most one principal per empresa
+  if (input.es_principal) {
+    await supabase.from("sede").update({ es_principal: false }).eq("empresa_id", input.empresa_id);
+  }
+  const { data, error } = await supabase
+    .from("sede")
+    .insert({ ...input, tenant_id: user.tenantId, creado_por: user.id })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+
+export async function updateSede(id: string, patch: Omit<SedeInput, "empresa_id">) {
+  await ensureWriter();
+  const supabase = await createServerSupabase();
+  if (patch.es_principal) {
+    const { data: current } = await supabase
+      .from("sede")
+      .select("empresa_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (current) {
+      await supabase
+        .from("sede")
+        .update({ es_principal: false })
+        .eq("empresa_id", current.empresa_id)
+        .neq("id", id);
+    }
+  }
+  const { error } = await supabase.from("sede").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteSede(id: string) {
+  await ensureWriter();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("sede").delete().eq("id", id);
+  if (error) throw new Error(error.message);
 }

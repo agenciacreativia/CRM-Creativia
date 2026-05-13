@@ -21,7 +21,16 @@ export default async function ContactoDetailPage({ params }: { params: Params })
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">{c.nombre}</h1>
-          {c.cargo && <p className="text-sm text-gray-500 mt-1">{c.cargo}</p>}
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            {c.cargo && <p className="text-sm text-gray-500">{c.cargo}</p>}
+            {c.asignado_nombre ? (
+              <span className="text-xs text-gray-600">
+                Asignado a <strong>{c.asignado_nombre}</strong>
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400">No asignado</span>
+            )}
+          </div>
         </div>
         {canEdit && (
           <Link

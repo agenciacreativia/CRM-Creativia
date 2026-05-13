@@ -19,6 +19,7 @@ const schema = z.object({
     (v) => (v === "" || v == null ? null : v),
     z.enum(["empresa", "linkedin", "cold_call", "evento", "otro"]).nullable(),
   ),
+  asignado_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
 });
 
 export type ContactoFormState = { ok: boolean; fieldErrors?: Record<string, string>; error?: string };

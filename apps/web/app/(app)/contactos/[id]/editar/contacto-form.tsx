@@ -13,13 +13,16 @@ import { updateContactoAction, type ContactoFormState } from "./actions";
 const INITIAL: ContactoFormState = { ok: false };
 
 type EmpresaOption = { id: string; nombre: string };
+type UsuarioOption = { id: string; nombre: string; rol: "admin" | "asesor" };
 
 export function ContactoForm({
   contacto,
   empresas,
+  usuarios,
 }: {
   contacto: ContactoDetail;
   empresas: EmpresaOption[];
+  usuarios: UsuarioOption[];
 }) {
   const action = updateContactoAction.bind(null, contacto.id);
   const [state, formAction, isPending] = useActionState(action, INITIAL);
@@ -76,6 +79,15 @@ export function ContactoForm({
             <option value="cold_call">Cold call</option>
             <option value="evento">Evento</option>
             <option value="otro">Otro</option>
+          </Select>
+        </Field>
+
+        <Field label="Asignado a" htmlFor="asignado_id" error={e.asignado_id}>
+          <Select id="asignado_id" name="asignado_id" defaultValue={contacto.asignado_id ?? ""}>
+            <option value="">(no asignado)</option>
+            {usuarios.map((u) => (
+              <option key={u.id} value={u.id}>{u.nombre} · {u.rol}</option>
+            ))}
           </Select>
         </Field>
       </div>

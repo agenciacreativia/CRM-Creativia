@@ -2,8 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getEmpresa } from "@/lib/db/empresas";
 import { listContactos } from "@/lib/db/contactos";
+import { listNotas } from "@/lib/db/notas";
+import { listSedes } from "@/lib/db/sedes";
 import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { NotasSection } from "@/components/notas/notas-section";
+import { SedesSection } from "@/components/sedes/sedes-section";
 
 type Params = Promise<{ id: string }>;
 
@@ -19,7 +23,11 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
   if (!empresa) notFound();
   const canEdit = user?.rol === "admin";
 
-  const contactos = await listContactos({ empresa_id: id });
+  const [contactos, notas, sedes] = await Promise.all([
+    listContactos({ empresa_id: id }),
+    listNotas({ tipo: "empresa", entity_id: id }),
+    listSedes(id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -30,9 +38,16 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">{empresa.nombre}</h1>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
             <Badge variant={ESTADO_BADGE[empresa.estado_empresa] ?? "default"}>{empresa.estado_empresa}</Badge>
             {empresa.origen && <Badge>{empresa.origen}</Badge>}
+            {empresa.asignado_nombre ? (
+              <span className="text-xs text-gray-600">
+                Asignado a <strong>{empresa.asignado_nombre}</strong>
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400">No asignado</span>
+            )}
           </div>
         </div>
         {canEdit && (
@@ -77,6 +92,17 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
         </section>
       )}
 
+      <SedesSection empresaId={id} initial={sedes} canWrite={canEdit} />
+
+      {user && (
+        <NotasSection
+          initial={notas}
+          target={{ tipo: "empresa", entity_id: id }}
+          currentUserId={user.id}
+          currentUserIsAdmin={user.rol === "admin"}
+        />
+      )}
+
       <section className="bg-white border border-gray-200 rounded-lg p-6">
         <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">
           Contactos asociados ({contactos.length})
@@ -91,7 +117,10 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
                   <Link href={`/contactos/${c.id}`} className="text-brand-primary hover:underline font-medium">
                     {c.nombre}
                   </Link>
-                  <p className="text-xs text-gray-500">{c.email}{c.cargo ? ` · ${c.cargo}` : ""}</p>
+                  <p className="text-xs text-gray-500">
+                    {c.email}{c.cargo ? ` · ${c.cargo}` : ""}
+                    {c.asignado_nombre && ` · asignado: ${c.asignado_nombre}`}
+                  </p>
                 </div>
                 <span className="text-xs text-gray-400">{c.oportunidades_count} oportunidades</span>
               </li>

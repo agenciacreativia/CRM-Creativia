@@ -25,7 +25,7 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
               <Th>Cargo</Th>
               <Th>Empresa</Th>
               <Th>Email</Th>
-              <Th>Teléfono</Th>
+              <Th>Asignado</Th>
               <Th className="text-right">Oportunidades</Th>
             </tr>
           </thead>
@@ -54,7 +54,7 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
                   </Link>
                 </Td>
                 <Td className="text-gray-600">{c.email}</Td>
-                <Td className="text-gray-600">{c.telefono ?? "—"}</Td>
+                <Td className="text-gray-600">{c.asignado_nombre ?? <span className="text-gray-400">no asignado</span>}</Td>
                 <Td className="text-right">{c.oportunidades_count}</Td>
               </tr>
             ))}

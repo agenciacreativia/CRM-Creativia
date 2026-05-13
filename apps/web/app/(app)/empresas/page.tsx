@@ -42,7 +42,7 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
               <Th>Nombre</Th>
               <Th>Estado</Th>
               <Th>Ciudad</Th>
-              <Th>Email</Th>
+              <Th>Asignado</Th>
               <Th className="text-right">Contactos</Th>
               <Th className="text-right">Oportunidades</Th>
             </tr>
@@ -70,7 +70,7 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
                   <Badge variant={ESTADO_BADGE[e.estado_empresa] ?? "default"}>{e.estado_empresa}</Badge>
                 </Td>
                 <Td>{e.ciudad ?? "—"}</Td>
-                <Td className="text-gray-600">{e.email ?? "—"}</Td>
+                <Td className="text-gray-600">{e.asignado_nombre ?? <span className="text-gray-400">no asignado</span>}</Td>
                 <Td className="text-right">{e.contactos_count}</Td>
                 <Td className="text-right">{e.oportunidades_count}</Td>
               </tr>

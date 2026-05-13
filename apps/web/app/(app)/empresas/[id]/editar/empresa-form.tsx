@@ -12,7 +12,15 @@ import { updateEmpresaAction, type EmpresaFormState } from "./actions";
 
 const INITIAL: EmpresaFormState = { ok: false };
 
-export function EmpresaForm({ empresa }: { empresa: EmpresaDetail }) {
+type UsuarioOption = { id: string; nombre: string; rol: "admin" | "asesor" };
+
+export function EmpresaForm({
+  empresa,
+  usuarios,
+}: {
+  empresa: EmpresaDetail;
+  usuarios: UsuarioOption[];
+}) {
   const action = updateEmpresaAction.bind(null, empresa.id);
   const [state, formAction, isPending] = useActionState(action, INITIAL);
   const e = state.fieldErrors ?? {};
@@ -68,6 +76,15 @@ export function EmpresaForm({ empresa }: { empresa: EmpresaDetail }) {
 
         <Field label="Dirección" htmlFor="direccion" error={e.direccion}>
           <Input id="direccion" name="direccion" defaultValue={empresa.direccion ?? ""} />
+        </Field>
+
+        <Field label="Asignado a" htmlFor="asignado_id" error={e.asignado_id}>
+          <Select id="asignado_id" name="asignado_id" defaultValue={empresa.asignado_id ?? ""}>
+            <option value="">(no asignado)</option>
+            {usuarios.map((u) => (
+              <option key={u.id} value={u.id}>{u.nombre} · {u.rol}</option>
+            ))}
+          </Select>
         </Field>
 
         <div className="grid grid-cols-2 gap-4">
