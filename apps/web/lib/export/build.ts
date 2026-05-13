@@ -1,4 +1,5 @@
 import "server-only";
+import * as XLSX from "xlsx";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export type ExportInclude = {
@@ -141,4 +142,71 @@ export function rowsToCsv(rows: Array<Record<string, unknown>>): string {
   const header = keys.map(escape).join(",");
   const lines = rows.map((row) => keys.map((k) => `"${escape(row[k])}"`).join(","));
   return [header, ...lines].join("\n");
+}
+
+/**
+ * Renders a multi-sheet Excel workbook from an ExportBundle's `data`
+ * object. Each top-level key becomes one sheet. Returns a Buffer ready
+ * to send as the response body.
+ */
+export function bundleToExcel(bundle: ExportBundle): Buffer {
+  const wb = XLSX.utils.book_new();
+
+  // "Resumen" sheet with metadata
+  const summary = [
+    ["CRM Turistea — Backup"],
+    ["Tenant", bundle.tenantName],
+    ["Tenant ID", bundle.tenantId],
+    ["Exportado", bundle.exportDate],
+    ["Versión schema", bundle.schemaVersion],
+    [],
+    ["Totales por entidad"],
+    ...Object.entries(bundle.metadata.totalRecords).map(([k, v]) => [k, v]),
+  ];
+  const wsSummary = XLSX.utils.aoa_to_sheet(summary);
+  XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen");
+
+  for (const [sheetKey, rows] of Object.entries(bundle.data)) {
+    if (!Array.isArray(rows) || rows.length === 0) continue;
+    // Flatten JSONB-style nested objects to strings so Excel cells stay sane
+    const flat = (rows as Record<string, unknown>[]).map((row) => {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(row)) {
+        if (v !== null && typeof v === "object" && !(v instanceof Date)) {
+          out[k] = JSON.stringify(v);
+        } else {
+          out[k] = v;
+        }
+      }
+      return out;
+    });
+    const ws = XLSX.utils.json_to_sheet(flat);
+    // Sheet names can't exceed 31 chars in xlsx
+    const name = sheetKey.slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  }
+
+  return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+}
+
+/**
+ * Renders a single-sheet Excel workbook from a list of rows. Used by
+ * the per-table CSV-or-Excel export endpoint.
+ */
+export function rowsToExcel(rows: Array<Record<string, unknown>>, sheetName: string): Buffer {
+  const wb = XLSX.utils.book_new();
+  const flat = rows.map((row) => {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(row)) {
+      if (v !== null && typeof v === "object" && !(v instanceof Date)) {
+        out[k] = JSON.stringify(v);
+      } else {
+        out[k] = v;
+      }
+    }
+    return out;
+  });
+  const ws = XLSX.utils.json_to_sheet(flat);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+  return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
 }

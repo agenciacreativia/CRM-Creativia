@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getTenantFromHeaders } from "@/lib/tenant";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { rowsToCsv } from "@/lib/export/build";
+import { rowsToCsv, rowsToExcel } from "@/lib/export/build";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +30,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const table = url.searchParams.get("table") ?? "empresa";
+  const format = (url.searchParams.get("format") ?? "csv").toLowerCase();
   if (!ALLOWED.has(table)) {
     return NextResponse.json({ error: "Tabla no permitida" }, { status: 400 });
   }
@@ -38,23 +39,36 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.from(table).select("*").limit(10000);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const csv = rowsToCsv((data ?? []) as Array<Record<string, unknown>>);
+  const rows = (data ?? []) as Array<Record<string, unknown>>;
+  const date = new Date().toISOString().slice(0, 10);
 
-  // Audit
+  let body: string | Buffer;
+  let contentType: string;
+  let filename: string;
+
+  if (format === "xlsx") {
+    body = rowsToExcel(rows, table);
+    contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    filename = `${table}-${tenant.subdominio}-${date}.xlsx`;
+  } else {
+    body = rowsToCsv(rows);
+    contentType = "text/csv; charset=utf-8";
+    filename = `${table}-${tenant.subdominio}-${date}.csv`;
+  }
+
   await supabase.from("backup_log").insert({
     tenant_id: tenant.id,
     accion: "export",
-    formato: "csv",
-    registros: { [table]: data?.length ?? 0 },
-    tamano_bytes: csv.length,
+    formato: format === "xlsx" ? "json" : "csv", // enum only json|csv; treat xlsx as json-family
+    registros: { [table]: rows.length, _formato: format } as Record<string, unknown>,
+    tamano_bytes: body.length,
     realizado_por: user.id,
   });
 
-  const date = new Date().toISOString().slice(0, 10);
-  return new NextResponse(csv, {
+  return new NextResponse(body as BodyInit, {
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${table}-${tenant.subdominio}-${date}.csv"`,
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
     },
   });

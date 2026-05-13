@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 
 const TABLES = [
   { key: "empresa", label: "Empresas" },
@@ -29,13 +30,15 @@ const INCLUDE_OPTIONS = [
   { key: "campos", label: "Campos personalizados" },
 ];
 
+const ALL_TRUE = Object.fromEntries(INCLUDE_OPTIONS.map((o) => [o.key, true]));
+const ALL_FALSE = Object.fromEntries(INCLUDE_OPTIONS.map((o) => [o.key, false]));
+
 export function ExportPanel() {
   const router = useRouter();
   const [working, setWorking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [include, setInclude] = useState<Record<string, boolean>>(
-    Object.fromEntries(INCLUDE_OPTIONS.map((o) => [o.key, true])),
-  );
+  const [include, setInclude] = useState<Record<string, boolean>>({ ...ALL_TRUE });
+  const [tableFormat, setTableFormat] = useState<"csv" | "xlsx">("xlsx");
 
   async function downloadBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
@@ -48,20 +51,26 @@ export function ExportPanel() {
     URL.revokeObjectURL(url);
   }
 
-  async function downloadJson() {
-    setWorking("json");
+  function filenameFrom(res: Response, fallback: string) {
+    const cd = res.headers.get("content-disposition") ?? "";
+    return /filename="([^"]+)"/.exec(cd)?.[1] ?? fallback;
+  }
+
+  async function downloadBundle(format: "json" | "xlsx") {
+    setWorking(`bundle-${format}`);
     setError(null);
     try {
-      const res = await fetch("/api/admin/export/json", {
+      const res = await fetch(`/api/admin/export/${format === "json" ? "json" : "excel"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ include }),
       });
       if (!res.ok) throw new Error((await res.json()).error ?? "Falló la exportación");
       const blob = await res.blob();
-      const cd = res.headers.get("content-disposition") ?? "";
-      const filename = /filename="([^"]+)"/.exec(cd)?.[1] ?? `backup-${Date.now()}.json`;
-      await downloadBlob(blob, filename);
+      await downloadBlob(
+        blob,
+        filenameFrom(res, `backup-${Date.now()}.${format === "json" ? "json" : "xlsx"}`),
+      );
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
@@ -70,16 +79,14 @@ export function ExportPanel() {
     }
   }
 
-  async function downloadCsv(table: string) {
-    setWorking(`csv-${table}`);
+  async function downloadTable(table: string) {
+    setWorking(`${tableFormat}-${table}`);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/export/csv?table=${table}`);
+      const res = await fetch(`/api/admin/export/csv?table=${table}&format=${tableFormat}`);
       if (!res.ok) throw new Error((await res.json()).error ?? "Falló la exportación");
       const blob = await res.blob();
-      const cd = res.headers.get("content-disposition") ?? "";
-      const filename = /filename="([^"]+)"/.exec(cd)?.[1] ?? `${table}.csv`;
-      await downloadBlob(blob, filename);
+      await downloadBlob(blob, filenameFrom(res, `${table}.${tableFormat}`));
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
@@ -87,6 +94,9 @@ export function ExportPanel() {
       setWorking(null);
     }
   }
+
+  const allSelected = INCLUDE_OPTIONS.every((o) => include[o.key]);
+  const noneSelected = INCLUDE_OPTIONS.every((o) => !include[o.key]);
 
   return (
     <div className="space-y-4">
@@ -95,9 +105,30 @@ export function ExportPanel() {
       )}
 
       <section className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-sm font-bold uppercase text-gray-500 mb-3">Backup JSON</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold uppercase text-gray-500">Backup completo</h2>
+          <div className="flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => setInclude({ ...ALL_TRUE })}
+              disabled={allSelected}
+              className="text-brand-primary hover:underline disabled:text-gray-400 disabled:no-underline"
+            >
+              Seleccionar todo
+            </button>
+            <span className="text-gray-300">·</span>
+            <button
+              type="button"
+              onClick={() => setInclude({ ...ALL_FALSE })}
+              disabled={noneSelected}
+              className="text-brand-primary hover:underline disabled:text-gray-400 disabled:no-underline"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
         <p className="text-sm text-gray-600 mb-3">
-          Snapshot completo del tenant. Incluye todas las relaciones. Ideal para backups regulares y migración.
+          Snapshot del tenant con todas las relaciones. Elegí qué secciones incluir.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4">
           {INCLUDE_OPTIONS.map((o) => (
@@ -112,15 +143,37 @@ export function ExportPanel() {
             </label>
           ))}
         </div>
-        <Button onClick={downloadJson} disabled={working !== null}>
-          {working === "json" ? "Generando..." : "Descargar JSON"}
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button onClick={() => downloadBundle("xlsx")} disabled={working !== null || noneSelected}>
+            {working === "bundle-xlsx" ? "Generando..." : "📊 Descargar Excel (.xlsx)"}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => downloadBundle("json")}
+            disabled={working !== null || noneSelected}
+          >
+            {working === "bundle-json" ? "Generando..." : "{ } Descargar JSON"}
+          </Button>
+        </div>
       </section>
 
       <section className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-sm font-bold uppercase text-gray-500 mb-3">Exportar a CSV (por tabla)</h2>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2 className="text-sm font-bold uppercase text-gray-500">Exportar tabla individual</h2>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-500">Formato:</label>
+            <Select
+              value={tableFormat}
+              onChange={(e) => setTableFormat(e.target.value as "csv" | "xlsx")}
+              className="w-auto text-xs py-1"
+            >
+              <option value="xlsx">Excel (.xlsx)</option>
+              <option value="csv">CSV</option>
+            </Select>
+          </div>
+        </div>
         <p className="text-sm text-gray-600 mb-4">
-          Descargá una sola entidad para abrir en Excel/Sheets. Útil para reportes ad-hoc.
+          Descargá una sola entidad para análisis ad-hoc. El formato Excel preserva tipos; el CSV es universalmente portable.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           {TABLES.map((t) => (
@@ -129,9 +182,9 @@ export function ExportPanel() {
               variant="secondary"
               size="sm"
               disabled={working !== null}
-              onClick={() => downloadCsv(t.key)}
+              onClick={() => downloadTable(t.key)}
             >
-              {working === `csv-${t.key}` ? "..." : `${t.label} .csv`}
+              {working === `${tableFormat}-${t.key}` ? "..." : `${t.label} .${tableFormat}`}
             </Button>
           ))}
         </div>
