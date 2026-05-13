@@ -22,7 +22,10 @@ export function NavLinks({ rol }: Props) {
 
   const adminLinks =
     rol === "admin"
-      ? [{ href: "/admin/usuarios", label: t("nav.admin") }]
+      ? [
+          { href: "/admin/datos", label: t("nav.datos") },
+          { href: "/admin/usuarios", label: t("nav.usuarios") },
+        ]
       : [];
 
   const links = [...baseLinks, ...adminLinks];

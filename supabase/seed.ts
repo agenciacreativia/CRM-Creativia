@@ -1,10 +1,17 @@
 /**
- * Creates demo auth users for local development.
+ * Provisions auth users for known tenants.
+ *
+ * Currently provisions:
+ *   - Juan Posada as ADMIN of tenant Creativia (juancarlos@agenciacreativia.com)
  *
  * Run AFTER migrations:
- *   npx tsx supabase/seed.ts
+ *   npm run seed -w @crm/web
  *
- * Requires .env.local with SUPABASE_SERVICE_ROLE_KEY.
+ * Requires .env.local with NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
+ *
+ * Idempotent: if a user with the email already exists, its password is reset
+ * to the value below and its public.usuario row is upserted with the right
+ * tenant/role.
  */
 import { createClient } from "@supabase/supabase-js";
 
@@ -29,19 +36,20 @@ type SeedUser = {
 };
 
 const TENANTS = {
-  acme: "11111111-1111-1111-1111-111111111111",
-  globex: "22222222-2222-2222-2222-222222222222",
+  creativia: "33333333-3333-3333-3333-333333333333",
 };
 
 const USERS: SeedUser[] = [
-  { email: "admin@acme.test",   password: "Acme1234!",   nombre: "Admin Acme",    rol: "admin",  tenantId: TENANTS.acme },
-  { email: "asesor@acme.test",  password: "Acme1234!",   nombre: "Asesor Acme",   rol: "asesor", tenantId: TENANTS.acme },
-  { email: "admin@globex.test", password: "Globex1234!", nombre: "Admin Globex",  rol: "admin",  tenantId: TENANTS.globex },
-  { email: "asesor@globex.test",password: "Globex1234!", nombre: "Asesor Globex", rol: "asesor", tenantId: TENANTS.globex },
+  {
+    email: "juancarlos@agenciacreativia.com",
+    password: "Mugrete1983@",
+    nombre: "Juan Posada",
+    rol: "admin",
+    tenantId: TENANTS.creativia,
+  },
 ];
 
 async function upsertUser(u: SeedUser) {
-  // 1. Create auth user (idempotent: if exists, fetch and reuse)
   const { data: existing } = await admin.auth.admin.listUsers();
   const found = existing?.users?.find((x) => x.email === u.email);
 
@@ -62,7 +70,6 @@ async function upsertUser(u: SeedUser) {
     console.log(`✓ Created ${u.email}`);
   }
 
-  // 2. Upsert public.usuario row
   const { error: upErr } = await admin.from("usuario").upsert({
     id: userId,
     tenant_id: u.tenantId,
@@ -78,9 +85,9 @@ async function main() {
   for (const u of USERS) {
     await upsertUser(u);
   }
-  console.log("\n✓ Seed complete. Demo credentials:");
+  console.log("\n✓ Provisioning complete:");
   for (const u of USERS) {
-    console.log(`  ${u.email} / ${u.password}  (tenant: ${u.tenantId === TENANTS.acme ? "acme" : "globex"}, rol: ${u.rol})`);
+    console.log(`  ${u.email} → tenant ${u.tenantId === TENANTS.creativia ? "creativia" : "?"} as ${u.rol}`);
   }
 }
 
