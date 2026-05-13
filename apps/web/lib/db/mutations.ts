@@ -1,11 +1,18 @@
 import "server-only";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminSupabase } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
 
 async function ensureWriter() {
   const u = await getSessionUser();
   if (!u) throw new Error("No autenticado");
   if (u.rol !== "admin") throw new Error("Solo administradores pueden editar");
+  return u;
+}
+
+async function ensureSession() {
+  const u = await getSessionUser();
+  if (!u) throw new Error("No autenticado");
   return u;
 }
 
@@ -258,4 +265,164 @@ export async function reorderEtapas(pipeline_id: string, orderedIds: string[]) {
       .eq("pipeline_id", pipeline_id);
     if (error) throw new Error(error.message);
   }
+}
+
+// ---------- Actividades ----------
+type NewActividad = {
+  oportunidad_id: string;
+  tipo: "llamada" | "email" | "whatsapp" | "reunion" | "otra";
+  descripcion: string | null;
+  fecha_programada: string | null;
+  completada: boolean;
+};
+
+export async function createActividad(input: NewActividad): Promise<string> {
+  const user = await ensureSession();
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("actividad")
+    .insert({
+      tenant_id: user.tenantId,
+      oportunidad_id: input.oportunidad_id,
+      tipo: input.tipo,
+      descripcion: input.descripcion,
+      fecha_programada: input.fecha_programada,
+      completada: input.completada,
+      fecha_completada: input.completada ? new Date().toISOString() : null,
+      creado_por: user.id,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+
+export async function toggleActividad(id: string, completada: boolean) {
+  await ensureSession();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase
+    .from("actividad")
+    .update({
+      completada,
+      fecha_completada: completada ? new Date().toISOString() : null,
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteActividad(id: string) {
+  await ensureSession();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("actividad").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Notas ----------
+type NewNota = {
+  tipo: "empresa" | "contacto" | "oportunidad";
+  empresa_id: string | null;
+  contacto_id: string | null;
+  oportunidad_id: string | null;
+  contenido: string;
+};
+
+export async function createNota(input: NewNota): Promise<string> {
+  const user = await ensureSession();
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("nota")
+    .insert({
+      tenant_id: user.tenantId,
+      tipo: input.tipo,
+      empresa_id: input.empresa_id,
+      contacto_id: input.contacto_id,
+      oportunidad_id: input.oportunidad_id,
+      contenido: input.contenido,
+      creado_por: user.id,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+
+export async function deleteNota(id: string) {
+  await ensureSession();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("nota").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ---------- Usuarios (admin) ----------
+type NewUsuario = {
+  nombre: string;
+  email: string;
+  password: string;
+  rol: "admin" | "asesor";
+};
+
+export async function createUsuario(input: NewUsuario): Promise<string> {
+  const caller = await ensureWriter();
+  const admin = createAdminSupabase();
+
+  const { data: created, error: authErr } = await admin.auth.admin.createUser({
+    email: input.email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: { nombre: input.nombre, tenant_id: caller.tenantId, rol: input.rol },
+  });
+  if (authErr || !created.user) {
+    throw new Error(`No se pudo crear usuario: ${authErr?.message ?? "sin detalle"}`);
+  }
+
+  const { error: insErr } = await admin.from("usuario").insert({
+    id: created.user.id,
+    tenant_id: caller.tenantId,
+    nombre: input.nombre,
+    email: input.email,
+    rol: input.rol,
+    activo: true,
+  });
+  if (insErr) {
+    // Roll back the auth user to avoid orphans
+    await admin.auth.admin.deleteUser(created.user.id);
+    throw new Error(`No se pudo insertar usuario: ${insErr.message}`);
+  }
+
+  return created.user.id;
+}
+
+type UsuarioUpdate = {
+  nombre: string;
+  rol: "admin" | "asesor";
+  activo: boolean;
+  password?: string;
+};
+
+export async function updateUsuario(id: string, patch: UsuarioUpdate) {
+  const caller = await ensureWriter();
+  const admin = createAdminSupabase();
+
+  // Lockout protection: don't let admin demote/deactivate themselves
+  if (id === caller.id && (patch.rol !== "admin" || !patch.activo)) {
+    throw new Error("No podés desactivarte ni quitarte el rol de admin a vos mismo");
+  }
+
+  const { error } = await admin
+    .from("usuario")
+    .update({ nombre: patch.nombre, rol: patch.rol, activo: patch.activo })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+
+  if (patch.password && patch.password.length >= 8) {
+    const { error: pwErr } = await admin.auth.admin.updateUserById(id, {
+      password: patch.password,
+    });
+    if (pwErr) throw new Error(pwErr.message);
+  }
+
+  // Keep user_metadata in sync so a future auth hook re-read sees the new values
+  await admin.auth.admin.updateUserById(id, {
+    user_metadata: { nombre: patch.nombre, tenant_id: caller.tenantId, rol: patch.rol },
+  });
 }

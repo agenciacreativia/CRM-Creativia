@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getContacto } from "@/lib/db/contactos";
+import { listNotas } from "@/lib/db/notas";
 import { getSessionUser } from "@/lib/auth";
+import { NotasSection } from "@/components/notas/notas-section";
 
 type Params = Promise<{ id: string }>;
 
@@ -10,6 +12,7 @@ export default async function ContactoDetailPage({ params }: { params: Params })
   const [c, user] = await Promise.all([getContacto(id), getSessionUser()]);
   if (!c) notFound();
   const canEdit = user?.rol === "admin";
+  const notas = await listNotas({ tipo: "contacto", entity_id: id });
 
   return (
     <div className="space-y-6">
@@ -82,6 +85,15 @@ export default async function ContactoDetailPage({ params }: { params: Params })
             ))}
           </dl>
         </section>
+      )}
+
+      {user && (
+        <NotasSection
+          initial={notas}
+          target={{ tipo: "contacto", entity_id: id }}
+          currentUserId={user.id}
+          currentUserIsAdmin={user.rol === "admin"}
+        />
       )}
     </div>
   );

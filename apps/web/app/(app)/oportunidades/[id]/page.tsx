@@ -1,8 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getOportunidad } from "@/lib/db/oportunidades";
+import { listActividades } from "@/lib/db/actividades";
+import { listNotas } from "@/lib/db/notas";
+import { listHistorialOportunidad } from "@/lib/db/historial";
 import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { ActividadesSection } from "@/components/oportunidad/actividades-section";
+import { NotasSection } from "@/components/notas/notas-section";
+import { HistorialSection } from "@/components/oportunidad/historial-section";
 
 type Params = Promise<{ id: string }>;
 
@@ -28,6 +34,12 @@ export default async function OportunidadDetailPage({ params }: { params: Params
   const [o, user] = await Promise.all([getOportunidad(id), getSessionUser()]);
   if (!o) notFound();
   const canEdit = user?.rol === "admin" || user?.id === o.asignado_id;
+
+  const [actividades, notas, historial] = await Promise.all([
+    listActividades(id),
+    listNotas({ tipo: "oportunidad", entity_id: id }),
+    listHistorialOportunidad(id),
+  ]);
 
   const diasEnEtapa = Math.floor(
     (Date.now() - new Date(o.fecha_entrado_etapa).getTime()) / (1000 * 60 * 60 * 24),
@@ -106,6 +118,19 @@ export default async function OportunidadDetailPage({ params }: { params: Params
           <p className="text-sm text-gray-800 whitespace-pre-wrap">{o.descripcion}</p>
         </section>
       )}
+
+      <ActividadesSection oportunidadId={id} initial={actividades} />
+
+      {user && (
+        <NotasSection
+          initial={notas}
+          target={{ tipo: "oportunidad", entity_id: id }}
+          currentUserId={user.id}
+          currentUserIsAdmin={user.rol === "admin"}
+        />
+      )}
+
+      <HistorialSection historial={historial} />
     </div>
   );
 }
