@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,10 +41,12 @@ const MONEDAS = ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"];
 export function OportunidadForm(props: Props) {
   const { mode, initial, picker, isPending, error, fieldErrors: e, cancelHref } = props;
 
-  const [empresaId, setEmpresaId] = useState(initial?.empresa_id ?? picker.empresas[0]?.id ?? "");
-  const [pipelineId, setPipelineId] = useState(
-    initial?.pipeline_id ?? picker.pipelines.find((p) => p.es_default)?.id ?? picker.pipelines[0]?.id ?? "",
-  );
+  const defaultEmpresa = initial?.empresa_id ?? picker.empresas[0]?.id ?? "";
+  const defaultPipeline =
+    initial?.pipeline_id ?? picker.pipelines.find((p) => p.es_default)?.id ?? picker.pipelines[0]?.id ?? "";
+
+  const [empresaId, setEmpresaId] = useState(defaultEmpresa);
+  const [pipelineId, setPipelineId] = useState(defaultPipeline);
   const [estado, setEstado] = useState<OportunidadFormValues["estado"]>(
     (initial?.estado as OportunidadFormValues["estado"]) ?? "activo",
   );
@@ -52,11 +54,45 @@ export function OportunidadForm(props: Props) {
   const contactosFiltrados = picker.contactos.filter((c) => c.empresa_id === empresaId);
   const etapasFiltradas = picker.etapas.filter((e) => e.pipeline_id === pipelineId);
 
+  const [contactoId, setContactoId] = useState(
+    initial?.contacto_id ?? contactosFiltrados[0]?.id ?? "",
+  );
+  const [etapaId, setEtapaId] = useState(initial?.etapa_id ?? etapasFiltradas[0]?.id ?? "");
+
+  // When empresa changes, snap contacto_id to a valid value (first of filtered list)
+  useEffect(() => {
+    if (contactosFiltrados.length === 0) {
+      setContactoId("");
+      return;
+    }
+    const stillValid = contactosFiltrados.some((c) => c.id === contactoId);
+    if (!stillValid) setContactoId(contactosFiltrados[0].id);
+  }, [empresaId, contactosFiltrados, contactoId]);
+
+  // Same for etapa when pipeline changes
+  useEffect(() => {
+    if (etapasFiltradas.length === 0) {
+      setEtapaId("");
+      return;
+    }
+    const stillValid = etapasFiltradas.some((s) => s.id === etapaId);
+    if (!stillValid) setEtapaId(etapasFiltradas[0].id);
+  }, [pipelineId, etapasFiltradas, etapaId]);
+
+  const hasFieldErrors = Object.keys(e).length > 0;
+
   return (
     <div className="space-y-5">
-      {error && (
+      {(error || hasFieldErrors) && (
         <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-status-danger">
-          {error}
+          {error ?? "Revisá los campos marcados en rojo abajo."}
+          {hasFieldErrors && !error && (
+            <ul className="mt-1 list-disc list-inside text-xs">
+              {Object.entries(e).map(([k, v]) => (
+                <li key={k}><strong>{k}</strong>: {v}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
@@ -79,18 +115,28 @@ export function OportunidadForm(props: Props) {
           </Select>
         </Field>
 
-        <Field label="Contacto" htmlFor="contacto_id" required error={e.contacto_id} hint={contactosFiltrados.length === 0 ? "Esta empresa no tiene contactos. Creá uno primero." : undefined}>
+        <Field
+          label="Contacto"
+          htmlFor="contacto_id"
+          required
+          error={e.contacto_id}
+          hint={contactosFiltrados.length === 0 ? "Esta empresa no tiene contactos. Creá uno primero." : undefined}
+        >
           <Select
             id="contacto_id"
             name="contacto_id"
-            defaultValue={initial?.contacto_id ?? contactosFiltrados[0]?.id ?? ""}
+            value={contactoId}
+            onChange={(ev) => setContactoId(ev.target.value)}
             required
             disabled={contactosFiltrados.length === 0}
           >
-            {contactosFiltrados.map((c) => (
-              <option key={c.id} value={c.id}>{c.nombre}</option>
-            ))}
-            {contactosFiltrados.length === 0 && <option value="">(sin contactos)</option>}
+            {contactosFiltrados.length === 0 ? (
+              <option value="">(sin contactos)</option>
+            ) : (
+              contactosFiltrados.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))
+            )}
           </Select>
         </Field>
 
@@ -112,12 +158,18 @@ export function OportunidadForm(props: Props) {
           <Select
             id="etapa_id"
             name="etapa_id"
-            defaultValue={initial?.etapa_id ?? etapasFiltradas[0]?.id ?? ""}
+            value={etapaId}
+            onChange={(ev) => setEtapaId(ev.target.value)}
             required
+            disabled={etapasFiltradas.length === 0}
           >
-            {etapasFiltradas.map((s) => (
-              <option key={s.id} value={s.id}>{s.nombre}</option>
-            ))}
+            {etapasFiltradas.length === 0 ? (
+              <option value="">(sin etapas)</option>
+            ) : (
+              etapasFiltradas.map((s) => (
+                <option key={s.id} value={s.id}>{s.nombre}</option>
+              ))
+            )}
           </Select>
         </Field>
 
@@ -219,12 +271,21 @@ export function OportunidadForm(props: Props) {
       </Field>
 
       <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
-        <Button type="submit" disabled={isPending}>
+        <Button
+          type="submit"
+          disabled={isPending || contactosFiltrados.length === 0 || etapasFiltradas.length === 0}
+        >
           {isPending ? "Guardando..." : mode === "create" ? "Crear oportunidad" : "Guardar cambios"}
         </Button>
         <Link href={cancelHref} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
           Cancelar
         </Link>
+        {(contactosFiltrados.length === 0 || etapasFiltradas.length === 0) && (
+          <p className="text-xs text-status-danger">
+            {contactosFiltrados.length === 0 ? "Necesitás un contacto en esta empresa. " : ""}
+            {etapasFiltradas.length === 0 ? "Necesitás al menos una etapa en este pipeline." : ""}
+          </p>
+        )}
       </div>
     </div>
   );

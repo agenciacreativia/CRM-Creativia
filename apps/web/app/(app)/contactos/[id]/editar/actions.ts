@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { updateContacto } from "@/lib/db/mutations";
 
-const emptyToNull = (v: unknown) => (typeof v === "string" && v.trim() === "" ? null : v);
+const emptyToNull = (v: unknown) => {
+  if (v == null) return null;
+  if (typeof v === "string" && v.trim() === "") return null;
+  return v;
+};
 
 const schema = z.object({
   empresa_id: z.string().uuid("Empresa requerida"),

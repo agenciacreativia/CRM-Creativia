@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { updateOportunidad } from "@/lib/db/mutations";
 
-const emptyToNull = (v: unknown) => (typeof v === "string" && v.trim() === "" ? null : v);
+const emptyToNull = (v: unknown) => {
+  if (v == null) return null;
+  if (typeof v === "string" && v.trim() === "") return null;
+  return v;
+};
 const numOrNull = (v: unknown) => {
   if (v === "" || v == null) return null;
   const n = Number(v);
