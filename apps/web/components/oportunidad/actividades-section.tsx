@@ -53,14 +53,15 @@ export function ActividadesSection({
   async function onAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    const fd = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
     fd.append("oportunidad_id", oportunidadId);
     const res = await createActividadAction(fd);
     if (!res.ok) {
       setError(res.error);
       return;
     }
-    e.currentTarget.reset();
+    form.reset();
     setShowAdd(false);
     router.refresh();
   }
