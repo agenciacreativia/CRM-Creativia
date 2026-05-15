@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { updateEmpresa } from "@/lib/db/mutations";
 
-const emptyToNull = (v: unknown) => (typeof v === "string" && v.trim() === "" ? null : v);
+const emptyToNull = (v: unknown) => {
+  if (v == null) return null;
+  if (typeof v === "string" && v.trim() === "") return null;
+  return v;
+};
 
 const schema = z.object({
   nombre: z.string().trim().min(1, "Nombre requerido").max(200),
