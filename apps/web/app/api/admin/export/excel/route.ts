@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   });
 
   const date = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-  return new NextResponse(buffer, {
+  return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="crm-${tenant.subdominio}-${date}.xlsx"`,

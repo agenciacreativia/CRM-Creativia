@@ -69,9 +69,9 @@ export default async function UsuariosPage() {
   );
 }
 
-function Th({ children, className }: { children: React.ReactNode; className?: string }) {
+function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
   return <th className={`px-4 py-2 font-medium ${className ?? ""}`}>{children}</th>;
 }
-function Td({ children, className }: { children: React.ReactNode; className?: string }) {
+function Td({ children, className }: { children?: React.ReactNode; className?: string }) {
   return <td className={`px-4 py-2.5 ${className ?? ""}`}>{children}</td>;
 }
