@@ -17,11 +17,14 @@ import type { KanbanColumn, KanbanCard } from "@/lib/db/oportunidades";
 import { moveOportunidadAction } from "./actions";
 import { cn } from "@/lib/utils";
 
-const CARD_COLOR_STYLES: Record<KanbanCard["color"], string> = {
-  green: "border-l-status-ok",
-  yellow: "border-l-status-warn",
-  red: "border-l-status-danger",
-  gray: "border-l-gray-300",
+// Left-edge stripe colors. Driven by `dias_en_etapa` vs `dias_maximo_alerta`
+// (see lib/db/oportunidades.ts): red = overdue, yellow = approaching the
+// limit, green = still within the optimal window, gray = no limit set.
+const CARD_STRIPE_STYLES: Record<KanbanCard["color"], string> = {
+  green: "bg-gradient-to-b from-[#b8eb4a] to-[#7bc100]",
+  yellow: "bg-gradient-to-b from-[#ff9b6a] to-[#ff5a14]",
+  red: "bg-gradient-to-b from-[#f0708a] to-[#d94965]",
+  gray: "bg-gray-300",
 };
 
 function formatCurrency(value: number | null, moneda: string): string {
@@ -196,12 +199,18 @@ function Card({ card, isDragging }: { card: KanbanCard; isDragging?: boolean }) 
       href={`/oportunidades/${card.id}`}
       onClick={(e) => isDragging && e.preventDefault()}
       className={cn(
-        "block bg-white border border-gray-200 rounded p-3 shadow-sm hover:shadow transition-shadow",
-        "border-l-4",
-        CARD_COLOR_STYLES[card.color],
+        "relative block bg-white rounded p-3 pl-4 shadow-sm hover:shadow transition-shadow overflow-hidden",
         isDragging && "shadow-lg ring-2 ring-brand-primary cursor-grabbing",
       )}
     >
+      {/* Status stripe (overdue / approaching / optimal) */}
+      <span
+        aria-hidden
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-1.5 rounded-l",
+          CARD_STRIPE_STYLES[card.color],
+        )}
+      />
       <p className="text-sm font-medium text-gray-900 truncate">{card.nombre}</p>
       <p className="text-xs text-gray-500 truncate mt-0.5">{card.empresa_nombre}</p>
       <div className="flex items-center justify-between mt-2 text-xs">
