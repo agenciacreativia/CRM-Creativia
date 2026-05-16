@@ -9,8 +9,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
 }
 
+// Primary uses the brand navy in light mode. In dark mode the body is also
+// navy, so it would disappear — globals.css swaps the primary button to the
+// brand green via `html.dark .bg-brand-primary` for visibility.
 const variantStyles: Record<Variant, string> = {
-  primary: "bg-brand-primary text-white hover:bg-blue-700 disabled:bg-blue-300",
+  primary: "bg-brand-primary text-white hover:bg-[#1c1840] disabled:opacity-60",
   secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
   ghost: "text-gray-700 hover:bg-gray-100",
   danger: "bg-status-danger text-white hover:bg-red-600",

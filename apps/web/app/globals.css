@@ -4,8 +4,27 @@
 
 @layer base {
   :root {
-    --color-bg: #f9fafb;
-    --color-fg: #1f2937;
+    /* Light theme — white surfaces, navy ink */
+    --bg: #ffffff;
+    --bg-subtle: #f9fafb;
+    --bg-muted: #f3f4f6;
+    --ink: #272255;
+    --ink-soft: #4b5563;
+    --ink-muted: #6b7280;
+    --border: #e5e7eb;
+    --border-soft: #f3f4f6;
+  }
+
+  html.dark {
+    /* Dark theme — navy body, deeper surfaces */
+    --bg: #000417;
+    --bg-subtle: #1f3243;
+    --bg-muted: #272255;
+    --ink: #f9fafb;
+    --ink-soft: #d1d5db;
+    --ink-muted: #85c2f6;
+    --border: #1f3243;
+    --border-soft: rgba(133, 194, 246, 0.12);
   }
 
   html, body {
@@ -13,7 +32,83 @@
   }
 
   body {
-    @apply bg-[var(--color-bg)] text-[var(--color-fg)] antialiased;
+    background-color: var(--bg);
+    color: var(--ink);
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/*
+ * Dark-mode overrides for the most common surface utilities the app uses.
+ * Centralizing them avoids sprinkling `dark:` variants across every
+ * component, while staying behind Tailwind's `class` dark-mode strategy.
+ */
+@layer utilities {
+  html.dark .bg-white { background-color: var(--bg-muted); }
+  html.dark .bg-gray-50 { background-color: var(--bg-subtle); }
+  html.dark .bg-gray-100 { background-color: var(--bg-subtle); }
+
+  html.dark .border-gray-200 { border-color: var(--border); }
+  html.dark .border-gray-100 { border-color: var(--border-soft); }
+  html.dark .divide-gray-100 > * + * { border-color: var(--border-soft); }
+
+  html.dark .text-gray-900 { color: var(--ink); }
+  html.dark .text-gray-800 { color: var(--ink); }
+  html.dark .text-gray-700 { color: var(--ink-soft); }
+  html.dark .text-gray-600 { color: var(--ink-soft); }
+  html.dark .text-gray-500 { color: var(--ink-muted); }
+  html.dark .text-gray-400 { color: var(--ink-muted); }
+
+  /* Tinted backgrounds (notes, warnings, etc.) need a darker version. */
+  html.dark .bg-blue-50 { background-color: rgba(133, 194, 246, 0.15); }
+  html.dark .bg-green-50 { background-color: rgba(149, 222, 0, 0.15); }
+  html.dark .bg-yellow-50 { background-color: rgba(255, 121, 62, 0.12); }
+  html.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.15); }
+
+  html.dark .border-blue-200 { border-color: rgba(133, 194, 246, 0.4); }
+  html.dark .border-green-200 { border-color: rgba(149, 222, 0, 0.4); }
+  html.dark .border-yellow-200 { border-color: rgba(255, 121, 62, 0.4); }
+  html.dark .border-red-200 { border-color: rgba(239, 68, 68, 0.4); }
+
+  /* Input/select backgrounds */
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+    background-color: var(--bg-muted);
+    color: var(--ink);
+    border-color: var(--border);
+  }
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: var(--ink-muted);
+  }
+
+  /* Recharts axis/labels */
+  html.dark .recharts-text {
+    fill: var(--ink-soft);
+  }
+
+  /* Brand primary text: navy in light, green accent in dark (navy on navy
+     would be unreadable). */
+  html.dark .text-brand-primary { color: #95DE00; }
+
+  /* Primary buttons / CTA chips: navy on light, green on dark.
+     White text becomes navy text on the green to keep contrast readable. */
+  html.dark .bg-brand-primary { background-color: #95DE00; color: #000417; }
+  html.dark .bg-brand-primary.text-white { color: #000417; }
+  html.dark .hover\:bg-blue-700:hover { background-color: #7bc100; }
+  html.dark .hover\:bg-\[\#1c1840\]:hover { background-color: #7bc100; }
+
+  /* Buttons styled with ring-brand-primary for focus → keep visible */
+  html.dark .focus\:ring-brand-primary:focus { --tw-ring-color: #95DE00; }
+
+  /* Row hover: very subtle sky tint in dark */
+  html.dark .hover\:bg-gray-50:hover { background-color: rgba(133, 194, 246, 0.06); }
+  html.dark .hover\:bg-gray-100:hover { background-color: rgba(133, 194, 246, 0.08); }
+
+  /* Active nav link uses bg-blue-50: in dark, give it a subtle green tint */
+  html.dark .bg-blue-50.text-brand-primary {
+    background-color: rgba(149, 222, 0, 0.15);
   }
 }

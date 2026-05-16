@@ -7,6 +7,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { NavLinks } from "@/components/nav-links";
 import { SearchModal } from "@/components/search/search-modal";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [user, tenant] = await Promise.all([
@@ -41,6 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <SearchModal />
 
             <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+              <ThemeToggle />
               <LanguageSwitcher />
               <span className="text-sm text-gray-600 hidden lg:inline whitespace-nowrap">
                 {user.nombre}
