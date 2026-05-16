@@ -46,6 +46,7 @@ export default async function DashboardPage() {
         <KpiCard
           label="Oportunidades activas"
           value={dash.kpis.oportunidades_activas.toString()}
+          href="/oportunidades/tabla?estado=activo"
         />
         <KpiCard
           label="Tasa de cierre"
@@ -55,26 +56,27 @@ export default async function DashboardPage() {
         <KpiCard
           label="Actividades pendientes"
           value={dash.kpis.actividades_pendientes.toString()}
+          href="#actividades-pendientes"
         />
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title="Origen de empresas">
+        <ChartCard title="Origen de empresas" accent="sky">
           <OrigenChart data={dash.charts.origen_empresas} />
         </ChartCard>
-        <ChartCard title="Oportunidades activas por etapa">
+        <ChartCard title="Oportunidades activas por etapa" accent="navy">
           <EtapaChart data={dash.charts.oportunidades_por_etapa} />
         </ChartCard>
-        <ChartCard title="Estado de oportunidades">
+        <ChartCard title="Estado de oportunidades" accent="green">
           <EstadoChart data={dash.charts.estado_distribution} />
         </ChartCard>
-        <ChartCard title="Motivos de pérdida (top 5)">
+        <ChartCard title="Motivos de pérdida (top 5)" accent="orange">
           <MotivosChart data={dash.charts.motivos_perdida} />
         </ChartCard>
       </section>
 
       {dash.actividades_proximas.length > 0 && (
-        <section className="bg-white border border-gray-200 rounded-lg p-6">
+        <section id="actividades-pendientes" className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-20">
           <h2 className="text-sm font-bold uppercase text-gray-500 mb-3">Próximas actividades pendientes</h2>
           <ul className="divide-y divide-gray-100">
             {dash.actividades_proximas.map((a) => (
@@ -135,11 +137,13 @@ function KpiCard({
   value,
   hint,
   featured = false,
+  href,
 }: {
   label: string;
   value: string;
   hint?: string;
   featured?: boolean;
+  href?: string;
 }) {
   if (featured) {
     return (
@@ -150,18 +154,38 @@ function KpiCard({
       </div>
     );
   }
-  return (
-    <div className="bg-white p-6">
+  const inner = (
+    <>
       <p className="text-xs uppercase tracking-widest text-gray-500">{label}</p>
       <p className="text-4xl font-bold text-gray-900 mt-2">{value}</p>
       {hint && <p className="text-xs text-gray-400 mt-2">{hint}</p>}
-    </div>
+    </>
   );
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="block bg-white p-6 hover:-translate-y-0.5 hover:shadow-lg transition cursor-pointer"
+      >
+        {inner}
+      </Link>
+    );
+  }
+  return <div className="bg-white p-6">{inner}</div>;
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({
+  title,
+  accent,
+  children,
+}: {
+  title: string;
+  accent?: "navy" | "green" | "orange" | "sky";
+  children: React.ReactNode;
+}) {
+  const stripeClass = accent ? ` card-stripe-${accent}` : "";
   return (
-    <div className="bg-white p-6">
+    <div className={`bg-white p-6${stripeClass}`}>
       <h3 className="text-sm font-bold uppercase text-gray-500 mb-4 tracking-widest">{title}</h3>
       {children}
     </div>

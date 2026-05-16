@@ -140,7 +140,9 @@
     font-weight: 600;
   }
 
-  /* Accent stripe on a card. Usage: <div class="bg-white card-stripe-green"> */
+  /* Accent stripe on a card. Lives on the LEFT edge so the dashboard chart
+     cards and the kanban opportunity cards use the same visual language.
+     Usage: <div class="bg-white card-stripe-green"> */
   .card-stripe-navy,
   .card-stripe-green,
   .card-stripe-orange,
@@ -154,9 +156,10 @@
   .card-stripe-sky::after {
     content: "";
     position: absolute;
-    right: 0; top: 0; bottom: 0;
-    width: 5px;
-    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    left: 0; top: 0; bottom: 0;
+    width: 6px;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    pointer-events: none;
   }
   .card-stripe-navy::after   { background: linear-gradient(180deg, #3a32a0, #1c1840); }
   .card-stripe-green::after  { background: linear-gradient(180deg, #b8eb4a, #7bc100); }
