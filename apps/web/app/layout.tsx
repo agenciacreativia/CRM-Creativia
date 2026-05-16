@@ -3,8 +3,11 @@ import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/provider";
 
 export const metadata: Metadata = {
-  title: "CRM Turistea",
-  description: "Multi-tenant CRM for sales management",
+  title: "Turistea CRM",
+  description: "Plataforma de gestión para Turistea — Mayorista de Turismo",
+  icons: {
+    icon: "/turistea-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

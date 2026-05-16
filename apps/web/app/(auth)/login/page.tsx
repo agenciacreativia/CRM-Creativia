@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getTenantFromHeaders } from "@/lib/tenant";
 import { LoginForm } from "./login-form";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -13,18 +14,21 @@ export default async function LoginPage() {
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-brand-primary">CRM Turistea</h1>
+          <Image
+            src="/turistea-logo.png"
+            alt="Turistea — Mayorista de Turismo"
+            width={2000}
+            height={497}
+            priority
+            className="h-12 w-auto mx-auto"
+          />
           {tenant && (
-            <p className="text-sm text-gray-500 mt-1">{tenant.nombre_empresa}</p>
+            <p className="text-sm text-gray-500 mt-3">{tenant.nombre_empresa}</p>
           )}
         </div>
 
         <LoginForm />
       </div>
-
-      <p className="mt-6 text-center text-xs text-gray-400">
-        v0.1.0 · Sprint 1
-      </p>
     </div>
   );
 }

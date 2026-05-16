@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { getTenantFromHeaders } from "@/lib/tenant";
@@ -23,8 +24,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Row 1: brand · tenant · search · right cluster */}
           <div className="h-14 flex items-center gap-3 sm:gap-4">
-            <Link href="/dashboard" className="font-bold text-brand-primary whitespace-nowrap">
-              CRM Turistea
+            <Link href="/dashboard" className="flex items-center whitespace-nowrap" aria-label="Turistea">
+              <Image
+                src="/turistea-logo.png"
+                alt="Turistea — Mayorista de Turismo"
+                width={2000}
+                height={497}
+                priority
+                className="h-9 w-auto"
+              />
             </Link>
             <span className="hidden sm:inline-block text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
               {tenant.nombre_empresa}
