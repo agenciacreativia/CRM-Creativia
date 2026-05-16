@@ -49,7 +49,14 @@ export default async function KanbanPage({ searchParams }: { searchParams: Searc
           </Link>
         </div>
       ) : (
-        <KanbanBoard initialBoard={board} />
+        <KanbanBoard
+          // Forzar remount cuando cambia el pipeline:
+          // useState(initialBoard) en KanbanBoard solo lee el valor inicial al
+          // primer mount, por lo que cambiar de Ventas → Prospección sin un
+          // `key` deja las columnas y tarjetas en memoria del pipeline anterior.
+          key={selectedPipelineId}
+          initialBoard={board}
+        />
       )}
     </div>
   );
