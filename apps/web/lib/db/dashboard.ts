@@ -58,12 +58,37 @@ export async function loadDashboard(): Promise<{
   const supabase = await createServerSupabase();
   const scope: Scope = user.rol === "admin" ? "admin" : "me";
 
-  // ---------- Opportunities (filtered by RLS — asesor sees only own) ----------
-  let oppQuery = supabase
+  // Fire every query in parallel — they're independent.
+  const oppSelect = supabase
     .from("oportunidad")
     .select("id, valor, moneda, estado, asignado_id, motivo_perdida_id, etapa_id, etapa_pipeline(nombre), motivo_perdida(nombre)");
-  if (scope === "me") oppQuery = oppQuery.eq("asignado_id", user.id);
-  const { data: opps } = await oppQuery;
+  const oppPromise = scope === "me" ? oppSelect.eq("asignado_id", user.id) : oppSelect;
+
+  const actsPromise = supabase
+    .from("actividad")
+    .select("id, oportunidad_id, tipo, descripcion, fecha_programada, completada, oportunidad(nombre, asignado_id)")
+    .eq("completada", false)
+    .order("fecha_programada", { ascending: true, nullsFirst: false })
+    .limit(15);
+
+  const empresasPromise = supabase.from("empresa").select("origen");
+
+  const usersPromise = scope === "admin"
+    ? supabase.from("usuario").select("id, nombre, rol").eq("activo", true)
+    : Promise.resolve({ data: [] as Array<{ id: string; nombre: string; rol: string }> });
+
+  const completadasPromise = scope === "admin"
+    ? supabase.from("actividad").select("creado_por").eq("completada", true)
+    : Promise.resolve({ data: [] as Array<{ creado_por: string | null }> });
+
+  const [
+    { data: opps },
+    { data: acts },
+    { data: empresas },
+    { data: users },
+    { data: completadas },
+  ] = await Promise.all([oppPromise, actsPromise, empresasPromise, usersPromise, completadasPromise]);
+
   const opportunities = (opps ?? []) as Array<{
     id: string;
     valor: number | null;
@@ -88,13 +113,6 @@ export async function loadDashboard(): Promise<{
   const win_rate = winDecided > 0 ? Math.round((ganadas.length / winDecided) * 100) : null;
 
   // ---------- Activities ----------
-  let actQuery = supabase
-    .from("actividad")
-    .select("id, oportunidad_id, tipo, descripcion, fecha_programada, completada, oportunidad(nombre, asignado_id)")
-    .eq("completada", false)
-    .order("fecha_programada", { ascending: true, nullsFirst: false })
-    .limit(15);
-  const { data: acts } = await actQuery;
   type RawAct = {
     id: string;
     oportunidad_id: string;
@@ -122,7 +140,6 @@ export async function loadDashboard(): Promise<{
   }));
 
   // ---------- Chart: origen empresas ----------
-  const { data: empresas } = await supabase.from("empresa").select("origen");
   const origenCount = new Map<string, number>();
   for (const e of empresas ?? []) {
     const k = (e as { origen: string | null }).origen ?? "sin especificar";
@@ -159,21 +176,13 @@ export async function loadDashboard(): Promise<{
   // ---------- Tabla: desempeño por asesor (admin only) ----------
   let asesores: AsesorDesempeno[] = [];
   if (scope === "admin") {
-    const { data: users } = await supabase
-      .from("usuario")
-      .select("id, nombre, rol")
-      .eq("activo", true);
-    const { data: completadas } = await supabase
-      .from("actividad")
-      .select("creado_por")
-      .eq("completada", true);
     const completedByUser = new Map<string, number>();
     for (const c of completadas ?? []) {
-      const k = (c as { creado_por: string | null }).creado_por;
+      const k = c.creado_por;
       if (!k) continue;
       completedByUser.set(k, (completedByUser.get(k) ?? 0) + 1);
     }
-    asesores = (users ?? []).map((u: { id: string; nombre: string; rol: string }) => {
+    asesores = (users ?? []).map((u) => {
       const own = opportunities.filter((o) => o.asignado_id === u.id);
       const own_ganadas = own.filter((o) => o.estado === "ganado").length;
       const own_perdidas = own.filter((o) => o.estado === "perdido").length;

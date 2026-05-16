@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { decodeJwtClaims } from "@/lib/jwt";
 
@@ -15,18 +16,25 @@ export type SessionUser = {
  * Reads the authenticated user + JWT custom claims (tenant_id, rol, etc.).
  * Returns null if not signed in or if claims are missing (= broken setup).
  *
+ * Wrapped in React `cache` so the same request reusing this function in
+ * layout + page + nested components only hits Supabase Auth once.
+ *
  * Custom claims live in the JWT itself (injected by the auth hook), NOT in
  * `user.app_metadata` (which is sourced from auth.users.raw_app_meta_data).
  */
-export async function getSessionUser(): Promise<SessionUser | null> {
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createServerSupabase();
 
-  // Validate the session (refreshes if needed)
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  // getUser() validates and refreshes if needed; getSession() reads the
+  // (possibly refreshed) access_token from cookies. We need both — but
+  // they're synchronous against the cookie store, so doing them in
+  // parallel is fine.
+  const [{ data: { user } }, { data: { session } }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession(),
+  ]);
 
-  // Read the access_token to decode its claims
-  const { data: { session } } = await supabase.auth.getSession();
+  if (!user) return null;
   const claims = decodeJwtClaims(session?.access_token);
 
   return {
@@ -37,4 +45,4 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     idioma: claims?.idioma ?? "es",
     nombre: claims?.nombre ?? user.email ?? "",
   };
-}
+});
