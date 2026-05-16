@@ -4,31 +4,73 @@
 
 @layer base {
   :root {
-    /* Light theme — soft lavender body, white cards, navy ink */
-    --bg: #eef0f7;
-    --bg-subtle: #f7f8fc;
-    --bg-muted: #ffffff;
-    --ink: #272255;
-    --ink-soft: #4b5563;
-    --ink-muted: #6b7280;
-    --border: rgba(39, 34, 85, 0.08);
-    --border-soft: rgba(39, 34, 85, 0.04);
-    --shadow-card: 0 1px 2px rgba(39, 34, 85, 0.04), 0 8px 24px rgba(39, 34, 85, 0.05);
-    --shadow-card-hover: 0 1px 2px rgba(39, 34, 85, 0.06), 0 12px 32px rgba(39, 34, 85, 0.08);
+    /* Background gradient (lavender base, like the reference mock) */
+    --bg-grad-1: #dcdcf2;
+    --bg-grad-2: #e9e8f7;
+
+    /* Glass surfaces */
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-bg-strong: rgba(255, 255, 255, 0.78);
+    --glass-border: rgba(255, 255, 255, 0.65);
+
+    /* Turistea brand palette (substituted for the mock's violet) */
+    --brand-navy: #272255;
+    --brand-navy-deep: #1c1840;
+    --brand-green: #95DE00;
+    --brand-green-deep: #7bc100;
+    --brand-orange: #FF793E;
+    --brand-sky: #85C2F6;
+    --brand-grad: linear-gradient(150deg, #3a32a0 0%, #272255 55%, #1c1840 100%);
+
+    /* Text inks */
+    --ink: #2c2c40;
+    --ink-soft: #6a6a82;
+    --ink-faint: #a0a0b4;
+
+    /* Status helpers */
+    --green-tag: #34c98a;
+    --red-soft: #f0708a;
+
+    /* Shadows with a slight navy tint, matching the reference */
+    --shadow-card: 0 14px 34px -12px rgba(39, 34, 85, 0.28);
+    --shadow-soft: 0 6px 18px -8px rgba(39, 34, 85, 0.22);
+    --shadow-feature: 0 22px 40px -16px rgba(39, 34, 85, 0.45);
+
+    /* Radii */
+    --radius-lg: 26px;
+    --radius-md: 20px;
+    --radius-sm: 15px;
+
+    /* Convenience legacy tokens */
+    --bg: var(--bg-grad-1);
+    --bg-subtle: rgba(255, 255, 255, 0.6);
+    --bg-muted: rgba(255, 255, 255, 0.78);
+    --border: var(--glass-border);
+    --border-soft: rgba(255, 255, 255, 0.4);
+    --ink-muted: var(--ink-faint);
   }
 
   html.dark {
-    /* Dark theme — deep navy body, lighter navy cards */
-    --bg: #000417;
-    --bg-subtle: #1f3243;
-    --bg-muted: #272255;
-    --ink: #f9fafb;
-    --ink-soft: #d1d5db;
-    --ink-muted: #85c2f6;
-    --border: rgba(133, 194, 246, 0.12);
-    --border-soft: rgba(133, 194, 246, 0.06);
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
-    --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.3);
+    /* Dark: keep brand navy as body, sliding-in glass over it */
+    --bg-grad-1: #000417;
+    --bg-grad-2: #15123a;
+    --glass-bg: rgba(39, 34, 85, 0.65);
+    --glass-bg-strong: rgba(39, 34, 85, 0.85);
+    --glass-border: rgba(133, 194, 246, 0.18);
+
+    --ink: #f3f4f8;
+    --ink-soft: #c8c9da;
+    --ink-faint: #85c2f6;
+
+    --shadow-card: 0 14px 34px -12px rgba(0, 0, 0, 0.55);
+    --shadow-soft: 0 6px 18px -8px rgba(0, 0, 0, 0.45);
+    --shadow-feature: 0 22px 40px -16px rgba(0, 0, 0, 0.65);
+
+    --bg-subtle: rgba(39, 34, 85, 0.55);
+    --bg-muted: rgba(39, 34, 85, 0.75);
+    --border: var(--glass-border);
+    --border-soft: rgba(133, 194, 246, 0.08);
+    --ink-muted: var(--ink-faint);
   }
 
   html, body {
@@ -36,136 +78,235 @@
   }
 
   body {
-    background-color: var(--bg);
-    /* Subtle radial-gradient washes in the light mode to add a sense of
-       depth, like the lavender dashboard reference. */
-    background-image:
-      radial-gradient(at 12% 18%, rgba(149, 222, 0, 0.05) 0%, transparent 45%),
-      radial-gradient(at 88% 82%, rgba(133, 194, 246, 0.12) 0%, transparent 50%);
-    background-attachment: fixed;
+    font-family: Inter, "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--ink);
-    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.7), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(149, 222, 0, 0.18), transparent 50%),
+      linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
+    background-attachment: fixed;
+    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
 
   html.dark body {
-    background-image:
-      radial-gradient(at 15% 20%, rgba(39, 34, 85, 0.55) 0%, transparent 50%),
-      radial-gradient(at 85% 80%, rgba(31, 50, 67, 0.6) 0%, transparent 55%);
+    background:
+      radial-gradient(circle at 18% 12%, rgba(133, 194, 246, 0.1), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(149, 222, 0, 0.12), transparent 50%),
+      linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
   }
 }
 
 /*
- * Centralized style upgrades — rounded cards, soft shadows, no harsh
- * borders. Targets the patterns the app already uses (bg-white,
- * rounded-lg, shadow-sm) so individual pages don't need to be rewritten.
+ * Component-level upgrades: every "bg-white" surface becomes a glass card,
+ * radii get bumped, shadows get a slight navy tint. This lets the whole
+ * app inherit the look without touching every component.
  */
 @layer components {
-  /* Every "bg-white" surface gets the soft-shadow, no-hard-border look. */
   .bg-white {
-    background-color: var(--bg-muted);
+    background-color: var(--glass-bg) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border) !important;
     box-shadow: var(--shadow-card);
-    border-color: transparent !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
   }
-  .bg-white:hover.hover\:shadow,
-  .bg-white.hover\:border-brand-primary:hover {
-    box-shadow: var(--shadow-card-hover);
+  .bg-white.hover\:bg-gray-50:hover {
+    background-color: var(--glass-bg-strong) !important;
   }
 
-  /* Promote rounded-lg → rounded-2xl for the soft modern look. */
-  .rounded-lg { border-radius: 1rem; }
-  .rounded-md { border-radius: 0.625rem; }
-
-  /* Table card subtleties */
-  table { border-spacing: 0; }
-  thead.bg-gray-50 { background-color: transparent; }
-  thead.bg-gray-50 th { padding-top: 0.875rem; padding-bottom: 0.875rem; }
-
-  /* Section heading style — keep the uppercase eyebrow but soften */
-  h2.text-sm.uppercase, h3.text-sm.uppercase {
-    letter-spacing: 0.06em;
-  }
-}
-
-/*
- * Dark-mode overrides for the most common surface utilities the app uses.
- * Stays behind Tailwind's `class` dark-mode strategy.
- */
-@layer utilities {
-  html.dark .bg-white { background-color: var(--bg-muted); }
-  html.dark .bg-gray-50 { background-color: var(--bg-subtle); }
-  html.dark .bg-gray-100 { background-color: var(--bg-subtle); }
-
-  html.dark .border-gray-200 { border-color: var(--border); }
-  html.dark .border-gray-100 { border-color: var(--border-soft); }
-  html.dark .divide-gray-100 > * + * { border-color: var(--border-soft); }
-
-  html.dark .text-gray-900 { color: var(--ink); }
-  html.dark .text-gray-800 { color: var(--ink); }
-  html.dark .text-gray-700 { color: var(--ink-soft); }
-  html.dark .text-gray-600 { color: var(--ink-soft); }
-  html.dark .text-gray-500 { color: var(--ink-muted); }
-  html.dark .text-gray-400 { color: var(--ink-muted); }
-
-  /* Tinted backgrounds need a darker version in dark mode. */
-  html.dark .bg-blue-50 { background-color: rgba(133, 194, 246, 0.15); }
-  html.dark .bg-green-50 { background-color: rgba(149, 222, 0, 0.15); }
-  html.dark .bg-yellow-50 { background-color: rgba(255, 121, 62, 0.12); }
-  html.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.15); }
-
-  html.dark .border-blue-200 { border-color: rgba(133, 194, 246, 0.4); }
-  html.dark .border-green-200 { border-color: rgba(149, 222, 0, 0.4); }
-  html.dark .border-yellow-200 { border-color: rgba(255, 121, 62, 0.4); }
-  html.dark .border-red-200 { border-color: rgba(239, 68, 68, 0.4); }
-
-  /* Input/select backgrounds */
-  html.dark input,
-  html.dark textarea,
-  html.dark select {
+  /* Stronger glass for surfaces marked "elevated" (rare) */
+  .bg-gray-50 {
     background-color: var(--bg-subtle);
-    color: var(--ink);
-    border-color: var(--border);
-  }
-  html.dark input::placeholder,
-  html.dark textarea::placeholder {
-    color: var(--ink-muted);
   }
 
-  html.dark .recharts-text { fill: var(--ink-soft); }
+  /* Radii promotion */
+  .rounded-md { border-radius: var(--radius-sm); }
+  .rounded-lg { border-radius: var(--radius-md); }
+  .rounded-xl { border-radius: var(--radius-md); }
+  .rounded-2xl { border-radius: var(--radius-lg); }
 
-  html.dark .text-brand-primary { color: #95DE00; }
-  html.dark .bg-brand-primary { background-color: #95DE00; color: #000417; }
-  html.dark .bg-brand-primary.text-white { color: #000417; }
-  html.dark .hover\:bg-blue-700:hover { background-color: #7bc100; }
-  html.dark .hover\:bg-\[\#1c1840\]:hover { background-color: #7bc100; }
-
-  html.dark .focus\:ring-brand-primary:focus { --tw-ring-color: #95DE00; }
-
-  html.dark .hover\:bg-gray-50:hover { background-color: rgba(133, 194, 246, 0.06); }
-  html.dark .hover\:bg-gray-100:hover { background-color: rgba(133, 194, 246, 0.08); }
-
-  html.dark .bg-blue-50.text-brand-primary {
-    background-color: rgba(149, 222, 0, 0.15);
+  /* Inputs/selects keep readable look on glass */
+  input, textarea, select {
+    background: var(--glass-bg-strong);
+    border-color: var(--glass-border);
+    border-radius: 13px;
   }
 
-  /* Soft card style holds in dark too */
-  html.dark .bg-white {
-    box-shadow: var(--shadow-card);
+  /* Section title (eyebrow style) */
+  h2.text-sm.uppercase, h3.text-sm.uppercase {
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    font-weight: 600;
   }
 
-  /* Featured-card variant — Turistea brand gradient. Used on the dashboard
-     hero KPI. Class: `card-featured` */
+  /* Accent stripe on a card. Usage: <div class="bg-white card-stripe-green"> */
+  .card-stripe-navy,
+  .card-stripe-green,
+  .card-stripe-orange,
+  .card-stripe-sky {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-stripe-navy::after,
+  .card-stripe-green::after,
+  .card-stripe-orange::after,
+  .card-stripe-sky::after {
+    content: "";
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 5px;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+  .card-stripe-navy::after   { background: linear-gradient(180deg, #3a32a0, #1c1840); }
+  .card-stripe-green::after  { background: linear-gradient(180deg, #b8eb4a, #7bc100); }
+  .card-stripe-orange::after { background: linear-gradient(180deg, #ff9b6a, #ff5a14); }
+  .card-stripe-sky::after    { background: linear-gradient(180deg, #b9dafc, #5b9be0); }
+
+  /* Featured hero card — Turistea navy gradient */
   .card-featured {
-    background-image: linear-gradient(160deg, #272255 0%, #5b47e3 100%);
-    color: white;
-    border-radius: 1.25rem;
-    box-shadow: 0 12px 32px rgba(91, 71, 227, 0.25);
+    background-image: var(--brand-grad);
+    color: #ffffff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-feature);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-featured::before {
+    content: "";
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    pointer-events: none;
   }
   .card-featured .text-gray-500,
   .card-featured .text-gray-600,
   .card-featured .text-gray-700,
   .card-featured .text-gray-800,
-  .card-featured .text-gray-900 {
-    color: rgba(255, 255, 255, 0.85) !important;
+  .card-featured .text-gray-900,
+  .card-featured .text-brand-primary {
+    color: rgba(255, 255, 255, 0.88) !important;
+  }
+
+  /* Round icon button (40×40 glass pill) */
+  .icon-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+  }
+  .icon-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Glass pill for inputs (used by the global search) */
+  .glass-pill {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    border-radius: 13px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Status pill */
+  .pill-success {
+    background: rgba(52, 201, 138, 0.16);
+    color: var(--green-tag);
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 9px;
+    font-size: 11.5px;
+  }
+}
+
+/*
+ * Tailwind class-targeted overrides for everything else (text colors,
+ * borders, hover states, dark-mode adjustments). Centralized so we
+ * don't have to touch every existing component.
+ */
+@layer utilities {
+  /* Borders: hide the hard gray-200 in favor of glass-border */
+  .border-gray-200 { border-color: var(--glass-border); }
+  .border-gray-100 { border-color: var(--border-soft); }
+  .divide-gray-100 > * + * { border-color: var(--border-soft); }
+
+  /* Text levels */
+  .text-gray-900 { color: var(--ink); }
+  .text-gray-800 { color: var(--ink); }
+  .text-gray-700 { color: var(--ink-soft); }
+  .text-gray-600 { color: var(--ink-soft); }
+  .text-gray-500 { color: var(--ink-soft); }
+  .text-gray-400 { color: var(--ink-faint); }
+
+  /* Tinted backgrounds (alerts, callouts) — toned to glassy variants */
+  .bg-blue-50 { background-color: rgba(133, 194, 246, 0.15); }
+  .bg-green-50 { background-color: rgba(149, 222, 0, 0.15); }
+  .bg-yellow-50 { background-color: rgba(255, 121, 62, 0.12); }
+  .bg-red-50 { background-color: rgba(240, 112, 138, 0.15); }
+
+  .border-blue-200 { border-color: rgba(133, 194, 246, 0.4); }
+  .border-green-200 { border-color: rgba(149, 222, 0, 0.4); }
+  .border-yellow-200 { border-color: rgba(255, 121, 62, 0.4); }
+  .border-red-200 { border-color: rgba(240, 112, 138, 0.4); }
+
+  /* Primary brand uses navy in light, green in dark for visibility */
+  .text-brand-primary { color: var(--brand-navy); }
+  html.dark .text-brand-primary { color: var(--brand-green); }
+  .bg-brand-primary { background-color: var(--brand-navy); color: #fff; }
+  html.dark .bg-brand-primary { background-color: var(--brand-green); color: var(--brand-navy); }
+  .hover\:bg-blue-700:hover { background-color: var(--brand-navy-deep); }
+  .hover\:bg-\[\#1c1840\]:hover { background-color: var(--brand-navy-deep); }
+  html.dark .hover\:bg-blue-700:hover { background-color: var(--brand-green-deep); }
+  html.dark .hover\:bg-\[\#1c1840\]:hover { background-color: var(--brand-green-deep); }
+  .focus\:ring-brand-primary:focus { --tw-ring-color: var(--brand-navy); }
+  html.dark .focus\:ring-brand-primary:focus { --tw-ring-color: var(--brand-green); }
+
+  /* Hover states for nav and rows */
+  .hover\:bg-gray-50:hover { background-color: rgba(255, 255, 255, 0.6); }
+  .hover\:bg-gray-100:hover { background-color: rgba(255, 255, 255, 0.5); }
+  html.dark .hover\:bg-gray-50:hover { background-color: rgba(133, 194, 246, 0.06); }
+  html.dark .hover\:bg-gray-100:hover { background-color: rgba(133, 194, 246, 0.08); }
+
+  /* Active nav link */
+  .bg-blue-50.text-brand-primary {
+    background-color: rgba(39, 34, 85, 0.1);
+    color: var(--brand-navy);
+  }
+  html.dark .bg-blue-50.text-brand-primary {
+    background-color: rgba(149, 222, 0, 0.18);
+    color: var(--brand-green);
+  }
+
+  /* Inputs in dark */
+  html.dark input, html.dark textarea, html.dark select {
+    background: var(--glass-bg);
+    color: var(--ink);
+    border-color: var(--glass-border);
+  }
+  html.dark input::placeholder, html.dark textarea::placeholder {
+    color: var(--ink-faint);
+  }
+
+  /* Recharts text labels follow the ink */
+  .recharts-text { fill: var(--ink-soft); }
+  html.dark .recharts-text { fill: var(--ink-soft); }
+
+  /* Kanban / status badge bands and other badges remain visible */
+  .bg-status-ok { background-color: var(--brand-green); color: var(--brand-navy); }
+  .bg-status-warn { background-color: var(--brand-orange); color: #fff; }
+  .bg-status-danger { background-color: var(--red-soft); color: #fff; }
+
+  /* Buttons: pill instead of rectangle */
+  button.rounded-md, .rounded-md > button {
+    border-radius: 13px;
   }
 }
