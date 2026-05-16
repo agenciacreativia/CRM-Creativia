@@ -120,7 +120,13 @@ export function KanbanBoard({ initialBoard }: { initialBoard: KanbanColumn[] }) 
         </div>
       )}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        {/*
+          Desktop (md+): columns share the width via flex-1 — every stage
+          is visible at once, no horizontal scroll.
+          Mobile: keep horizontal scroll with fixed-width columns since
+          the table would be unreadable otherwise.
+        */}
+        <div className="flex gap-3 pb-4 overflow-x-auto md:overflow-x-visible">
           {board[0].etapas.map((stage) => (
             <Column key={stage.id} stage={stage} />
           ))}
@@ -142,19 +148,19 @@ function Column({ stage }: { stage: KanbanColumn["etapas"][number] }) {
     <div
       ref={setNodeRef}
       className={cn(
-        "flex-shrink-0 w-72 bg-gray-50 rounded-lg p-3 transition-colors",
+        "flex-shrink-0 w-64 md:w-auto md:flex-1 md:min-w-0 bg-gray-50 rounded-lg p-3 transition-colors",
         isOver && "bg-blue-50 ring-2 ring-brand-primary",
       )}
     >
       <header className="mb-3 px-1">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium text-sm text-gray-700">{stage.nombre}</h3>
-          <span className="text-xs text-gray-500">{stage.oportunidades.length}</span>
+        <div className="flex items-center justify-between gap-1">
+          <h3 className="font-medium text-sm text-gray-700 truncate">{stage.nombre}</h3>
+          <span className="text-xs text-gray-500 flex-shrink-0">{stage.oportunidades.length}</span>
         </div>
-        <p className="text-xs text-gray-500 mt-0.5">
+        <p className="text-xs text-gray-500 mt-0.5 truncate">
           {formatCurrency(totalValue, moneda)}
           {stage.dias_maximo_alerta != null && (
-            <span className="text-gray-400"> · alerta {stage.dias_maximo_alerta}d</span>
+            <span className="text-gray-400"> · {stage.dias_maximo_alerta}d</span>
           )}
         </p>
       </header>
