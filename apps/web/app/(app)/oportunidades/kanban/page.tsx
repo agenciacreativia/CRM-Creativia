@@ -27,7 +27,7 @@ export default async function KanbanPage({ searchParams }: { searchParams: Searc
             <PipelineSwitcher pipelines={pipelines} current={selectedPipelineId} />
           )}
           <Link
-            href="/oportunidades"
+            href="/oportunidades/tabla"
             className="px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100 border border-gray-200"
           >
             Vista tabla
