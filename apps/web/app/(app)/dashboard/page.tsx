@@ -41,7 +41,6 @@ export default async function DashboardPage() {
         <KpiCard
           label="Valor en pipeline"
           value={fmtCurrency(dash.kpis.valor_pipeline, dash.kpis.moneda_pipeline)}
-          featured
         />
         <KpiCard
           label="Oportunidades activas"
@@ -136,42 +135,31 @@ function KpiCard({
   label,
   value,
   hint,
-  featured = false,
   href,
 }: {
   label: string;
   value: string;
   hint?: string;
-  featured?: boolean;
   href?: string;
 }) {
-  if (featured) {
-    return (
-      <div className="card-featured p-6">
-        <p className="text-xs uppercase tracking-widest opacity-80">{label}</p>
-        <p className="text-4xl font-bold mt-2">{value}</p>
-        {hint && <p className="text-xs opacity-70 mt-2">{hint}</p>}
-      </div>
-    );
-  }
   const inner = (
     <>
-      <p className="text-xs uppercase tracking-widest text-gray-500">{label}</p>
-      <p className="text-4xl font-bold text-gray-900 mt-2">{value}</p>
-      {hint && <p className="text-xs text-gray-400 mt-2">{hint}</p>}
+      <p className="text-xs uppercase tracking-widest opacity-80">{label}</p>
+      <p className="text-4xl font-bold mt-2">{value}</p>
+      {hint && <p className="text-xs opacity-70 mt-2">{hint}</p>}
     </>
   );
   if (href) {
     return (
       <Link
         href={href}
-        className="block bg-white p-6 hover:-translate-y-0.5 hover:shadow-lg transition cursor-pointer"
+        className="card-featured p-6 block hover:-translate-y-0.5 transition cursor-pointer"
       >
         {inner}
       </Link>
     );
   }
-  return <div className="bg-white p-6">{inner}</div>;
+  return <div className="card-featured p-6">{inner}</div>;
 }
 
 function ChartCard({
