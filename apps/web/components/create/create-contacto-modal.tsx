@@ -22,11 +22,13 @@ export function CreateContactoModal({
   usuarios,
   campos,
   onClose,
+  defaultEmpresaId,
 }: {
   empresas: Option[];
   usuarios: Option[];
   campos: CampoPersonalizado[];
   onClose: () => void;
+  defaultEmpresaId?: string;
 }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(createContactoAction, INITIAL);
@@ -62,7 +64,7 @@ export function CreateContactoModal({
               <Input id="nombre" name="nombre" required autoFocus />
             </Field>
             <Field label="Empresa" htmlFor="empresa_id" required error={e.empresa_id}>
-              <Select id="empresa_id" name="empresa_id" defaultValue={empresas[0]?.id ?? ""}>
+              <Select id="empresa_id" name="empresa_id" defaultValue={defaultEmpresaId ?? empresas[0]?.id ?? ""}>
                 {empresas.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nombre}

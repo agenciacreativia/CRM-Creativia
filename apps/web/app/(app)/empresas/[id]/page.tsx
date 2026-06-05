@@ -10,6 +10,9 @@ import { listDocumentos } from "@/lib/db/documentos";
 import { listOportunidadesDeEmpresa, listContactosDeEmpresa } from "@/lib/db/relaciones";
 import { OportunidadesList } from "@/components/relaciones/oportunidades-list";
 import { ContactosList } from "@/components/relaciones/contactos-list";
+import { listEmpresas } from "@/lib/db/empresas";
+import { listUsuarios } from "@/lib/db/usuarios";
+import { AddContactoButton } from "./add-contacto-button";
 import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { NotasSection } from "@/components/notas/notas-section";
@@ -32,7 +35,7 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
   if (!empresa) notFound();
   const canEdit = user?.rol === "admin";
 
-  const [contactos, notas, sedes, campos, cambios, documentos, opps, contactosRel] = await Promise.all([
+  const [contactos, notas, sedes, campos, cambios, documentos, opps, contactosRel, todasEmpresas, usuarios] = await Promise.all([
     listContactos({ empresa_id: id }),
     listNotas({ tipo: "empresa", entity_id: id }),
     listSedes(id),
@@ -41,6 +44,8 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
     listDocumentos("empresa", id),
     listOportunidadesDeEmpresa(id),
     listContactosDeEmpresa(id),
+    listEmpresas({}),
+    listUsuarios({ activo: "activos" }),
   ]);
 
   const historialEntries = cambios.map((c) => ({
@@ -98,9 +103,19 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
           )}
 
           <section className="rounded-lg border border-gray-200 bg-white p-6">
-            <h2 className="mb-4 text-sm font-bold uppercase text-gray-500">
-              Contactos asociados ({contactos.length})
-            </h2>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-bold uppercase text-gray-500">
+                Contactos asociados ({contactos.length})
+              </h2>
+              {canEdit && (
+                <AddContactoButton
+                  empresaId={id}
+                  empresas={todasEmpresas.map((e) => ({ id: e.id, nombre: e.nombre }))}
+                  usuarios={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))}
+                  campos={campos}
+                />
+              )}
+            </div>
             {contactos.length === 0 ? (
               <p className="text-sm text-gray-500">Sin contactos.</p>
             ) : (
