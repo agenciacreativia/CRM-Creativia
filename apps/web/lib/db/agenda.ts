@@ -6,6 +6,7 @@ export type AgendaEvent = {
   id: string;
   oportunidad_id: string;
   oportunidad_nombre: string;
+  contacto_nombre: string | null;
   asignado_id: string | null;
   asignado_nombre: string | null;
   tipo: "llamada" | "email" | "whatsapp" | "reunion" | "otra";
@@ -30,7 +31,7 @@ export async function loadAgendaRange(args: {
   let query = supabase
     .from("actividad")
     .select(
-      "id, oportunidad_id, tipo, descripcion, completada, fecha_programada, oportunidad(nombre, asignado_id, usuario(nombre))",
+      "id, oportunidad_id, tipo, descripcion, completada, fecha_programada, oportunidad(nombre, asignado_id, contacto(nombre), usuario!oportunidad_asignado_id_fkey(nombre))",
     )
     .gte("fecha_programada", `${args.from}T00:00:00Z`)
     .lte("fecha_programada", `${args.to}T23:59:59Z`)
@@ -46,26 +47,22 @@ export async function loadAgendaRange(args: {
     descripcion: string | null;
     completada: boolean;
     fecha_programada: string;
-    oportunidad: {
-      nombre: string;
-      asignado_id: string | null;
-      usuario: { nombre: string } | { nombre: string }[] | null;
-    } | Array<{
-      nombre: string;
-      asignado_id: string | null;
-      usuario: { nombre: string } | { nombre: string }[] | null;
-    }> | null;
+    oportunidad: unknown;
   };
 
   const events: AgendaEvent[] = ((data ?? []) as Raw[]).flatMap((row) => {
-    const opp = Array.isArray(row.oportunidad) ? row.oportunidad[0] : row.oportunidad;
+    const opp = (Array.isArray(row.oportunidad) ? row.oportunidad[0] : row.oportunidad) as
+      | { nombre: string; asignado_id: string | null; contacto: { nombre: string } | { nombre: string }[] | null; usuario: { nombre: string } | { nombre: string }[] | null }
+      | null;
     if (!opp) return [];
     const u = Array.isArray(opp.usuario) ? opp.usuario[0] : opp.usuario;
+    const c = Array.isArray(opp.contacto) ? opp.contacto[0] : opp.contacto;
     return [
       {
         id: row.id,
         oportunidad_id: row.oportunidad_id,
         oportunidad_nombre: opp.nombre,
+        contacto_nombre: c?.nombre ?? null,
         asignado_id: opp.asignado_id,
         asignado_nombre: u?.nombre ?? null,
         tipo: row.tipo,

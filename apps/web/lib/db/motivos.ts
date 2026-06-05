@@ -8,12 +8,18 @@ export type MotivoPerdida = {
   oportunidades_count: number;
 };
 
-export async function listMotivosPerdida(): Promise<MotivoPerdida[]> {
+export async function listMotivosPerdida(
+  opts: { q?: string } = {},
+): Promise<MotivoPerdida[]> {
   const supabase = await createServerSupabase();
-  const { data, error } = await supabase
+  let query = supabase
     .from("motivo_perdida")
     .select("id, nombre, creado_en, oportunidad(count)")
     .order("nombre");
+  if (opts.q) {
+    query = query.ilike("nombre", `%${opts.q}%`);
+  }
+  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map((m: { id: string; nombre: string; creado_en: string; oportunidad?: { count: number }[] }) => ({
     id: m.id,

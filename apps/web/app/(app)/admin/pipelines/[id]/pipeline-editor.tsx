@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -16,7 +16,6 @@ import type { PipelineDetail } from "@/lib/db/pipelines";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
 import {
   updatePipelineAction,
   deletePipelineAction,
@@ -32,6 +31,15 @@ export function PipelineEditor({ pipeline }: { pipeline: PipelineDetail }) {
   const [, startTransition] = useTransition();
   const router = useRouter();
 
+  // Re-sincronizar estado local cuando el server component re-renderiza con
+  // un nuevo `pipeline.etapas` (p. ej. después de router.refresh()). Sin esto,
+  // useState congelaba la lista vieja y al agregar etapas se chocaba el orden.
+  const etapasKey = pipeline.etapas.map((e) => `${e.id}:${e.orden}`).join("|");
+  useEffect(() => {
+    setEtapas(pipeline.etapas);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [etapasKey]);
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   async function onUpdatePipeline(e: React.FormEvent<HTMLFormElement>) {
@@ -44,10 +52,10 @@ export function PipelineEditor({ pipeline }: { pipeline: PipelineDetail }) {
   }
 
   async function onDelete() {
-    if (!confirm(`¿Eliminar pipeline "${pipeline.nombre}"? Solo se puede si no tiene oportunidades.`)) return;
+    if (!confirm(`¿Eliminar embudo "${pipeline.nombre}"? Solo se puede si no tiene oportunidades.`)) return;
     const res = await deletePipelineAction(pipeline.id);
     if (!res.ok) setError(res.error);
-    else router.push("/admin/pipelines");
+    else router.push("/oportunidades/kanban");
   }
 
   async function onAddEtapa(e: React.FormEvent<HTMLFormElement>) {
@@ -83,62 +91,67 @@ export function PipelineEditor({ pipeline }: { pipeline: PipelineDetail }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 pb-20">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-status-danger">{error}</div>
+        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>
       )}
 
-      <section className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">Pipeline</h2>
-        <form onSubmit={onUpdatePipeline} className="space-y-4 max-w-2xl">
+      {/* Embudo: compact (sticky save abajo) */}
+      <form id="pipeline-form" onSubmit={onUpdatePipeline} className="rounded-lg border border-gray-200 bg-white p-4">
+        <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Embudo</h2>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <Field label="Nombre" htmlFor="nombre" required>
             <Input id="nombre" name="nombre" defaultValue={pipeline.nombre} required />
           </Field>
-          <Field label="Descripción" htmlFor="descripcion">
-            <Textarea id="descripcion" name="descripcion" rows={2} defaultValue={pipeline.descripcion ?? ""} />
-          </Field>
-          <div className="flex items-center gap-3">
-            <Button type="submit">Guardar</Button>
-            <Button type="button" variant="danger" onClick={onDelete}>Eliminar pipeline</Button>
+          <div className="md:col-span-2">
+            <Field label="Descripción" htmlFor="descripcion">
+              <Input id="descripcion" name="descripcion" defaultValue={pipeline.descripcion ?? ""} />
+            </Field>
           </div>
-        </form>
-      </section>
+        </div>
+      </form>
 
-      <section className="bg-white border border-gray-200 rounded-lg p-6">
-        <header className="mb-4">
-          <h2 className="text-sm font-bold uppercase text-gray-500">Etapas</h2>
-          <p className="text-xs text-gray-400 mt-1">Arrastrá las etapas para reordenarlas. El orden afecta al Kanban.</p>
+      {/* Etapas: compact */}
+      <section className="rounded-lg border border-gray-200 bg-white p-4">
+        <header className="mb-3 flex items-center justify-between">
+          <div>
+            <h2 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Etapas</h2>
+            <p className="text-xs text-gray-400">Arrastrá para reordenar.</p>
+          </div>
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">{etapas.length}</span>
         </header>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={etapas.map((e) => e.id)} strategy={verticalListSortingStrategy}>
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {etapas.map((etapa) => (
-                <SortableEtapa
-                  key={etapa.id}
-                  etapa={etapa}
-                  pipelineId={pipeline.id}
-                  onError={setError}
-                />
+                <SortableEtapa key={etapa.id} etapa={etapa} pipelineId={pipeline.id} onError={setError} />
               ))}
             </ul>
           </SortableContext>
         </DndContext>
 
-        {etapas.length === 0 && (
-          <p className="text-sm text-gray-500 italic">Sin etapas. Agregá una abajo.</p>
-        )}
+        {etapas.length === 0 && <p className="py-2 text-sm italic text-gray-500">Sin etapas todavía.</p>}
 
-        <form onSubmit={onAddEtapa} className="mt-6 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-end">
-          <Field label="Nueva etapa" htmlFor="nombre">
-            <Input id="nombre" name="nombre" placeholder="ej. Demo agendada" required />
-          </Field>
-          <Field label="Alerta (días)" htmlFor="dias_maximo_alerta" hint="opcional">
-            <Input id="dias_maximo_alerta" name="dias_maximo_alerta" type="number" min="1" className="w-32" />
-          </Field>
-          <Button type="submit">+ Agregar</Button>
+        {/* Form agregar (inline más compacto) */}
+        <form onSubmit={onAddEtapa} className="mt-3 flex flex-wrap items-end gap-2 border-t border-gray-100 pt-3">
+          <div className="min-w-40 flex-1">
+            <label className="mb-1 block text-xs text-gray-500">Nueva etapa</label>
+            <Input name="nombre" placeholder="ej. Demo agendada" required />
+          </div>
+          <div className="w-28">
+            <label className="mb-1 block text-xs text-gray-500">Alerta (días)</label>
+            <Input name="dias_maximo_alerta" type="number" min="1" />
+          </div>
+          <Button type="submit" size="sm" variant="success">+ Agregar etapa</Button>
         </form>
       </section>
+
+      {/* Sticky footer con Guardar (sticky, no fixed, así respeta el sidebar) */}
+      <div className="sticky bottom-0 z-30 -mx-4 mt-2 flex items-center justify-end gap-2 border-t border-gray-200 bg-white px-4 py-3 shadow-lift">
+        <Button type="button" variant="danger" size="sm" onClick={onDelete}>Eliminar embudo</Button>
+        <Button type="submit" form="pipeline-form" size="md">Guardar cambios</Button>
+      </div>
     </div>
   );
 }

@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { getTenantFromHeaders } from "@/lib/tenant";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { NavLinks } from "@/components/nav-links";
-import { SearchModal } from "@/components/search/search-modal";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { getMyPermisos } from "@/lib/db/roles";
+import { getTenantHerramientas, isPlatformAdmin } from "@/lib/db/planes";
+import { getNotificaciones } from "@/lib/db/notificaciones";
+import { listAgencias } from "@/lib/db/agencias";
+import { AppShell } from "@/components/shell/app-shell";
+import { ListaEsperaBanner } from "@/components/lista-espera-banner";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [user, tenant] = await Promise.all([
@@ -19,51 +19,36 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user.tenantId || !tenant) redirect("/auth/error?reason=tenant_mismatch");
   if (user.tenantId !== tenant.id) redirect("/auth/error?reason=tenant_mismatch");
 
+  const [{ permisos, es_admin }, herramientas, notificaciones, esPlataforma] = await Promise.all([
+    getMyPermisos(),
+    getTenantHerramientas(),
+    getNotificaciones(),
+    isPlatformAdmin(),
+  ]);
+  const tiene = (k: string) => herramientas === null || herramientas.has(k);
+  const tools = {
+    roles_permisos: tiene("roles_permisos"),
+    importar_datos: tiene("importar_datos"),
+  };
+
+  // Agency switcher for "Ver como agencia" (platform admin only).
+  const agencias = esPlataforma
+    ? (await listAgencias()).map((a) => ({ id: a.id, nombre: a.nombre_empresa }))
+    : [];
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Row 1: brand · tenant · search · right cluster */}
-          <div className="h-14 flex items-center gap-3 sm:gap-4">
-            <Link href="/dashboard" className="flex items-center whitespace-nowrap" aria-label="Turistea">
-              <Image
-                src="/turistea-logo.png"
-                alt="Turistea — Mayorista de Turismo"
-                width={2000}
-                height={497}
-                priority
-                className="h-9 w-auto"
-              />
-            </Link>
-            <span className="hidden sm:inline-block text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
-              {tenant.nombre_empresa}
-            </span>
-
-            <SearchModal />
-
-            <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-              <ThemeToggle />
-              <LanguageSwitcher />
-              <span className="text-sm text-gray-600 hidden lg:inline whitespace-nowrap">
-                {user.nombre}
-                {user.rol && (
-                  <span className="ml-1 text-xs uppercase text-gray-400">· {user.rol}</span>
-                )}
-              </span>
-              <SignOutButton />
-            </div>
-          </div>
-
-          {/* Row 2: nav links, with horizontal scroll on small screens */}
-          <div className="border-t border-gray-100 overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-1.5">
-            <NavLinks rol={user.rol} />
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {children}
-      </main>
-    </div>
+    <AppShell
+      user={{ id: user.id, nombre: user.nombre, email: user.email, rol: user.rol }}
+      tenant={{ nombre_empresa: tenant.nombre_empresa }}
+      permisos={permisos}
+      esAdmin={es_admin}
+      tools={tools}
+      notificaciones={notificaciones}
+      agencias={agencias}
+    >
+      <ImpersonationBanner />
+      <ListaEsperaBanner />
+      {children}
+    </AppShell>
   );
 }

@@ -109,8 +109,8 @@ export function SearchModal() {
   const showDropdown = open && q.trim().length > 0;
 
   return (
-    <div ref={containerRef} className="relative flex-1 max-w-xs sm:max-w-sm lg:max-w-md">
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-primary focus-within:border-transparent rounded-md border border-gray-200 transition-colors">
+    <div ref={containerRef} className="relative w-56">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-white focus-within:ring-2 focus-within:ring-brand-primary rounded-md border border-gray-300 transition-colors">
         <span className="text-gray-400 text-sm">🔎</span>
         <input
           ref={inputRef}
@@ -122,17 +122,14 @@ export function SearchModal() {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onInputKeyDown}
-          placeholder="Buscar empresas, contactos, oportunidades..."
+          placeholder="Buscar en el CRM"
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400 min-w-0"
           aria-label="Buscar"
         />
-        <kbd className="hidden lg:inline-flex px-1.5 py-0.5 bg-white border border-gray-200 rounded text-xs text-gray-500">
-          ⌘K
-        </kbd>
       </div>
 
       {showDropdown && (
-        <div className="absolute top-full right-0 left-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden z-50 max-h-96 overflow-y-auto min-w-[20rem]">
+        <div className="surface-white absolute top-full right-0 left-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden z-50 max-h-96 overflow-y-auto min-w-[20rem]">
           {q.trim().length < 2 ? (
             <p className="px-4 py-6 text-sm text-gray-400 text-center">
               Escribí al menos 2 caracteres

@@ -71,6 +71,10 @@ export function ContactoForm({
           />
         </Field>
 
+        <Field label="Fecha de nacimiento" htmlFor="fecha_nacimiento">
+          <Input id="fecha_nacimiento" name="fecha_nacimiento" type="date" defaultValue={contacto.fecha_nacimiento ?? ""} />
+        </Field>
+
         <Field label="Origen" htmlFor="origen" error={e.origen}>
           <Select id="origen" name="origen" defaultValue={contacto.origen ?? ""}>
             <option value="">— sin especificar —</option>

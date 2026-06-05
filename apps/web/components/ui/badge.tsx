@@ -2,12 +2,14 @@ import { cn } from "@/lib/utils";
 
 type Variant = "default" | "success" | "warn" | "danger" | "info";
 
+// Horizon Voyager: pill-shaped status badges with 10% opacity backgrounds and
+// full-saturation text for high contrast (per the design spec).
 const styles: Record<Variant, string> = {
   default: "bg-gray-100 text-gray-700",
-  success: "bg-green-100 text-green-800",
-  warn: "bg-yellow-100 text-yellow-800",
-  danger: "bg-red-100 text-red-800",
-  info: "bg-blue-100 text-blue-800",
+  success: "bg-[rgba(170,245,43,0.18)] text-[#446900]",
+  warn:    "bg-[rgba(234,106,48,0.16)] text-brand-orange",
+  danger:  "bg-[rgba(186,26,26,0.12)] text-status-danger",
+  info:    "bg-[rgba(133,194,246,0.20)] text-brand-navy",
 };
 
 export function Badge({
@@ -22,7 +24,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
         styles[variant],
         className,
       )}

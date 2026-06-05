@@ -1,32 +1,46 @@
 import Link from "next/link";
 import { listContactos } from "@/lib/db/contactos";
-import { SearchInput } from "@/components/list-toolbar";
+import { FilterBuilder } from "@/components/filters/filter-builder";
+import { ListOrder } from "@/components/list-order";
+import { getFilterFields } from "@/lib/filters/server";
+import { decodeFilterSpec, specHasConditions } from "@/lib/filters/types";
+import { rowMatches } from "@/lib/filters/evaluate";
+import { sortRows } from "@/lib/filters/sort";
 
-type SearchParams = Promise<{ q?: string }>;
+type SearchParams = Promise<{ filtros?: string; orden?: string }>;
 
 export default async function ContactosPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const rows = await listContactos({ q: params.q });
+  const spec = decodeFilterSpec(params.filtros);
+  const hasAdvanced = specHasConditions(spec);
+
+  const [rowsRaw, filterFields] = await Promise.all([
+    listContactos({ limit: hasAdvanced ? 2000 : 200 }),
+    getFilterFields("contacto"),
+  ]);
+
+  const filtered =
+    hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
+  const rows = sortRows(filtered, params.orden, filterFields);
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Contactos</h1>
-        <p className="text-sm text-gray-500">{rows.length} resultados</p>
-      </header>
-
-      <SearchInput placeholder="Buscar por nombre, email, cargo..." />
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
+        <ListOrder fields={filterFields} />
+        <FilterBuilder fields={filterFields} />
+      </div>
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+          <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
-              <Th>Nombre</Th>
-              <Th>Cargo</Th>
-              <Th>Empresa</Th>
-              <Th>Email</Th>
-              <Th>Asignado</Th>
-              <Th className="text-right">Oportunidades</Th>
+              <Th className="font-bold">Nombre</Th>
+              <Th className="font-bold">Cargo</Th>
+              <Th className="font-bold">Empresa</Th>
+              <Th className="font-bold">Email</Th>
+              <Th className="font-bold">Asignado</Th>
+              <Th className="font-bold text-right">Oportunidades</Th>
             </tr>
           </thead>
           <tbody>
@@ -40,8 +54,8 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
                 </td>
               </tr>
             )}
-            {rows.map((c) => (
-              <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50">
+            {rows.map((c, idx) => (
+              <tr key={c.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
                 <Td>
                   <Link href={`/contactos/${c.id}`} className="text-brand-primary hover:underline font-medium">
                     {c.nombre}

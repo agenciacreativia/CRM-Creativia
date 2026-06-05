@@ -15,8 +15,8 @@ export default async function PipelineDetailPage({ params }: { params: Params })
   if (!pipeline) notFound();
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <Link href="/admin/pipelines" className="text-sm text-brand-primary hover:underline">← Pipelines</Link>
+    <div className="space-y-6">
+      <Link href="/oportunidades/kanban" className="text-sm text-brand-primary hover:underline">← Volver a oportunidades</Link>
       <PipelineEditor pipeline={pipeline} />
     </div>
   );

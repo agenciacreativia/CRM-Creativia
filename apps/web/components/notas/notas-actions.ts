@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createNota, deleteNota } from "@/lib/db/mutations";
+import { createNota, deleteNota, logCambio } from "@/lib/db/mutations";
 
 const schema = z.object({
   tipo: z.enum(["empresa", "contacto", "oportunidad"]),
@@ -24,6 +24,7 @@ export async function createNotaAction(formData: FormData): Promise<Result> {
       contacto_id: tipo === "contacto" ? entity_id : null,
       oportunidad_id: tipo === "oportunidad" ? entity_id : null,
     });
+    await logCambio(tipo, entity_id, "Agregó una nota");
     revalidatePath(`/${tipo === "empresa" ? "empresas" : tipo === "contacto" ? "contactos" : "oportunidades"}/${entity_id}`);
     return { ok: true };
   } catch (e) {

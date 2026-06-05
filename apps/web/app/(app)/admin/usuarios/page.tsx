@@ -2,23 +2,50 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { listUsuarios } from "@/lib/db/usuarios";
+import { SearchInput, FilterSelect } from "@/components/list-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { NewUsuarioForm } from "./new-usuario-form";
 
-export default async function UsuariosPage() {
+type SearchParams = Promise<{ q?: string; rol?: string; activo?: string }>;
+
+export default async function UsuariosPage({ searchParams }: { searchParams: SearchParams }) {
   const me = await getSessionUser();
   if (me?.rol !== "admin") redirect("/dashboard");
 
-  const usuarios = await listUsuarios();
+  const params = await searchParams;
+  const usuarios = await listUsuarios({ q: params.q, rol: params.rol, activo: params.activo });
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      <header>
-        <h1 className="text-2xl font-bold">Usuarios</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Gestioná los miembros del tenant. Admins ven todo; asesores ven solo sus oportunidades.
-        </p>
+    <div className="space-y-6 ">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Usuarios</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Gestioná los miembros del tenant. Admins ven todo; asesores ven solo sus oportunidades.
+          </p>
+        </div>
+        <p className="text-sm text-gray-500">{usuarios.length} resultados</p>
       </header>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <SearchInput placeholder="Buscar por nombre o email..." />
+        <FilterSelect
+          name="rol"
+          options={[
+            { value: "todos", label: "Todos los roles" },
+            { value: "admin", label: "Admin" },
+            { value: "asesor", label: "Asesor" },
+          ]}
+        />
+        <FilterSelect
+          name="activo"
+          options={[
+            { value: "todos", label: "Todos los estados" },
+            { value: "activos", label: "Activos" },
+            { value: "inactivos", label: "Desactivados" },
+          ]}
+        />
+      </div>
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
@@ -33,6 +60,13 @@ export default async function UsuariosPage() {
             </tr>
           </thead>
           <tbody>
+            {usuarios.length === 0 && (
+              <tr>
+                <td colSpan={6} className="text-center text-gray-500 py-8">
+                  No hay usuarios con esos filtros.
+                </td>
+              </tr>
+            )}
             {usuarios.map((u) => (
               <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
                 <Td>

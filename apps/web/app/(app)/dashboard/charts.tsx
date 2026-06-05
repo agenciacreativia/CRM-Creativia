@@ -149,7 +149,7 @@ export function ForecastChart({ data, moneda }: { data: ForecastDatum[]; moneda:
 
 type EmbudoDatum = { nombre: string; alcanzaron: number; conversion_pct: number | null };
 export function EmbudoChart({ data }: { data: EmbudoDatum[] }) {
-  if (data.length === 0) return <Empty>Sin pipeline configurado</Empty>;
+  if (data.length === 0) return <Empty>Sin embudo configurado</Empty>;
   // Barras horizontales decrecientes — visualmente lee como embudo.
   const max = Math.max(...data.map((d) => d.alcanzaron), 1);
   const height = Math.max(220, data.length * 46);

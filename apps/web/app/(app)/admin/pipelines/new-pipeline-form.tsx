@@ -42,7 +42,7 @@ export function NewPipelineForm() {
         <Textarea id="descripcion" name="descripcion" rows={2} />
       </Field>
       <Button type="submit" disabled={submitting}>
-        {submitting ? "Creando..." : "Crear pipeline"}
+        {submitting ? "Creando..." : "Crear embudo"}
       </Button>
     </form>
   );

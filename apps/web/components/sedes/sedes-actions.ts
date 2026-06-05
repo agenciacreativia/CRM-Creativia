@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createSede, updateSede, deleteSede } from "@/lib/db/mutations";
+import { createSede, updateSede, deleteSede, logCambio } from "@/lib/db/mutations";
 
 const emptyToNull = (v: unknown) => (typeof v === "string" && v.trim() === "" ? null : v);
 
@@ -24,6 +24,7 @@ export async function createSedeAction(formData: FormData): Promise<Result> {
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   try {
     await createSede(parsed.data);
+    await logCambio("empresa", parsed.data.empresa_id, "Agregó una sede");
     revalidatePath(`/empresas/${parsed.data.empresa_id}`);
     return { ok: true };
   } catch (e) {
@@ -37,6 +38,7 @@ export async function updateSedeAction(id: string, formData: FormData): Promise<
   try {
     const { empresa_id, ...patch } = parsed.data;
     await updateSede(id, patch);
+    await logCambio("empresa", empresa_id, "Editó una sede");
     revalidatePath(`/empresas/${empresa_id}`);
     return { ok: true };
   } catch (e) {
@@ -47,6 +49,7 @@ export async function updateSedeAction(id: string, formData: FormData): Promise<
 export async function deleteSedeAction(id: string, empresa_id: string): Promise<Result> {
   try {
     await deleteSede(id);
+    await logCambio("empresa", empresa_id, "Eliminó una sede");
     revalidatePath(`/empresas/${empresa_id}`);
     return { ok: true };
   } catch (e) {

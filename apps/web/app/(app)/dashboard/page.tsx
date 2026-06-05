@@ -52,7 +52,7 @@ export default async function DashboardPage() {
       {/* ---------- KPIs ---------- */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <KpiCard
-          label="Valor en pipeline"
+          label="Valor en embudo"
           value={fmtCurrency(dash.kpis.valor_pipeline, dash.kpis.moneda_pipeline)}
         />
         <KpiCard
@@ -278,51 +278,48 @@ function KpiCard({
 }) {
   const inner = (
     <>
-      <p className="text-xs uppercase tracking-widest opacity-80">{label}</p>
-      <p className="text-4xl font-bold mt-2">{value}</p>
-      {hint && <p className="text-xs opacity-70 mt-2">{hint}</p>}
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="mt-3 text-4xl font-bold tracking-tight text-gray-900">{value}</p>
+      {hint && <p className="mt-2 text-xs text-gray-500">{hint}</p>}
     </>
   );
-  if (href) {
-    return (
-      <Link
-        href={href}
-        className="card-featured p-6 block hover:-translate-y-0.5 transition cursor-pointer"
-      >
-        {inner}
-      </Link>
-    );
-  }
-  return <div className="card-featured p-6">{inner}</div>;
+  const base = "block rounded-lg border border-gray-200 bg-white p-5 transition hover:-translate-y-[2px] hover:border-gray-300 hover:shadow-lift";
+  if (href) return <Link href={href} className={base + " cursor-pointer"}>{inner}</Link>;
+  return <div className={base}>{inner}</div>;
 }
 
 function ForecastKpi({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="bg-white p-6 card-stripe-green">
-      <p className="text-xs uppercase tracking-widest text-gray-500">{label}</p>
-      <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-      <p className="text-xs text-gray-500 mt-1.5">{sub}</p>
+    <div className="rounded-lg border border-gray-200 bg-white p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="mt-3 text-3xl font-bold tracking-tight text-gray-900">{value}</p>
+      <p className="mt-1.5 text-xs text-gray-500">{sub}</p>
     </div>
   );
 }
 
 function ChartCard({
   title,
-  accent,
   children,
 }: {
   title: string;
   accent?: "navy" | "green" | "orange" | "sky";
   children: React.ReactNode;
 }) {
-  const stripeClass = accent ? ` card-stripe-${accent}` : "";
   return (
-    <div className={`bg-white p-6${stripeClass}`}>
-      <h3 className="text-sm font-bold uppercase text-gray-500 mb-4 tracking-widest">{title}</h3>
+    <div className="rounded-lg border border-gray-200 bg-white p-5">
+      <h3 className="mb-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">{title}</h3>
       {children}
     </div>
   );
 }
+
+const ATENCION_DOT: Record<string, string> = {
+  navy: "bg-brand-navy",
+  green: "bg-brand-green",
+  orange: "bg-brand-orange",
+  sky: "bg-brand-sky",
+};
 
 function AtencionCard({
   title,
@@ -340,16 +337,19 @@ function AtencionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`bg-white p-5 card-stripe-${accent} flex flex-col`}>
-      <div className="flex items-baseline justify-between mb-3">
-        <h3 className="text-sm font-bold uppercase text-gray-500 tracking-widest">{title}</h3>
-        <span className="text-2xl font-bold text-gray-900 leading-none">{count}</span>
+    <div className="flex flex-col rounded-lg border border-gray-200 bg-white p-5">
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+          <span className={`h-2 w-2 rounded-full ${ATENCION_DOT[accent]}`} />
+          {title}
+        </h3>
+        <span className="text-2xl font-bold leading-none text-gray-900">{count}</span>
       </div>
-      {hint && <p className="text-xs text-gray-400 -mt-2 mb-3">{hint}</p>}
+      {hint && <p className="-mt-2 mb-3 text-xs text-gray-400">{hint}</p>}
       {count === 0 ? (
-        <p className="text-xs text-gray-400 py-2">{empty}</p>
+        <p className="py-2 text-xs text-gray-400">{empty}</p>
       ) : (
-        <ul className="divide-y divide-gray-100 flex-1">{children}</ul>
+        <ul className="flex-1 divide-y divide-gray-100">{children}</ul>
       )}
     </div>
   );

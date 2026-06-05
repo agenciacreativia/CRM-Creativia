@@ -6,11 +6,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { createBrowserSupabase } from "@/lib/supabase/client";
+import { env } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 type FormData = { email: string; password: string };
+
+/** Subdomain currently present in the browser host, or null on the bare domain. */
+function currentSubdomain(): string | null {
+  const host = window.location.hostname.toLowerCase();
+  const base = env.BASE_DOMAIN.split(":")[0].toLowerCase();
+  if (host === base) return null;
+  if (!host.endsWith(`.${base}`)) return null;
+  return host.slice(0, host.length - base.length - 1).split(".")[0] || null;
+}
 
 export function LoginForm() {
   const { t } = useTranslation();
@@ -27,7 +37,7 @@ export function LoginForm() {
     setServerError(null);
 
     const supabase = createBrowserSupabase();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
     });
@@ -38,12 +48,53 @@ export function LoginForm() {
       return;
     }
 
+    // If we're already on a tenant subdomain, the session cookie is set for the
+    // right host — just continue to the app.
+    if (currentSubdomain()) {
+      router.push(next);
+      router.refresh();
+      return;
+    }
+
+    // Central (bare-domain) login: figure out which tenant this user belongs to
+    // and hand the session off to that subdomain.
+    try {
+      const res = await fetch("/api/auth/tenant-home");
+      const session = data.session;
+      if (res.ok && session) {
+        const { subdomain } = (await res.json()) as { subdomain: string };
+        const hash = new URLSearchParams({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          next,
+        });
+        window.location.href = `${window.location.protocol}//${subdomain}.${env.BASE_DOMAIN}/auth/handoff#${hash.toString()}`;
+        return;
+      }
+    } catch {
+      // fall through to default
+    }
+
+    // Fallback: stay on the current host.
     router.push(next);
     router.refresh();
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form
+      method="POST"
+      action="#"
+      autoComplete="on"
+      onSubmit={(e) => {
+        // Blindaje extra: aún si el handler de react-hook-form no se montó
+        // (hydration tardía, JS bloqueado, etc.) NUNCA dejamos que el browser
+        // haga GET con email/password en la URL.
+        e.preventDefault();
+        e.stopPropagation();
+        handleSubmit(onSubmit)(e);
+      }}
+      className="space-y-4"
+    >
       <div>
         <Label htmlFor="email">{t("login.email")}</Label>
         <Input

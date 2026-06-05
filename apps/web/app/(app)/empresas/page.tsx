@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { listEmpresas } from "@/lib/db/empresas";
-import { SearchInput, FilterSelect } from "@/components/list-toolbar";
+import { FilterBuilder } from "@/components/filters/filter-builder";
+import { ListOrder } from "@/components/list-order";
+import { getFilterFields } from "@/lib/filters/server";
+import { decodeFilterSpec, specHasConditions } from "@/lib/filters/types";
+import { rowMatches } from "@/lib/filters/evaluate";
+import { sortRows } from "@/lib/filters/sort";
 import { Badge } from "@/components/ui/badge";
 
-type SearchParams = Promise<{ q?: string; estado?: string }>;
+type SearchParams = Promise<{ filtros?: string; orden?: string }>;
 
 const ESTADO_BADGE: Record<string, "info" | "success" | "default"> = {
   prospecto: "info",
@@ -13,38 +18,36 @@ const ESTADO_BADGE: Record<string, "info" | "success" | "default"> = {
 
 export default async function EmpresasPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const rows = await listEmpresas({ q: params.q, estado: params.estado });
+  const spec = decodeFilterSpec(params.filtros);
+  const hasAdvanced = specHasConditions(spec);
+
+  const [rowsRaw, filterFields] = await Promise.all([
+    listEmpresas({ limit: hasAdvanced ? 2000 : 200 }),
+    getFilterFields("empresa"),
+  ]);
+
+  const filtered =
+    hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
+  const rows = sortRows(filtered, params.orden, filterFields);
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Empresas</h1>
-        <p className="text-sm text-gray-500">{rows.length} resultados</p>
-      </header>
-
-      <div className="flex items-center gap-3">
-        <SearchInput placeholder="Buscar por nombre, email, ciudad..." />
-        <FilterSelect
-          name="estado"
-          options={[
-            { value: "todos", label: "Todos los estados" },
-            { value: "prospecto", label: "Prospecto" },
-            { value: "cliente", label: "Cliente" },
-            { value: "inactivo", label: "Inactivo" },
-          ]}
-        />
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
+        <ListOrder fields={filterFields} />
+        <FilterBuilder fields={filterFields} />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+          <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
-              <Th>Nombre</Th>
-              <Th>Estado</Th>
-              <Th>Ciudad</Th>
-              <Th>Asignado</Th>
-              <Th className="text-right">Contactos</Th>
-              <Th className="text-right">Oportunidades</Th>
+              <Th className="font-bold">Nombre</Th>
+              <Th className="font-bold">Estado</Th>
+              <Th className="font-bold">Ciudad</Th>
+              <Th className="font-bold">Asignado</Th>
+              <Th className="font-bold text-right">Contactos</Th>
+              <Th className="font-bold text-right">Oportunidades</Th>
             </tr>
           </thead>
           <tbody>
@@ -59,8 +62,8 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
                 </td>
               </tr>
             )}
-            {rows.map((e) => (
-              <tr key={e.id} className="border-t border-gray-100 hover:bg-gray-50">
+            {rows.map((e, idx) => (
+              <tr key={e.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
                 <Td>
                   <Link href={`/empresas/${e.id}`} className="text-brand-primary hover:underline font-medium">
                     {e.nombre}

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { updateEmpresa } from "@/lib/db/mutations";
+import { updateEmpresa, logCambio } from "@/lib/db/mutations";
 
 const emptyToNull = (v: unknown) => {
   if (v == null) return null;
@@ -47,6 +47,7 @@ export async function updateEmpresaAction(
 
   try {
     await updateEmpresa(id, parsed.data);
+    await logCambio("empresa", id, "Editó la empresa (formulario)");
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error desconocido" };
   }

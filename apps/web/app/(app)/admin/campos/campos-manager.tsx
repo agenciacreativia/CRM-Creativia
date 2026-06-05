@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
 import type { CampoPersonalizado, TipoEntidad, TipoCampo } from "@/lib/db/campos";
-import { createCampoAction, updateCampoAction, deleteCampoAction } from "./actions";
+import { createCampoAction, updateCampoAction, deleteCampoAction, toggleCampoMostrarAction } from "./actions";
+import { campoVisibleEnForm } from "@/lib/campos-visibility";
 
 const ENTIDADES: { value: TipoEntidad; label: string }[] = [
   { value: "empresa", label: "Empresas" },
@@ -69,6 +70,14 @@ export function CamposManager({
     });
   }
 
+  function onToggleMostrar(id: string, value: boolean) {
+    startTransition(async () => {
+      const res = await toggleCampoMostrarAction(id, value);
+      if (!res.ok) setError(res.error);
+      else router.refresh();
+    });
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 border-b border-gray-200">
@@ -100,13 +109,14 @@ export function CamposManager({
               <th className="px-4 py-2 font-medium">Clave</th>
               <th className="px-4 py-2 font-medium">Tipo</th>
               <th className="px-4 py-2 font-medium">Requerido</th>
+              <th className="px-4 py-2 font-medium">En popup</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
           <tbody>
             {initial.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center text-gray-500 py-6">
+                <td colSpan={6} className="text-center text-gray-500 py-6">
                   Sin campos personalizados para {entidad}s. Agregá uno abajo.
                 </td>
               </tr>
@@ -114,7 +124,7 @@ export function CamposManager({
             {initial.map((c) =>
               editingId === c.id ? (
                 <tr key={c.id} className="border-t border-gray-100">
-                  <td colSpan={5} className="p-4 bg-blue-50">
+                  <td colSpan={6} className="p-4 bg-blue-50">
                     <CampoFormFields
                       mode="edit"
                       initial={c}
@@ -132,6 +142,30 @@ export function CamposManager({
                     <Badge>{TIPO_LABEL[c.tipo]}</Badge>
                   </td>
                   <td className="px-4 py-2.5">{c.requerido ? "Sí" : "—"}</td>
+                  <td className="px-4 py-2.5">
+                    {c.requerido ? (
+                      <span className="text-xs text-gray-400" title="Los obligatorios siempre se muestran">
+                        Siempre
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={campoVisibleEnForm(c)}
+                        onClick={() => onToggleMostrar(c.id, !campoVisibleEnForm(c))}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          campoVisibleEnForm(c) ? "bg-brand-primary" : "bg-gray-300"
+                        }`}
+                        title={campoVisibleEnForm(c) ? "Se muestra en el popup" : "No se muestra en el popup"}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                            campoVisibleEnForm(c) ? "translate-x-4" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-right space-x-1">
                     <Button type="button" size="sm" variant="ghost" onClick={() => setEditingId(c.id)}>Editar</Button>
                     <Button type="button" size="sm" variant="ghost" onClick={() => onDelete(c.id)} className="text-status-danger hover:bg-red-50">Eliminar</Button>

@@ -1,0 +1,86 @@
+import "server-only";
+import crypto from "node:crypto";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminSupabase } from "@/lib/supabase/admin";
+import { getSessionUser } from "@/lib/auth";
+import { EVENTOS_WEBHOOK, type Webhook } from "@/lib/webhooks-types";
+
+export type { Webhook };
+export { EVENTOS_WEBHOOK };
+
+async function ensureAdmin() {
+  const u = await getSessionUser();
+  if (u?.rol !== "admin") throw new Error("Solo administradores");
+  if (!u.tenantId) throw new Error("Tenant ausente");
+  return u;
+}
+
+export async function listWebhooks(): Promise<Webhook[]> {
+  try {
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from("webhook")
+      .select("id, nombre, url, eventos, activo, ultimo_envio, ultimo_estado")
+      .order("creado_en", { ascending: false });
+    return (data ?? []) as Webhook[];
+  } catch {
+    return [];
+  }
+}
+
+export type WebhookInput = { nombre: string; url: string; eventos: string[]; secret?: string | null };
+
+export async function createWebhook(input: WebhookInput): Promise<string> {
+  const caller = await ensureAdmin();
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("webhook")
+    .insert({ ...input, tenant_id: caller.tenantId })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+export async function updateWebhook(id: string, patch: Partial<WebhookInput> & { activo?: boolean }): Promise<void> {
+  await ensureAdmin();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("webhook").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+export async function deleteWebhook(id: string): Promise<void> {
+  await ensureAdmin();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("webhook").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Best-effort fire-and-forget dispatcher. Reads tenant webhooks and POSTs payload. */
+export async function dispatchWebhook(tenantId: string, evento: string, payload: Record<string, unknown>): Promise<void> {
+  try {
+    const admin = createAdminSupabase();
+    const { data } = await admin
+      .from("webhook")
+      .select("id, url, eventos, secret")
+      .eq("tenant_id", tenantId)
+      .eq("activo", true);
+    for (const w of data ?? []) {
+      const eventos = (w.eventos as string[]) ?? [];
+      if (!eventos.includes(evento)) continue;
+      const body = JSON.stringify({ evento, payload, fecha: new Date().toISOString() });
+      const headers: Record<string, string> = { "Content-Type": "application/json", "X-CRM-Event": evento };
+      if (w.secret) {
+        const sig = crypto.createHmac("sha256", w.secret as string).update(body).digest("hex");
+        headers["X-CRM-Signature"] = sig;
+      }
+      fetch(w.url as string, { method: "POST", headers, body })
+        .then(async (r) => {
+          admin.from("webhook").update({ ultimo_envio: new Date().toISOString(), ultimo_estado: r.status }).eq("id", w.id).then(() => {}, () => {});
+        })
+        .catch(() => {
+          admin.from("webhook").update({ ultimo_envio: new Date().toISOString(), ultimo_estado: 0 }).eq("id", w.id).then(() => {}, () => {});
+        });
+    }
+  } catch {
+    /* never throw */
+  }
+}

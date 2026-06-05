@@ -2,16 +2,18 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { listBackupLog } from "@/lib/db/backup-log";
+import { tenantTieneHerramienta } from "@/lib/db/planes";
 import { ExportPanel } from "./export-panel";
 
 export default async function ExportarPage() {
   const user = await getSessionUser();
   if (user?.rol !== "admin") redirect("/dashboard");
+  if (!(await tenantTieneHerramienta("exportar_datos"))) redirect("/admin/datos");
 
   const log = await listBackupLog(20);
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 ">
       <Link href="/admin/datos" className="text-sm text-brand-primary hover:underline">← Datos</Link>
 
       <header>

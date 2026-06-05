@@ -1,0 +1,171 @@
+import "server-only";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { createAdminSupabase } from "@/lib/supabase/admin";
+import { getSessionUser } from "@/lib/auth";
+import { getMyAccessToken } from "@/lib/db/google";
+import { sendGmail } from "@/lib/google/gmail";
+import { registrarCorreoEnviado, aplicarTracking } from "@/lib/db/correo-tracking";
+
+export type CampaniaMetrics = {
+  campania_id: string; enviados: number; aperturas: number; abiertos_unicos: number;
+  clicks: number; click_unicos: number; tasa_apertura: number | null; tasa_click: number | null;
+  bounces: number; tasa_bounce: number | null;
+};
+
+export async function getCampaniaMetrics(campaniaId: string): Promise<CampaniaMetrics | null> {
+  try {
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from("correo_enviado")
+      .select("aperturas, clicks, abierto_en, click_en, destinatario")
+      .eq("campania_id", campaniaId);
+    const rows = (data ?? []) as { aperturas: number; clicks: number; abierto_en: string | null; click_en: string | null; destinatario: string }[];
+    const enviados = rows.length;
+    if (enviados === 0) return { campania_id: campaniaId, enviados: 0, aperturas: 0, abiertos_unicos: 0, clicks: 0, click_unicos: 0, tasa_apertura: null, tasa_click: null, bounces: 0, tasa_bounce: null };
+    const aperturas = rows.reduce((s, r) => s + (r.aperturas ?? 0), 0);
+    const abiertos = rows.filter((r) => r.abierto_en).length;
+    const clicks = rows.reduce((s, r) => s + (r.clicks ?? 0), 0);
+    const clicksU = rows.filter((r) => r.click_en).length;
+    const bounces = 0;
+    return {
+      campania_id: campaniaId, enviados, aperturas, abiertos_unicos: abiertos, clicks, click_unicos: clicksU,
+      tasa_apertura: Math.round((abiertos / enviados) * 1000) / 10,
+      tasa_click: Math.round((clicksU / enviados) * 1000) / 10,
+      bounces, tasa_bounce: null,
+    };
+  } catch { return null; }
+}
+
+export async function getAllCampaniaMetrics(): Promise<Record<string, CampaniaMetrics>> {
+  try {
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from("correo_enviado")
+      .select("campania_id, aperturas, clicks, abierto_en, click_en");
+    const map = new Map<string, { enviados: number; aperturas: number; abiertos: number; clicks: number; clicksU: number }>();
+    for (const r of (data ?? []) as { campania_id: string | null; aperturas: number; clicks: number; abierto_en: string | null; click_en: string | null }[]) {
+      if (!r.campania_id) continue;
+      const cur = map.get(r.campania_id) ?? { enviados: 0, aperturas: 0, abiertos: 0, clicks: 0, clicksU: 0 };
+      cur.enviados += 1;
+      cur.aperturas += r.aperturas ?? 0;
+      cur.clicks += r.clicks ?? 0;
+      if (r.abierto_en) cur.abiertos += 1;
+      if (r.click_en) cur.clicksU += 1;
+      map.set(r.campania_id, cur);
+    }
+    const out: Record<string, CampaniaMetrics> = {};
+    for (const [k, v] of map) {
+      out[k] = {
+        campania_id: k,
+        enviados: v.enviados, aperturas: v.aperturas, abiertos_unicos: v.abiertos,
+        clicks: v.clicks, click_unicos: v.clicksU,
+        tasa_apertura: v.enviados ? Math.round((v.abiertos / v.enviados) * 1000) / 10 : null,
+        tasa_click: v.enviados ? Math.round((v.clicksU / v.enviados) * 1000) / 10 : null,
+        bounces: 0, tasa_bounce: null,
+      };
+    }
+    return out;
+  } catch { return {}; }
+}
+
+export type Campania = {
+  id: string;
+  nombre: string;
+  asunto: string;
+  cuerpo_html: string;
+  segmento: { estado_empresa?: string; con_email?: boolean };
+  estado: "borrador" | "enviada" | "cancelada";
+  enviados: number;
+  creada_en: string;
+  enviada_en: string | null;
+};
+
+async function ensureAdmin() {
+  const u = await getSessionUser();
+  if (u?.rol !== "admin") throw new Error("Solo administradores");
+  if (!u.tenantId) throw new Error("Tenant ausente");
+  return u;
+}
+
+export async function listCampanias(): Promise<Campania[]> {
+  try {
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from("campania")
+      .select("id, nombre, asunto, cuerpo_html, segmento, estado, enviados, creada_en, enviada_en")
+      .order("creada_en", { ascending: false });
+    return (data ?? []) as Campania[];
+  } catch {
+    return [];
+  }
+}
+
+export type CampaniaInput = { nombre: string; asunto: string; cuerpo_html: string; segmento: Campania["segmento"] };
+
+export async function createCampania(input: CampaniaInput): Promise<string> {
+  const caller = await ensureAdmin();
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("campania")
+    .insert({ ...input, tenant_id: caller.tenantId, creada_por: caller.id })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return data.id;
+}
+
+export async function deleteCampania(id: string): Promise<void> {
+  await ensureAdmin();
+  const supabase = await createServerSupabase();
+  const { error } = await supabase.from("campania").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Resolve which contacts match a segment. */
+async function resolverDestinatarios(tenantId: string, segmento: Campania["segmento"]): Promise<{ id: string; email: string }[]> {
+  const admin = createAdminSupabase();
+  let query = admin.from("contacto").select("id, email, empresa_id, empresa:empresa_id(estado_empresa)").eq("tenant_id", tenantId);
+  if (segmento.con_email !== false) query = query.not("email", "is", null).neq("email", "");
+  const { data } = await query;
+  let rows = ((data ?? []) as unknown as Record<string, unknown>[]).map((r) => {
+    const e = Array.isArray(r.empresa) ? r.empresa[0] : r.empresa;
+    return { id: r.id as string, email: (r.email as string) ?? "", estado: (e as { estado_empresa: string } | null)?.estado_empresa ?? null };
+  });
+  if (segmento.estado_empresa) rows = rows.filter((r) => r.estado === segmento.estado_empresa);
+  return rows.filter((r) => r.email).map((r) => ({ id: r.id, email: r.email }));
+}
+
+export async function enviarCampania(campaniaId: string): Promise<{ enviados: number; errores: number }> {
+  const caller = await ensureAdmin();
+  const accessToken = await getMyAccessToken();
+  if (!accessToken) throw new Error("Conectá Google primero para enviar la campaña.");
+
+  const admin = createAdminSupabase();
+  const { data: c } = await admin.from("campania").select("nombre, asunto, cuerpo_html, segmento, estado").eq("id", campaniaId).maybeSingle();
+  if (!c) throw new Error("Campaña no encontrada");
+  if (c.estado !== "borrador") throw new Error("La campaña ya fue enviada o está cancelada");
+
+  const destinatarios = await resolverDestinatarios(caller.tenantId!, c.segmento as Campania["segmento"]);
+  if (destinatarios.length === 0) throw new Error("Sin destinatarios para ese segmento");
+
+  let enviados = 0, errores = 0;
+  for (const d of destinatarios) {
+    try {
+      const track = await registrarCorreoEnviado({
+        oportunidadId: null, contactoId: d.id, asunto: c.asunto as string, destinatario: d.email, campaniaId,
+      });
+      const html = track ? aplicarTracking(c.cuerpo_html as string, track.pixelUrl, track.clickRedirectBase) : (c.cuerpo_html as string);
+      await sendGmail(accessToken, { to: d.email, subject: c.asunto as string, html });
+      enviados++;
+    } catch {
+      errores++;
+    }
+  }
+
+  await admin
+    .from("campania")
+    .update({ estado: "enviada", enviados, enviada_en: new Date().toISOString() })
+    .eq("id", campaniaId);
+
+  return { enviados, errores };
+}

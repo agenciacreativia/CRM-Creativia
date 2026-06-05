@@ -5,11 +5,18 @@ import { listContactos } from "@/lib/db/contactos";
 import { listNotas } from "@/lib/db/notas";
 import { listSedes } from "@/lib/db/sedes";
 import { listCampos } from "@/lib/db/campos";
+import { listHistorialCambios } from "@/lib/db/historial";
+import { listDocumentos } from "@/lib/db/documentos";
+import { listOportunidadesDeEmpresa, listContactosDeEmpresa } from "@/lib/db/relaciones";
+import { OportunidadesList } from "@/components/relaciones/oportunidades-list";
+import { ContactosList } from "@/components/relaciones/contactos-list";
 import { getSessionUser } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { NotasSection } from "@/components/notas/notas-section";
 import { SedesSection } from "@/components/sedes/sedes-section";
-import { CamposCustomSection } from "@/components/campos/campos-custom-section";
+import { DocumentosPanel } from "@/components/documentos/documentos-panel";
+import { HistorialSection } from "@/components/oportunidad/historial-section";
+import { EmpresaAside } from "./empresa-aside";
 
 type Params = Promise<{ id: string }>;
 
@@ -25,132 +32,127 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
   if (!empresa) notFound();
   const canEdit = user?.rol === "admin";
 
-  const [contactos, notas, sedes, campos] = await Promise.all([
+  const [contactos, notas, sedes, campos, cambios, documentos, opps, contactosRel] = await Promise.all([
     listContactos({ empresa_id: id }),
     listNotas({ tipo: "empresa", entity_id: id }),
     listSedes(id),
     listCampos("empresa"),
+    listHistorialCambios("empresa", id),
+    listDocumentos("empresa", id),
+    listOportunidadesDeEmpresa(id),
+    listContactosDeEmpresa(id),
   ]);
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/empresas" className="text-sm text-brand-primary hover:underline">← Empresas</Link>
-      </div>
+  const historialEntries = cambios.map((c) => ({
+    id: c.id,
+    texto: c.descripcion,
+    autor: c.autor,
+    fecha: c.fecha,
+  }));
 
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{empresa.nombre}</h1>
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
+  return (
+    <div className="space-y-4">
+      <Link href="/empresas" className="text-sm text-brand-primary hover:underline">
+        ← Empresas
+      </Link>
+
+      {/* Top container */}
+      <div className="flex items-start justify-between gap-4 rounded-lg border border-gray-200 bg-white p-5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="truncate text-2xl font-bold text-gray-900">{empresa.nombre}</h1>
             <Badge variant={ESTADO_BADGE[empresa.estado_empresa] ?? "default"}>{empresa.estado_empresa}</Badge>
-            {empresa.origen && <Badge>{empresa.origen}</Badge>}
-            {empresa.asignado_nombre ? (
-              <span className="text-xs text-gray-600">
-                Asignado a <strong>{empresa.asignado_nombre}</strong>
-              </span>
-            ) : (
-              <span className="text-xs text-gray-400">No asignado</span>
-            )}
           </div>
+          <p className="mt-1 text-sm text-gray-500">
+            {empresa.asignado_nombre ? (
+              <>Asignado a <span className="font-medium text-gray-700">{empresa.asignado_nombre}</span></>
+            ) : (
+              "Sin asignar"
+            )}
+          </p>
         </div>
         {canEdit && (
           <Link
             href={`/empresas/${empresa.id}/editar`}
-            className="inline-flex items-center justify-center rounded-md font-medium px-4 py-2 text-sm bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 transition-colors"
+            className="shrink-0 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
           >
             Editar
           </Link>
         )}
-      </header>
+      </div>
 
-      <section className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">Datos básicos</h2>
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-          <Field label="Email" value={empresa.email} />
-          <Field label="Teléfono" value={empresa.telefono} />
-          <Field label="Sitio web" value={empresa.sitio_web} link />
-          <Field label="Dirección" value={empresa.direccion} />
-          <Field label="Ciudad" value={empresa.ciudad} />
-          <Field label="País" value={empresa.pais} />
-        </dl>
-        {empresa.descripcion && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <dt className="text-xs uppercase text-gray-500">Descripción</dt>
-            <dd className="text-sm text-gray-800 mt-1 whitespace-pre-wrap">{empresa.descripcion}</dd>
-          </div>
-        )}
-      </section>
+      {/* Two columns */}
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+        {/* Big section */}
+        <div className="space-y-4 lg:col-span-2">
+          <ContactosList items={contactosRel} />
+          <OportunidadesList items={opps} />
 
-      <CamposCustomSection
-        tipo_entidad="empresa"
-        entity_id={id}
-        campos={campos}
-        values={empresa.campos_custom}
-        canEdit={canEdit}
-      />
+          {user && (
+            <NotasSection
+              initial={notas}
+              target={{ tipo: "empresa", entity_id: id }}
+              currentUserId={user.id}
+              currentUserIsAdmin={user.rol === "admin"}
+            />
+          )}
 
-      <SedesSection empresaId={id} initial={sedes} canWrite={canEdit} />
+          <section className="rounded-lg border border-gray-200 bg-white p-6">
+            <h2 className="mb-4 text-sm font-bold uppercase text-gray-500">
+              Contactos asociados ({contactos.length})
+            </h2>
+            {contactos.length === 0 ? (
+              <p className="text-sm text-gray-500">Sin contactos.</p>
+            ) : (
+              <ul className="divide-y divide-gray-100">
+                {contactos.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between py-2">
+                    <div>
+                      <Link href={`/contactos/${c.id}`} className="font-medium text-brand-primary hover:underline">
+                        {c.nombre}
+                      </Link>
+                      <p className="text-xs text-gray-500">
+                        {c.email}
+                        {c.cargo ? ` · ${c.cargo}` : ""}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-400">{c.oportunidades_count} oportunidades</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-      {user && (
-        <NotasSection
-          initial={notas}
-          target={{ tipo: "empresa", entity_id: id }}
-          currentUserId={user.id}
-          currentUserIsAdmin={user.rol === "admin"}
-        />
-      )}
+          <SedesSection empresaId={id} initial={sedes} canWrite={canEdit} />
 
-      <section className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">
-          Contactos asociados ({contactos.length})
-        </h2>
-        {contactos.length === 0 ? (
-          <p className="text-sm text-gray-500">Sin contactos.</p>
-        ) : (
-          <ul className="divide-y divide-gray-100">
-            {contactos.map((c) => (
-              <li key={c.id} className="py-2 flex items-center justify-between">
-                <div>
-                  <Link href={`/contactos/${c.id}`} className="text-brand-primary hover:underline font-medium">
-                    {c.nombre}
-                  </Link>
-                  <p className="text-xs text-gray-500">
-                    {c.email}{c.cargo ? ` · ${c.cargo}` : ""}
-                    {c.asignado_nombre && ` · asignado: ${c.asignado_nombre}`}
-                  </p>
-                </div>
-                <span className="text-xs text-gray-400">{c.oportunidades_count} oportunidades</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
-  );
-}
+          <section className="rounded-lg border border-gray-200 bg-white p-6">
+            <h2 className="mb-4 text-sm font-bold uppercase text-gray-500">Documentos</h2>
+            <DocumentosPanel entidad="empresa" entityId={id} initial={documentos} canEdit={canEdit} />
+          </section>
 
-function Field({ label, value, link }: { label: string; value: string | null; link?: boolean }) {
-  return (
-    <div>
-      <dt className="text-xs uppercase text-gray-500">{label}</dt>
-      <dd className="text-gray-800 mt-0.5">
-        {value ? (
-          link ? (
-            <a
-              href={value.startsWith("http") ? value : `https://${value}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-primary hover:underline"
-            >
-              {value}
-            </a>
-          ) : (
-            value
-          )
-        ) : (
-          <span className="text-gray-400">—</span>
-        )}
-      </dd>
+          <HistorialSection entries={historialEntries} />
+        </div>
+
+        {/* Aside */}
+        <div className="lg:col-span-1">
+          <EmpresaAside
+            empresa={{
+              id: empresa.id,
+              nombre: empresa.nombre,
+              estado_empresa: empresa.estado_empresa,
+              email: empresa.email,
+              telefono: empresa.telefono,
+              ciudad: empresa.ciudad,
+              pais: empresa.pais,
+              sitio_web: empresa.sitio_web,
+              descripcion: empresa.descripcion,
+              campos_custom: empresa.campos_custom,
+            }}
+            campos={campos}
+            canEdit={canEdit}
+          />
+        </div>
+      </div>
     </div>
   );
 }

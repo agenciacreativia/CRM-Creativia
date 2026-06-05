@@ -13,8 +13,10 @@ export type OportunidadListItem = {
   pipeline_nombre: string;
   etapa_nombre: string;
   asignado_nombre: string | null;
+  probabilidad_cierre: number | null;
   fecha_esperada_cierre: string | null;
   creado_en: string;
+  campos_custom: Record<string, unknown>;
 };
 
 export type OportunidadDetail = {
@@ -41,8 +43,11 @@ export type OportunidadDetail = {
   fecha_entrado_etapa: string;
   observaciones_perdida: string | null;
   descripcion: string | null;
+  estrategia: string | null;
   campos_custom: Record<string, unknown>;
+  creado_por: string | null;
   creado_en: string;
+  eliminada_en: string | null;
 };
 
 export async function getOportunidad(id: string): Promise<OportunidadDetail | null> {
@@ -50,7 +55,7 @@ export async function getOportunidad(id: string): Promise<OportunidadDetail | nu
   const { data, error } = await supabase
     .from("oportunidad")
     .select(
-      "*, empresa(nombre), contacto(nombre), pipeline(nombre), etapa_pipeline(nombre, dias_maximo_alerta), usuario(nombre), motivo_perdida(nombre)",
+      "*, empresa(nombre), contacto(nombre), pipeline(nombre), etapa_pipeline(nombre, dias_maximo_alerta), usuario!oportunidad_asignado_id_fkey(nombre), motivo_perdida(nombre)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -89,8 +94,11 @@ export async function getOportunidad(id: string): Promise<OportunidadDetail | nu
     fecha_entrado_etapa: data.fecha_entrado_etapa,
     observaciones_perdida: data.observaciones_perdida,
     descripcion: data.descripcion,
+    estrategia: data.estrategia ?? null,
     campos_custom: data.campos_custom ?? {},
+    creado_por: data.creado_por ?? null,
     creado_en: data.creado_en,
+    eliminada_en: data.eliminada_en ?? null,
   };
 }
 
@@ -117,6 +125,25 @@ export type KanbanCard = {
   color: "green" | "yellow" | "red" | "gray";
 };
 
+export type EtapaItem = {
+  id: string;
+  nombre: string;
+  orden: number;
+  dias_maximo_alerta: number | null;
+};
+
+/** Ordered stages of a pipeline — used by the deal detail wizard. */
+export async function listEtapasDePipeline(pipelineId: string): Promise<EtapaItem[]> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from("etapa_pipeline")
+    .select("id, nombre, orden, dias_maximo_alerta")
+    .eq("pipeline_id", pipelineId)
+    .order("orden", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as EtapaItem[];
+}
+
 export async function getKanbanBoard(pipeline_id?: string): Promise<KanbanColumn[]> {
   const supabase = await createServerSupabase();
   const { data: pipelines } = await supabase
@@ -136,7 +163,7 @@ export async function getKanbanBoard(pipeline_id?: string): Promise<KanbanColumn
 
   const { data: opportunities } = await supabase
     .from("oportunidad")
-    .select("id, nombre, valor, moneda, etapa_id, fecha_entrado_etapa, empresa(nombre), usuario(nombre)")
+    .select("id, nombre, valor, moneda, etapa_id, fecha_entrado_etapa, empresa(nombre), usuario!oportunidad_asignado_id_fkey(nombre)")
     .eq("pipeline_id", selectedPipelineId)
     .eq("estado", "activo");
 
@@ -214,16 +241,17 @@ export async function listOportunidades(opts: {
   cierre_hasta?: string;
   valor_min?: number;
   valor_max?: number;
+  limit?: number;
 } = {}): Promise<OportunidadListItem[]> {
   const supabase = await createServerSupabase();
 
   let query = supabase
     .from("oportunidad")
     .select(
-      "id, nombre, valor, moneda, estado, empresa_id, asignado_id, fecha_esperada_cierre, creado_en, empresa(nombre), contacto(nombre), pipeline(nombre), etapa_pipeline(nombre), usuario(nombre)",
+      "id, nombre, valor, moneda, estado, empresa_id, asignado_id, probabilidad_cierre, fecha_esperada_cierre, creado_en, campos_custom, empresa(nombre), contacto(nombre), pipeline(nombre), etapa_pipeline(nombre), usuario!oportunidad_asignado_id_fkey(nombre)",
     )
     .order("creado_en", { ascending: false })
-    .limit(200);
+    .limit(opts.limit ?? 200);
 
   if (opts.q) {
     query = query.ilike("nombre", `%${opts.q}%`);
@@ -257,7 +285,7 @@ export async function listOportunidades(opts: {
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data ?? []).map((row: { id: string; nombre: string; valor: number | null; moneda: string; estado: "activo" | "ganado" | "perdido" | "eliminado"; empresa_id: string; asignado_id: string | null; fecha_esperada_cierre: string | null; creado_en: string; empresa: { nombre: string } | { nombre: string }[] | null; contacto: { nombre: string } | { nombre: string }[] | null; pipeline: { nombre: string } | { nombre: string }[] | null; etapa_pipeline: { nombre: string } | { nombre: string }[] | null; usuario: { nombre: string } | { nombre: string }[] | null }) => {
+  return (data ?? []).map((row: { id: string; nombre: string; valor: number | null; moneda: string; estado: "activo" | "ganado" | "perdido" | "eliminado"; empresa_id: string; asignado_id: string | null; probabilidad_cierre: number | null; fecha_esperada_cierre: string | null; creado_en: string; campos_custom: Record<string, unknown> | null; empresa: { nombre: string } | { nombre: string }[] | null; contacto: { nombre: string } | { nombre: string }[] | null; pipeline: { nombre: string } | { nombre: string }[] | null; etapa_pipeline: { nombre: string } | { nombre: string }[] | null; usuario: { nombre: string } | { nombre: string }[] | null }) => {
     const oneOf = <T extends { nombre: string }>(v: T | T[] | null): T | null =>
       Array.isArray(v) ? v[0] ?? null : v;
     return {
@@ -272,8 +300,10 @@ export async function listOportunidades(opts: {
       pipeline_nombre: oneOf(row.pipeline)?.nombre ?? "—",
       etapa_nombre: oneOf(row.etapa_pipeline)?.nombre ?? "—",
       asignado_nombre: oneOf(row.usuario)?.nombre ?? null,
+      probabilidad_cierre: row.probabilidad_cierre,
       fecha_esperada_cierre: row.fecha_esperada_cierre,
       creado_en: row.creado_en,
+      campos_custom: row.campos_custom ?? {},
     };
   });
 }

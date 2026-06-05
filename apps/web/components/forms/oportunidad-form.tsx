@@ -34,12 +34,14 @@ type Props = {
   error: string | null;
   fieldErrors: Record<string, string>;
   cancelHref: string;
+  /** Extra fields (e.g. custom fields) rendered just before the action buttons. */
+  extraFields?: React.ReactNode;
 };
 
 const MONEDAS = ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"];
 
 export function OportunidadForm(props: Props) {
-  const { mode, initial, picker, isPending, error, fieldErrors: e, cancelHref } = props;
+  const { mode, initial, picker, isPending, error, fieldErrors: e, cancelHref, extraFields } = props;
 
   const defaultEmpresa = initial?.empresa_id ?? picker.empresas[0]?.id ?? "";
   const defaultPipeline =
@@ -140,7 +142,7 @@ export function OportunidadForm(props: Props) {
           </Select>
         </Field>
 
-        <Field label="Pipeline" htmlFor="pipeline_id" required error={e.pipeline_id}>
+        <Field label="Embudo" htmlFor="pipeline_id" required error={e.pipeline_id}>
           <Select
             id="pipeline_id"
             name="pipeline_id"
@@ -269,6 +271,8 @@ export function OportunidadForm(props: Props) {
           defaultValue={initial?.descripcion ?? ""}
         />
       </Field>
+
+      {extraFields}
 
       <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
         <Button

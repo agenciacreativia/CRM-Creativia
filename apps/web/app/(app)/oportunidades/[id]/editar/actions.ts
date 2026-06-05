@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { updateOportunidad } from "@/lib/db/mutations";
+import { updateOportunidad, logCambio } from "@/lib/db/mutations";
+import { getOportunidad } from "@/lib/db/oportunidades";
 
 const emptyToNull = (v: unknown) => {
   if (v == null) return null;
@@ -52,8 +53,14 @@ export async function updateOportunidadAction(
     for (const issue of parsed.error.issues) fieldErrors[issue.path.join(".")] = issue.message;
     return { ok: false, fieldErrors };
   }
+  // Bloquear edición si la oportunidad está eliminada (soft delete, 30 días).
+  const actual = await getOportunidad(id);
+  if (actual && actual.estado === "eliminado") {
+    return { ok: false, error: "La oportunidad está en estado Eliminada y no se puede editar. Restaurala antes de modificarla." };
+  }
   try {
     await updateOportunidad(id, parsed.data);
+    await logCambio("oportunidad", id, "Editó la oportunidad (formulario)");
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error desconocido" };
   }

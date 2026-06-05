@@ -14,10 +14,12 @@ const PUBLIC_PATHS = new Set<string>([
   "/reset-password",
   "/auth/callback",
   "/auth/error",
+  "/auth/handoff",
+  "/invitacion",
   "/landing",
 ]);
 
-const STATIC_PREFIXES = ["/_next", "/api/health", "/favicon.ico"];
+const STATIC_PREFIXES = ["/_next", "/api/health", "/api/auth", "/api/google", "/api/leads", "/api/track", "/api/public", "/nps", "/favicon.ico"];
 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true;
@@ -39,29 +41,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // -- Step 2: Resolve tenant by subdomain
+  // -- Step 2: Resolve tenant by subdomain (cached — cheap)
   const tenant = await findTenantBySubdomain(subdomain);
   if (!tenant) {
     return NextResponse.redirect(`${env.ROOT_URL}/landing?reason=invalid_tenant`);
   }
 
-  // -- Step 3: Refresh Supabase session
-  const { response, user, accessToken } = await updateSession(request);
+  const setTenantHeaders = (target: { headers: Headers }) => {
+    target.headers.set(TENANT_HEADERS.ID, tenant.id);
+    target.headers.set(TENANT_HEADERS.SUBDOMAIN, tenant.subdominio);
+    target.headers.set(TENANT_HEADERS.NAME, tenant.nombre_empresa);
+    target.headers.set(TENANT_HEADERS.PLAN, tenant.plan);
+  };
 
-  // Forward tenant context to Server Components via request headers
-  response.headers.set(TENANT_HEADERS.ID, tenant.id);
-  response.headers.set(TENANT_HEADERS.SUBDOMAIN, tenant.subdominio);
-  response.headers.set(TENANT_HEADERS.NAME, tenant.nombre_empresa);
-  response.headers.set(TENANT_HEADERS.PLAN, tenant.plan);
-  request.headers.set(TENANT_HEADERS.ID, tenant.id);
-  request.headers.set(TENANT_HEADERS.SUBDOMAIN, tenant.subdominio);
-  request.headers.set(TENANT_HEADERS.NAME, tenant.nombre_empresa);
-  request.headers.set(TENANT_HEADERS.PLAN, tenant.plan);
-
-  // -- Step 4: Auth gating
+  // -- Step 3: Public paths don't need a user — skip the Supabase session
+  // network round-trip entirely. Just forward tenant context and continue.
   if (isPublic(pathname)) {
-    return response;
+    setTenantHeaders(request);
+    const res = NextResponse.next({ request });
+    setTenantHeaders(res);
+    return res;
   }
+
+  // -- Step 4: Protected path — refresh Supabase session and gate by auth
+  const { response, user, accessToken } = await updateSession(request);
+  setTenantHeaders(request);
+  setTenantHeaders(response);
 
   if (!user) {
     const url = request.nextUrl.clone();

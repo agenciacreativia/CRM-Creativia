@@ -15,13 +15,13 @@ export type EmpresaListItem = {
   creado_en: string;
   contactos_count: number;
   oportunidades_count: number;
+  campos_custom: Record<string, unknown>;
 };
 
 export type EmpresaDetail = EmpresaListItem & {
   sitio_web: string | null;
   direccion: string | null;
   descripcion: string | null;
-  campos_custom: Record<string, unknown>;
 };
 
 type RawEmpresaRow = {
@@ -36,6 +36,7 @@ type RawEmpresaRow = {
   asignado_id: string | null;
   asignado: { nombre: string } | { nombre: string }[] | null;
   creado_en: string;
+  campos_custom: Record<string, unknown> | null;
   contacto?: { count: number }[];
   oportunidad?: { count: number }[];
 };
@@ -44,14 +45,14 @@ function oneOf<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
 }
 
-export async function listEmpresas(opts: { q?: string; estado?: string } = {}): Promise<EmpresaListItem[]> {
+export async function listEmpresas(opts: { q?: string; estado?: string; limit?: number } = {}): Promise<EmpresaListItem[]> {
   const supabase = await createServerSupabase();
 
   let query = supabase
     .from("empresa")
-    .select("id, nombre, email, telefono, ciudad, pais, estado_empresa, origen, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, contacto(count), oportunidad(count)")
+    .select("id, nombre, email, telefono, ciudad, pais, estado_empresa, origen, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, campos_custom, contacto(count), oportunidad(count)")
     .order("nombre", { ascending: true })
-    .limit(200);
+    .limit(opts.limit ?? 200);
 
   if (opts.q) {
     const s = `%${opts.q}%`;
@@ -78,6 +79,7 @@ export async function listEmpresas(opts: { q?: string; estado?: string } = {}): 
     creado_en: row.creado_en,
     contactos_count: row.contacto?.[0]?.count ?? 0,
     oportunidades_count: row.oportunidad?.[0]?.count ?? 0,
+    campos_custom: row.campos_custom ?? {},
   }));
 }
 

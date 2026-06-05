@@ -58,10 +58,28 @@ export function extractSubdomain(host: string | null): string | null {
 }
 
 /**
+ * In-memory cache for subdomain → tenant lookups.
+ *
+ * The middleware resolves the tenant on EVERY request; without this, each
+ * navigation (and every page that triggers middleware) costs a round-trip to
+ * Supabase. Tenants change very rarely, so a short TTL is safe and removes that
+ * latency from the hot path. Cache lives for the lifetime of the server
+ * process / serverless instance.
+ */
+const TENANT_CACHE_TTL_MS = 60_000;
+const tenantCache = new Map<string, { tenant: Tenant | null; expires: number }>();
+
+/**
  * Look up a tenant by its subdomain using the admin (service_role) client.
  * This bypasses RLS — required because we don't have an authenticated user yet.
+ * Results (including misses) are cached briefly to keep middleware fast.
  */
 export async function findTenantBySubdomain(subdomain: string): Promise<Tenant | null> {
+  const cached = tenantCache.get(subdomain);
+  if (cached && cached.expires > Date.now()) {
+    return cached.tenant;
+  }
+
   const supabase = createAdminSupabase();
   const { data, error } = await supabase
     .from("tenant")
@@ -72,9 +90,12 @@ export async function findTenantBySubdomain(subdomain: string): Promise<Tenant |
 
   if (error) {
     console.error("findTenantBySubdomain error:", error);
-    return null;
+    return cached?.tenant ?? null; // serve stale on error if we have it
   }
-  return data as Tenant | null;
+
+  const tenant = data as Tenant | null;
+  tenantCache.set(subdomain, { tenant, expires: Date.now() + TENANT_CACHE_TTL_MS });
+  return tenant;
 }
 
 /**

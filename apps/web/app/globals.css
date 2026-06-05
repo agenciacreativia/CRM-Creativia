@@ -1,177 +1,238 @@
+/* IMPORTANT: @import must come BEFORE @tailwind / any other rule (CSS spec). */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * ──────────────────────────────────────────────────────────────────────────
+ * Horizon Voyager design system (Stitch 2026-06-05)
+ *
+ * Style direction: Corporate / Modern with "High-Contrast Utility".
+ * Deep Navy base + Lime CTA + Orange urgency. Light surfaces, 1px outlines,
+ * no heavy shadows — separation through tonal layering.
+ *
+ * Backwards-compatible with all legacy Tailwind classes used across the app
+ * (text-gray-*, bg-white, brand-primary, etc.) so we can migrate screen by
+ * screen without a single big rewrite.
+ * ──────────────────────────────────────────────────────────────────────────
+ */
+
 @layer base {
   :root {
-    /* Background gradient (lavender base, like the reference mock) */
-    --bg-grad-1: #dcdcf2;
-    --bg-grad-2: #e9e8f7;
+    /* ---- Stitch tokens (Horizon Voyager) ---- */
+    --surface: #f7f9ff;
+    --surface-low: #edf4ff;
+    --surface-base: #e2efff;
+    --surface-high: #d8eaff;
+    --surface-card: #ffffff;
+    --surface-sidebar: #000417;
+    --surface-sidebar-hover: #0e1840;
 
-    /* Glass surfaces */
-    --glass-bg: rgba(255, 255, 255, 0.55);
-    --glass-bg-strong: rgba(255, 255, 255, 0.78);
-    --glass-border: rgba(255, 255, 255, 0.65);
+    --ink: #081d2d;
+    --ink-soft: #47464f;
+    --ink-faint: #787680;
+    --ink-inverse: #e8f2ff;
 
-    /* Turistea brand palette (substituted for the mock's violet) */
     --brand-navy: #272255;
-    --brand-navy-deep: #1c1840;
-    --brand-green: #95DE00;
-    --brand-green-deep: #7bc100;
-    --brand-orange: #FF793E;
-    --brand-sky: #85C2F6;
-    --brand-grad: linear-gradient(150deg, #3a32a0 0%, #272255 55%, #1c1840 100%);
+    --brand-navy-deep: #120b40;
+    --brand-navy-soft: #8f8ac4;
+    --brand-green: #aaf52b;
+    --brand-green-dark: #446900;
+    --brand-orange: #ea6a30;
+    --brand-orange-soft: #ffb598;
+    --brand-sky: #85c2f6;
 
-    /* Text inks */
-    --ink: #2c2c40;
-    --ink-soft: #6a6a82;
-    --ink-faint: #a0a0b4;
+    --outline: #c9c5d0;
+    --outline-soft: rgba(31, 50, 67, 0.10);
 
-    /* Status helpers */
-    --green-tag: #34c98a;
-    --red-soft: #f0708a;
+    --status-ok: #aaf52b;
+    --status-ok-deep: #446900;
+    --status-warn: #ea6a30;
+    --status-danger: #ba1a1a;
 
-    /* Shadows with a slight navy tint, matching the reference */
-    --shadow-card: 0 14px 34px -12px rgba(39, 34, 85, 0.28);
-    --shadow-soft: 0 6px 18px -8px rgba(39, 34, 85, 0.22);
-    --shadow-feature: 0 22px 40px -16px rgba(39, 34, 85, 0.45);
+    /* Soft, ambient shadow (no heavy drop shadow per the design spec) */
+    --shadow-card: 0 1px 0 rgba(31, 50, 67, 0.04);
+    --shadow-elevated: 0 8px 24px rgba(31, 50, 67, 0.12);
+    --shadow-lift: 0 4px 12px rgba(31, 50, 67, 0.08);
 
-    /* Radii */
-    --radius-lg: 26px;
-    --radius-md: 20px;
-    --radius-sm: 15px;
+    /* Radii (8px base) */
+    --radius-sm: 0.25rem;
+    --radius: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
 
-    /* Convenience legacy tokens */
-    --bg: var(--bg-grad-1);
-    --bg-subtle: rgba(255, 255, 255, 0.6);
-    --bg-muted: rgba(255, 255, 255, 0.78);
-    --border: var(--glass-border);
-    --border-soft: rgba(255, 255, 255, 0.4);
+    /* ---- Legacy aliases (so existing components keep rendering) ---- */
+    --bg: var(--surface);
+    --bg-subtle: var(--surface-low);
+    --bg-muted: var(--surface-base);
+    --border: var(--outline-soft);
+    --border-soft: var(--outline-soft);
     --ink-muted: var(--ink-faint);
+    --glass-bg: #ffffff;
+    --glass-bg-strong: #ffffff;
+    --glass-border: rgba(31, 50, 67, 0.08);
   }
 
   html.dark {
-    /* Dark: keep brand navy as body, sliding-in glass over it */
-    --bg-grad-1: #000417;
-    --bg-grad-2: #15123a;
-    --glass-bg: rgba(39, 34, 85, 0.65);
-    --glass-bg-strong: rgba(39, 34, 85, 0.85);
-    --glass-border: rgba(133, 194, 246, 0.18);
+    --surface: #0a0f1e;
+    --surface-low: #111a30;
+    --surface-base: #16213d;
+    --surface-high: #1b2a4c;
+    --surface-card: #111a30;
+    --surface-sidebar: #000417;
+    --surface-sidebar-hover: #0e1840;
 
-    --ink: #f3f4f8;
-    --ink-soft: #c8c9da;
+    --ink: #e8f2ff;
+    --ink-soft: #c9c5d0;
     --ink-faint: #85c2f6;
+    --ink-inverse: #081d2d;
 
-    --shadow-card: 0 14px 34px -12px rgba(0, 0, 0, 0.55);
-    --shadow-soft: 0 6px 18px -8px rgba(0, 0, 0, 0.45);
-    --shadow-feature: 0 22px 40px -16px rgba(0, 0, 0, 0.65);
+    --outline: #2a3855;
+    --outline-soft: rgba(133, 194, 246, 0.10);
 
-    --bg-subtle: rgba(39, 34, 85, 0.55);
-    --bg-muted: rgba(39, 34, 85, 0.75);
-    --border: var(--glass-border);
-    --border-soft: rgba(133, 194, 246, 0.08);
-    --ink-muted: var(--ink-faint);
+    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.4);
+    --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --shadow-lift: 0 6px 18px rgba(0, 0, 0, 0.35);
+
+    --bg-subtle: var(--surface-low);
+    --bg-muted: var(--surface-base);
+    --border: var(--outline-soft);
+    --glass-bg: var(--surface-card);
+    --glass-bg-strong: var(--surface-card);
+    --glass-border: var(--outline-soft);
   }
 
-  html, body {
-    @apply h-full;
-  }
+  html, body { @apply h-full; }
 
   body {
-    font-family: Inter, "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: "Poppins", Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--ink);
-    background:
-      radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.7), transparent 45%),
-      radial-gradient(circle at 85% 90%, rgba(149, 222, 0, 0.18), transparent 50%),
-      linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
-    background-attachment: fixed;
+    background: var(--surface);
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
-  }
-
-  html.dark body {
-    background:
-      radial-gradient(circle at 18% 12%, rgba(133, 194, 246, 0.1), transparent 45%),
-      radial-gradient(circle at 85% 90%, rgba(149, 222, 0, 0.12), transparent 50%),
-      linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
+    text-rendering: optimizeLegibility;
   }
 }
 
 /*
- * Component-level upgrades: every "bg-white" surface becomes a glass card,
- * radii get bumped, shadows get a slight navy tint. This lets the whole
- * app inherit the look without touching every component.
+ * ──────────────────────────────────────────────────────────────────────────
+ * Component-level upgrades.
+ *
+ * Most surfaces in the app use `bg-white` and `border-gray-200`. We retarget
+ * those classes to the Horizon Voyager surface/outline tokens so every card
+ * inherits the new look without changes in the components.
+ * ──────────────────────────────────────────────────────────────────────────
  */
 @layer components {
   .bg-white {
-    background-color: var(--glass-bg) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border) !important;
+    background-color: var(--surface-card) !important;
+    border-color: var(--outline-soft);
     box-shadow: var(--shadow-card);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   }
   .bg-white.hover\:bg-gray-50:hover {
-    background-color: var(--glass-bg-strong) !important;
+    background-color: var(--surface-low) !important;
   }
 
-  /* Stronger glass for surfaces marked "elevated" (rare) */
-  .bg-gray-50 {
-    background-color: var(--bg-subtle);
-  }
+  .bg-gray-50 { background-color: var(--surface-low) !important; }
+  .bg-gray-100 { background-color: var(--surface-base) !important; }
 
-  /* Radii promotion */
-  .rounded-md { border-radius: var(--radius-sm); }
+  /* Slightly larger corners for a softer, modern feel */
+  .rounded-md { border-radius: var(--radius); }
   .rounded-lg { border-radius: var(--radius-md); }
-  .rounded-xl { border-radius: var(--radius-md); }
-  .rounded-2xl { border-radius: var(--radius-lg); }
+  .rounded-xl { border-radius: var(--radius-lg); }
+  .rounded-2xl { border-radius: var(--radius-xl); }
 
-  /* Inputs/selects keep readable look on glass */
-  input, textarea, select {
-    background: var(--glass-bg-strong);
-    border-color: var(--glass-border);
-    border-radius: 13px;
+  /*
+   * Form controls: solid surface, marked border, no shadow.
+   * Higher specificity + !important so they win over .bg-white.
+   * `.bg-transparent` opts out (used by the global search-modal input).
+   */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.bg-transparent),
+  textarea:not(.bg-transparent):not([readonly]),
+  select:not(.bg-transparent):not([multiple]) {
+    background-color: var(--surface-card) !important;
+    border: 1px solid var(--outline) !important;
+    box-shadow: none !important;
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-family: "Poppins", inherit;
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--ink-faint) !important;
+    opacity: 1 !important;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--brand-navy) !important;
+    box-shadow: 0 0 0 3px rgba(133, 194, 246, 0.4) !important;
   }
 
-  /* Section title (eyebrow style) */
+  /* Eyebrow / section title style */
   h2.text-sm.uppercase, h3.text-sm.uppercase {
     letter-spacing: 0.08em;
-    color: var(--ink-soft);
+    color: var(--ink-faint);
     font-weight: 600;
   }
 
-  /* Accent stripe on a card. Lives on the LEFT edge so the dashboard chart
-     cards and the kanban opportunity cards use the same visual language.
-     Usage: <div class="bg-white card-stripe-green"> */
-  .card-stripe-navy,
-  .card-stripe-green,
-  .card-stripe-orange,
-  .card-stripe-sky {
-    position: relative;
-    overflow: hidden;
+  /* ──────────────── Reusable Stitch patterns ──────────────── */
+
+  /* Dark navy sidebar background (the iconic Horizon Voyager nav) */
+  .surface-sidebar {
+    background-color: var(--surface-sidebar);
+    color: var(--ink-inverse);
   }
-  .card-stripe-navy::after,
-  .card-stripe-green::after,
-  .card-stripe-orange::after,
-  .card-stripe-sky::after {
+  .surface-sidebar-hover:hover {
+    background-color: var(--surface-sidebar-hover);
+  }
+  /* Active nav item: lime indicator on the left, lime text */
+  .nav-active {
+    background-color: rgba(170, 245, 43, 0.10);
+    color: var(--brand-green);
+    position: relative;
+  }
+  .nav-active::before {
     content: "";
     position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 6px;
-    border-radius: var(--radius-md) 0 0 var(--radius-md);
-    pointer-events: none;
+    left: 0; top: 6px; bottom: 6px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--brand-green);
   }
-  .card-stripe-navy::after   { background: linear-gradient(180deg, #3a32a0, #1c1840); }
-  .card-stripe-green::after  { background: linear-gradient(180deg, #b8eb4a, #7bc100); }
-  .card-stripe-orange::after { background: linear-gradient(180deg, #ff9b6a, #ff5a14); }
-  .card-stripe-sky::after    { background: linear-gradient(180deg, #b9dafc, #5b9be0); }
 
-  /* Featured hero card — Turistea navy gradient */
+  /* Solid white opaque surface (popovers, dropdowns) */
+  .surface-white {
+    background-color: var(--surface-card) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Status pill (filled, low-opacity background) */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .pill-ok { background: rgba(170, 245, 43, 0.18); color: var(--brand-green-dark); }
+  .pill-warn { background: rgba(234, 106, 48, 0.16); color: var(--brand-orange); }
+  .pill-danger { background: rgba(186, 26, 26, 0.12); color: var(--status-danger); }
+  .pill-navy { background: rgba(39, 34, 85, 0.10); color: var(--brand-navy); }
+
+  /* Featured / hero card — Horizon Voyager dark navy block (the dashboard
+   * "Agent Tip" / "Lead Retention" highlight) */
   .card-featured {
-    background-image: var(--brand-grad);
+    background: linear-gradient(160deg, #19143e 0%, var(--brand-navy) 55%, var(--brand-navy-deep) 100%);
     color: #ffffff;
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-feature);
+    box-shadow: var(--shadow-elevated);
     position: relative;
     overflow: hidden;
   }
@@ -181,7 +242,7 @@
     top: -40px; right: -40px;
     width: 140px; height: 140px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(170, 245, 43, 0.10);
     pointer-events: none;
   }
   .card-featured .text-gray-500,
@@ -190,126 +251,104 @@
   .card-featured .text-gray-800,
   .card-featured .text-gray-900,
   .card-featured .text-brand-primary {
-    color: rgba(255, 255, 255, 0.88) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
   }
 
-  /* Round icon button (40×40 glass pill) */
+  /* Round icon button (36×36) */
   .icon-btn {
-    width: 40px; height: 40px;
+    width: 36px; height: 36px;
     border-radius: 50%;
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
+    background: var(--surface-card);
+    border: 1px solid var(--outline-soft);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: var(--ink-soft);
-    box-shadow: var(--shadow-soft);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     cursor: pointer;
   }
   .icon-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-card);
-  }
-
-  /* Glass pill for inputs (used by the global search) */
-  .glass-pill {
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
-    border-radius: 13px;
-    box-shadow: var(--shadow-soft);
-  }
-
-  /* Status pill */
-  .pill-success {
-    background: rgba(52, 201, 138, 0.16);
-    color: var(--green-tag);
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 9px;
-    font-size: 11.5px;
+    background: var(--surface-low);
+    border-color: var(--outline);
   }
 }
 
 /*
- * Tailwind class-targeted overrides for everything else (text colors,
- * borders, hover states, dark-mode adjustments). Centralized so we
- * don't have to touch every existing component.
+ * ──────────────────────────────────────────────────────────────────────────
+ * Utility overrides — retarget Tailwind grays to ink tokens. Centralised
+ * so we don't have to touch components. Works on light + dark mode.
+ * ──────────────────────────────────────────────────────────────────────────
  */
 @layer utilities {
-  /* Borders: hide the hard gray-200 in favor of glass-border */
-  .border-gray-200 { border-color: var(--glass-border); }
-  .border-gray-100 { border-color: var(--border-soft); }
-  .divide-gray-100 > * + * { border-color: var(--border-soft); }
+  /* Borders */
+  .border-gray-200 { border-color: var(--outline-soft); }
+  .border-gray-100 { border-color: var(--outline-soft); }
+  .divide-gray-100 > * + * { border-color: var(--outline-soft); }
 
   /* Text levels */
   .text-gray-900 { color: var(--ink); }
   .text-gray-800 { color: var(--ink); }
   .text-gray-700 { color: var(--ink-soft); }
   .text-gray-600 { color: var(--ink-soft); }
-  .text-gray-500 { color: var(--ink-soft); }
+  .text-gray-500 { color: var(--ink-faint); }
   .text-gray-400 { color: var(--ink-faint); }
 
-  /* Tinted backgrounds (alerts, callouts) — toned to glassy variants */
-  .bg-blue-50 { background-color: rgba(133, 194, 246, 0.15); }
-  .bg-green-50 { background-color: rgba(149, 222, 0, 0.15); }
-  .bg-yellow-50 { background-color: rgba(255, 121, 62, 0.12); }
-  .bg-red-50 { background-color: rgba(240, 112, 138, 0.15); }
+  /* Soft tinted backgrounds (alerts) — Horizon palette */
+  .bg-blue-50 { background-color: rgba(133, 194, 246, 0.18); }
+  .bg-green-50 { background-color: rgba(170, 245, 43, 0.18); }
+  .bg-yellow-50 { background-color: rgba(234, 106, 48, 0.14); }
+  .bg-red-50 { background-color: rgba(186, 26, 26, 0.10); }
+  .bg-amber-50 { background-color: rgba(234, 106, 48, 0.14); }
+  .bg-purple-50 { background-color: rgba(143, 138, 196, 0.15); }
 
-  .border-blue-200 { border-color: rgba(133, 194, 246, 0.4); }
-  .border-green-200 { border-color: rgba(149, 222, 0, 0.4); }
-  .border-yellow-200 { border-color: rgba(255, 121, 62, 0.4); }
-  .border-red-200 { border-color: rgba(240, 112, 138, 0.4); }
+  .border-blue-200 { border-color: rgba(133, 194, 246, 0.5); }
+  .border-green-200 { border-color: rgba(170, 245, 43, 0.5); }
+  .border-yellow-200 { border-color: rgba(234, 106, 48, 0.45); }
+  .border-red-200 { border-color: rgba(186, 26, 26, 0.35); }
+  .border-amber-200 { border-color: rgba(234, 106, 48, 0.45); }
 
-  /* Primary brand uses navy in light, green in dark for visibility */
+  /* Brand primary — navy on light, lime on dark for visibility */
   .text-brand-primary { color: var(--brand-navy); }
   html.dark .text-brand-primary { color: var(--brand-green); }
   .bg-brand-primary { background-color: var(--brand-navy); color: #fff; }
   html.dark .bg-brand-primary { background-color: var(--brand-green); color: var(--brand-navy); }
   .hover\:bg-blue-700:hover { background-color: var(--brand-navy-deep); }
-  .hover\:bg-\[\#1c1840\]:hover { background-color: var(--brand-navy-deep); }
-  html.dark .hover\:bg-blue-700:hover { background-color: var(--brand-green-deep); }
-  html.dark .hover\:bg-\[\#1c1840\]:hover { background-color: var(--brand-green-deep); }
+  html.dark .hover\:bg-blue-700:hover { background-color: var(--brand-green-dark); }
   .focus\:ring-brand-primary:focus { --tw-ring-color: var(--brand-navy); }
   html.dark .focus\:ring-brand-primary:focus { --tw-ring-color: var(--brand-green); }
 
-  /* Hover states for nav and rows */
-  .hover\:bg-gray-50:hover { background-color: rgba(255, 255, 255, 0.6); }
-  .hover\:bg-gray-100:hover { background-color: rgba(255, 255, 255, 0.5); }
-  html.dark .hover\:bg-gray-50:hover { background-color: rgba(133, 194, 246, 0.06); }
-  html.dark .hover\:bg-gray-100:hover { background-color: rgba(133, 194, 246, 0.08); }
+  /* Hover states for rows */
+  .hover\:bg-gray-50:hover { background-color: var(--surface-low); }
+  .hover\:bg-gray-100:hover { background-color: var(--surface-base); }
 
-  /* Active nav link */
+  /* Active nav link (legacy combo used by AppShell) — gets the Horizon look */
   .bg-blue-50.text-brand-primary {
-    background-color: rgba(39, 34, 85, 0.1);
+    background-color: transparent;
     color: var(--brand-navy);
   }
   html.dark .bg-blue-50.text-brand-primary {
-    background-color: rgba(149, 222, 0, 0.18);
     color: var(--brand-green);
   }
 
-  /* Inputs in dark */
-  html.dark input, html.dark textarea, html.dark select {
-    background: var(--glass-bg);
-    color: var(--ink);
-    border-color: var(--glass-border);
+  /* Dark mode inputs — solid surface, sky-tinted border */
+  html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.bg-transparent),
+  html.dark textarea, html.dark select {
+    background-color: var(--surface-card) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--outline) !important;
   }
   html.dark input::placeholder, html.dark textarea::placeholder {
-    color: var(--ink-faint);
+    color: var(--ink-faint) !important;
   }
 
-  /* Recharts text labels follow the ink */
-  .recharts-text { fill: var(--ink-soft); }
-  html.dark .recharts-text { fill: var(--ink-soft); }
+  /* Recharts text labels */
+  .recharts-text { fill: var(--ink-faint); }
 
-  /* Kanban / status badge bands and other badges remain visible */
-  .bg-status-ok { background-color: var(--brand-green); color: var(--brand-navy); }
+  /* Status backgrounds */
+  .bg-status-ok { background-color: var(--brand-green); color: var(--brand-navy-deep); }
   .bg-status-warn { background-color: var(--brand-orange); color: #fff; }
-  .bg-status-danger { background-color: var(--red-soft); color: #fff; }
-
-  /* Buttons: pill instead of rectangle */
-  button.rounded-md, .rounded-md > button {
-    border-radius: 13px;
-  }
+  .bg-status-danger { background-color: var(--status-danger); color: #fff; }
+  .text-status-ok { color: var(--brand-green-dark); }
+  .text-status-warn { color: var(--brand-orange); }
+  .text-status-danger { color: var(--status-danger); }
 }

@@ -34,9 +34,15 @@ const TIPO_LABEL: Record<Actividad["tipo"], string> = {
 export function ActividadesSection({
   oportunidadId,
   initial,
+  soloTipo,
+  bare = false,
 }: {
   oportunidadId: string;
   initial: Actividad[];
+  /** Restrict to a single activity type (used by the detail tabs). */
+  soloTipo?: Actividad["tipo"];
+  /** Render without the outer card chrome. */
+  bare?: boolean;
 }) {
   const [filter, setFilter] = useState<"todas" | "pendientes" | "completadas">("todas");
   const [showAdd, setShowAdd] = useState(false);
@@ -44,7 +50,8 @@ export function ActividadesSection({
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const filtered = initial.filter((a) => {
+  const byType = soloTipo ? initial.filter((a) => a.tipo === soloTipo) : initial;
+  const filtered = byType.filter((a) => {
     if (filter === "pendientes") return !a.completada;
     if (filter === "completadas") return a.completada;
     return true;
@@ -83,11 +90,14 @@ export function ActividadesSection({
     });
   }
 
+  const Wrapper = bare ? "div" : "section";
+
   return (
-    <section className="bg-white border border-gray-200 rounded-lg p-6">
+    <Wrapper className={bare ? "" : "bg-white border border-gray-200 rounded-lg p-6"}>
       <header className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-bold uppercase text-gray-500">
-          Actividades <span className="text-gray-400">({initial.length})</span>
+          {soloTipo ? TIPO_LABEL[soloTipo] : "Actividades"}{" "}
+          <span className="text-gray-400">({byType.length})</span>
         </h2>
         <div className="flex items-center gap-2">
           <Select
@@ -111,20 +121,29 @@ export function ActividadesSection({
 
       {showAdd && (
         <form onSubmit={onAdd} className="bg-gray-50 border border-gray-200 rounded p-4 space-y-3 mb-4">
-          <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-3">
-            <Field label="Tipo" htmlFor="tipo">
-              <Select id="tipo" name="tipo" defaultValue="llamada">
-                <option value="llamada">📞 Llamada</option>
-                <option value="email">✉️ Email</option>
-                <option value="whatsapp">💬 WhatsApp</option>
-                <option value="reunion">📅 Reunión</option>
-                <option value="otra">• Otra</option>
-              </Select>
-            </Field>
-            <Field label="Fecha programada" htmlFor="fecha_programada" hint="Dejá vacío si es ad-hoc">
-              <Input id="fecha_programada" name="fecha_programada" type="datetime-local" />
-            </Field>
-          </div>
+          {soloTipo ? (
+            <>
+              <input type="hidden" name="tipo" value={soloTipo} />
+              <Field label="Fecha programada" htmlFor="fecha_programada" hint="Dejá vacío si es ad-hoc">
+                <Input id="fecha_programada" name="fecha_programada" type="datetime-local" />
+              </Field>
+            </>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-3">
+              <Field label="Tipo" htmlFor="tipo">
+                <Select id="tipo" name="tipo" defaultValue="llamada">
+                  <option value="llamada">📞 Llamada</option>
+                  <option value="email">✉️ Email</option>
+                  <option value="whatsapp">💬 WhatsApp</option>
+                  <option value="reunion">📅 Reunión</option>
+                  <option value="otra">• Otra</option>
+                </Select>
+              </Field>
+              <Field label="Fecha programada" htmlFor="fecha_programada" hint="Dejá vacío si es ad-hoc">
+                <Input id="fecha_programada" name="fecha_programada" type="datetime-local" />
+              </Field>
+            </div>
+          )}
           <Field label="Descripción" htmlFor="descripcion">
             <Textarea id="descripcion" name="descripcion" rows={2} placeholder="¿De qué se trata?" />
           </Field>
@@ -179,7 +198,7 @@ export function ActividadesSection({
           ))}
         </ul>
       )}
-    </section>
+    </Wrapper>
   );
 }
 

@@ -81,7 +81,18 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form
+      method="POST"
+      action="#"
+      autoComplete="off"
+      onSubmit={(e) => {
+        // Garantiza que ningún form-submit nativo deje passwords en URL.
+        e.preventDefault();
+        e.stopPropagation();
+        handleSubmit(onSubmit)(e);
+      }}
+      className="space-y-4"
+    >
       <div>
         <Label htmlFor="password">Nueva contraseña</Label>
         <Input

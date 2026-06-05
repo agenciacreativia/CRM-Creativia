@@ -116,7 +116,7 @@ export function OportunidadFilters({ usuarios, pipelines, currentUserId }: Props
                 </Select>
               </Field>
 
-              <Field label="Pipeline" htmlFor="pipeline">
+              <Field label="Embudo" htmlFor="pipeline">
                 <Select id="pipeline" name="pipeline" defaultValue={params.get("pipeline") ?? ""}>
                   <option value="">— todos —</option>
                   {pipelines.map((p) => (

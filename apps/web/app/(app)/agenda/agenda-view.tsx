@@ -178,10 +178,11 @@ export function AgendaView({
                         TIPO_COLOR[e.tipo],
                         e.completada && "opacity-50 line-through",
                       )}
-                      title={`${e.tipo}: ${e.oportunidad_nombre}${e.descripcion ? ` — ${e.descripcion}` : ""}`}
+                      title={`${e.tipo}: ${e.oportunidad_nombre}${e.contacto_nombre ? " · " + e.contacto_nombre : ""}${e.descripcion ? " — " + e.descripcion : ""}`}
                     >
                       <span className="mr-1">{TIPO_ICON[e.tipo]}</span>
-                      {e.oportunidad_nombre}
+                      <span className="block truncate font-medium">{e.oportunidad_nombre}</span>
+                      {e.contacto_nombre && <span className="block truncate text-[10px] opacity-80">{e.contacto_nombre}</span>}
                     </div>
                   ))}
                   {dayEvents.length > 3 && (
@@ -222,12 +223,15 @@ export function AgendaView({
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Link
-                        href={`/oportunidades/${e.oportunidad_id}`}
-                        className="text-sm font-medium text-brand-primary hover:underline"
-                      >
-                        {e.oportunidad_nombre}
-                      </Link>
+                      <div className="flex flex-col">
+                        <Link
+                          href={`/oportunidades/${e.oportunidad_id}`}
+                          className="text-sm font-medium text-brand-primary hover:underline"
+                        >
+                          {e.oportunidad_nombre}
+                        </Link>
+                        {e.contacto_nombre && <span className="text-xs text-gray-500">{e.contacto_nombre}</span>}
+                      </div>
                       <span className="text-xs text-gray-500">
                         {new Date(e.fecha_programada).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
                       </span>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { updateContacto } from "@/lib/db/mutations";
+import { updateContacto, logCambio } from "@/lib/db/mutations";
 
 const emptyToNull = (v: unknown) => {
   if (v == null) return null;
@@ -24,6 +24,7 @@ const schema = z.object({
     z.enum(["empresa", "linkedin", "cold_call", "evento", "otro"]).nullable(),
   ),
   asignado_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
+  fecha_nacimiento: z.preprocess(emptyToNull, z.string().nullable()),
 });
 
 export type ContactoFormState = { ok: boolean; fieldErrors?: Record<string, string>; error?: string };
@@ -45,6 +46,7 @@ export async function updateContactoAction(
 
   try {
     await updateContacto(id, parsed.data);
+    await logCambio("contacto", id, "Editó el contacto (formulario)");
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error desconocido" };
   }

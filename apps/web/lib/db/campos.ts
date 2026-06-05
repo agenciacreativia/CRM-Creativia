@@ -13,6 +13,10 @@ export type CampoPersonalizado = {
   tipo: TipoCampo;
   opciones: string[] | null;
   requerido: boolean;
+  // Added by migration 0008. Optional in the type so code is safe before the
+  // column exists. A field shows in the create/edit popup when it's required
+  // OR this flag is true.
+  mostrar_en_form?: boolean;
   orden: number;
   creado_en: string;
 };

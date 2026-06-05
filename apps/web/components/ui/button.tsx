@@ -1,7 +1,14 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+// Horizon Voyager button system:
+//   primary  → navy (global / safe action)
+//   success  → lime (Book Now, Save, Approve)
+//   urgent   → orange (Create Lead, Emergency)
+//   secondary→ white outlined (Cancel, Back)
+//   ghost    → text-only
+//   danger   → red (destructive)
+type Variant = "primary" | "success" | "urgent" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -9,14 +16,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
 }
 
-// Primary uses the brand navy in light mode. In dark mode the body is also
-// navy, so it would disappear — globals.css swaps the primary button to the
-// brand green via `html.dark .bg-brand-primary` for visibility.
 const variantStyles: Record<Variant, string> = {
-  primary: "bg-brand-primary text-white hover:bg-[#1c1840] disabled:opacity-60",
-  secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
-  ghost: "text-gray-700 hover:bg-gray-100",
-  danger: "bg-status-danger text-white hover:bg-red-600",
+  primary:   "bg-brand-navy text-white hover:bg-brand-navy-deep",
+  success:   "bg-brand-green text-brand-navy-deep hover:brightness-105",
+  urgent:    "bg-brand-orange text-white hover:brightness-110",
+  secondary: "bg-white text-gray-800 border border-outline hover:bg-surface-low",
+  ghost:     "text-gray-700 hover:bg-surface-low",
+  danger:    "bg-status-danger text-white hover:brightness-110",
 };
 
 const sizeStyles: Record<Size, string> = {
@@ -31,10 +37,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-xl font-medium transition-all",
-          "focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2",
+          "inline-flex items-center justify-center gap-1.5 rounded-md font-semibold transition-all",
+          "focus:outline-none focus:ring-2 focus:ring-brand-navy focus:ring-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-60",
-          "shadow-sm hover:shadow",
           variantStyles[variant],
           sizeStyles[size],
           className,

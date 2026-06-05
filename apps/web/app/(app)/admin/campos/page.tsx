@@ -14,7 +14,7 @@ export default async function CamposPage({ searchParams }: { searchParams: Searc
   const campos = await listCampos(entidad);
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 ">
       <header>
         <h1 className="text-2xl font-bold">Campos personalizados</h1>
         <p className="text-sm text-gray-500 mt-1">

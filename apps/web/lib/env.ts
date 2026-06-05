@@ -30,4 +30,24 @@ export const serverEnv = {
     typeof window === "undefined" ? process.env.SUPABASE_DB_URL : undefined,
   SUPABASE_JWT_SECRET:
     typeof window === "undefined" ? process.env.SUPABASE_JWT_SECRET : undefined,
+  GOOGLE_CLIENT_ID:
+    typeof window === "undefined" ? process.env.GOOGLE_CLIENT_ID : undefined,
+  GOOGLE_CLIENT_SECRET:
+    typeof window === "undefined" ? process.env.GOOGLE_CLIENT_SECRET : undefined,
+  GOOGLE_REDIRECT_URI:
+    typeof window === "undefined" ? process.env.GOOGLE_REDIRECT_URI : undefined,
+  // External Supabase project that holds the website's cupos/planes inventory.
+  CUPOS_SUPABASE_URL:
+    typeof window === "undefined" ? process.env.CUPOS_SUPABASE_URL : undefined,
+  CUPOS_SUPABASE_KEY:
+    typeof window === "undefined" ? process.env.CUPOS_SUPABASE_KEY : undefined,
+  // Stripe (billing) — connected post-launch.
+  STRIPE_SECRET_KEY:
+    typeof window === "undefined" ? process.env.STRIPE_SECRET_KEY : undefined,
+  STRIPE_WEBHOOK_SECRET:
+    typeof window === "undefined" ? process.env.STRIPE_WEBHOOK_SECRET : undefined,
 };
+
+/** Whether Stripe billing is configured (keys present). */
+export const stripeConfigurado = (): boolean =>
+  typeof window === "undefined" && !!process.env.STRIPE_SECRET_KEY;

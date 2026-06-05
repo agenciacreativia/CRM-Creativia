@@ -6,6 +6,7 @@ import {
   createCampoPersonalizado,
   updateCampoPersonalizado,
   deleteCampoPersonalizado,
+  setCampoMostrarEnForm,
   updateCamposCustom,
 } from "@/lib/db/mutations";
 
@@ -57,6 +58,16 @@ export async function updateCampoAction(id: string, formData: FormData): Promise
 export async function deleteCampoAction(id: string): Promise<Result> {
   try {
     await deleteCampoPersonalizado(id);
+    revalidatePath("/admin/campos");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error" };
+  }
+}
+
+export async function toggleCampoMostrarAction(id: string, value: boolean): Promise<Result> {
+  try {
+    await setCampoMostrarEnForm(id, value);
     revalidatePath("/admin/campos");
     return { ok: true };
   } catch (e) {

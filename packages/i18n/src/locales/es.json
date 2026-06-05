@@ -25,7 +25,7 @@
   },
   "kpi": {
     "opportunities_active": "Oportunidades activas",
-    "pipeline_value": "Valor en pipeline",
+    "pipeline_value": "Valor en embudo",
     "win_rate": "Tasa de cierre",
     "pending_activities": "Actividades pendientes"
   },

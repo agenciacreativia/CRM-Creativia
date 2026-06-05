@@ -12,9 +12,10 @@ type Props = {
   target: { tipo: "empresa" | "contacto" | "oportunidad"; entity_id: string };
   currentUserId: string;
   currentUserIsAdmin: boolean;
+  bare?: boolean;
 };
 
-export function NotasSection({ initial, target, currentUserId, currentUserIsAdmin }: Props) {
+export function NotasSection({ initial, target, currentUserId, currentUserIsAdmin, bare = false }: Props) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -44,8 +45,10 @@ export function NotasSection({ initial, target, currentUserId, currentUserIsAdmi
     });
   }
 
+  const Wrapper = bare ? "div" : "section";
+
   return (
-    <section className="bg-white border border-gray-200 rounded-lg p-6">
+    <Wrapper className={bare ? "" : "bg-white border border-gray-200 rounded-lg p-6"}>
       <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">
         Notas <span className="text-gray-400">({initial.length})</span>
       </h2>
@@ -95,7 +98,7 @@ export function NotasSection({ initial, target, currentUserId, currentUserIsAdmi
           })}
         </ul>
       )}
-    </section>
+    </Wrapper>
   );
 }
 
