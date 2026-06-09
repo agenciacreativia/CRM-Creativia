@@ -19,7 +19,7 @@ const PUBLIC_PATHS = new Set<string>([
   "/landing",
 ]);
 
-const STATIC_PREFIXES = ["/_next", "/api/health", "/api/auth", "/api/google", "/api/leads", "/api/track", "/api/public", "/nps", "/favicon.ico"];
+const STATIC_PREFIXES = ["/_next", "/api/health", "/api/auth", "/api/google", "/api/leads", "/api/track", "/api/public", "/api/v1", "/nps", "/favicon.ico"];
 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true;
@@ -44,7 +44,16 @@ export async function middleware(request: NextRequest) {
   // -- Step 2: Resolve tenant by subdomain (cached — cheap)
   const tenant = await findTenantBySubdomain(subdomain);
   if (!tenant) {
-    return NextResponse.redirect(`${env.ROOT_URL}/landing?reason=invalid_tenant`);
+    // Redirigir al landing del ROOT (sin subdominio). Construimos la URL
+    // a partir del request actual para evitar usar env.ROOT_URL — el bundle
+    // de Edge a veces inlinea el default "localhost:3000" del build.
+    const url = request.nextUrl.clone();
+    const baseHost = env.BASE_DOMAIN || url.host;
+    url.host = baseHost.split(":")[0];
+    url.port = baseHost.includes(":") ? baseHost.split(":")[1] : "";
+    url.pathname = "/landing";
+    url.search = "?reason=invalid_tenant";
+    return NextResponse.redirect(url);
   }
 
   const setTenantHeaders = (target: { headers: Headers }) => {
