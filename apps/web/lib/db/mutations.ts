@@ -755,6 +755,15 @@ export async function updateUsuario(id: string, patch: UsuarioUpdate) {
   const caller = await ensureWriter();
   const admin = createAdminSupabase();
 
+  // Defensa: verificar que el usuario a editar pertenece al mismo tenant que el admin.
+  const { data: target } = await admin
+    .from("usuario")
+    .select("id, tenant_id")
+    .eq("id", id)
+    .eq("tenant_id", caller.tenantId!)
+    .maybeSingle();
+  if (!target) throw new Error("Usuario no encontrado en tu cuenta");
+
   // Lockout protection: don't let admin demote/deactivate themselves
   if (id === caller.id && (patch.rol !== "admin" || !patch.activo)) {
     throw new Error("No podés desactivarte ni quitarte el rol de admin a vos mismo");
@@ -763,7 +772,8 @@ export async function updateUsuario(id: string, patch: UsuarioUpdate) {
   const { error } = await admin
     .from("usuario")
     .update({ nombre: patch.nombre, rol: patch.rol, activo: patch.activo })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("tenant_id", caller.tenantId!);
   if (error) throw new Error(error.message);
 
   if (patch.password && patch.password.length >= 8) {

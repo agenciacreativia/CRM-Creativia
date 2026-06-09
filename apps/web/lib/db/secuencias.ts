@@ -72,7 +72,12 @@ export async function inscribirEnSecuencia(secuenciaId: string, oportunidadId: s
   const pasos = (sec.pasos ?? []) as PasoSecuencia[];
   if (pasos.length === 0) return 0;
 
-  const filas = pasos.map((p) => {
+  const tiposValidos: PasoSecuencia["actividad_tipo"][] = ["llamada", "email", "whatsapp", "reunion", "otra"];
+
+  const filas = pasos.map((p, idx) => {
+    if (!tiposValidos.includes(p.actividad_tipo)) {
+      throw new Error(`Paso ${idx + 1} tiene un tipo de actividad inválido: ${p.actividad_tipo}`);
+    }
     const fecha = new Date();
     fecha.setDate(fecha.getDate() + (Number(p.dias) || 0));
     return {

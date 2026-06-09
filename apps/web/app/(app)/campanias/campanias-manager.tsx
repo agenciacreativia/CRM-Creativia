@@ -29,6 +29,7 @@ export function CampaniasManager({ initial, metricas = {} }: { initial: Campania
   }
   async function onEliminar(id: string) {
     if (!confirm("¿Eliminar la campaña?")) return;
+    setError(null); setOkMsg(null);
     const res = await eliminarCampaniaAction(id);
     if (!res.ok) setError(res.error ?? "Error"); else router.refresh();
   }
@@ -74,7 +75,7 @@ export function CampaniasManager({ initial, metricas = {} }: { initial: Campania
                     <Send className="h-3.5 w-3.5" /> {busy === c.id ? "Enviando…" : "Enviar"}
                   </button>
                 )}
-                <button type="button" onClick={() => onEliminar(c.id)} className="text-gray-400 hover:text-status-danger"><Trash2 className="h-4 w-4" /></button>
+                <button type="button" onClick={() => onEliminar(c.id)} aria-label={`Eliminar campaña ${c.nombre}`} title="Eliminar campaña" className="text-gray-400 hover:text-status-danger"><Trash2 className="h-4 w-4" /></button>
               </div>
             </li>
           ))}

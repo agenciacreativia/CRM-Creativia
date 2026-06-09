@@ -10,7 +10,10 @@ export async function listAtribucionPorEstrategia(): Promise<AtribucionRow[]> {
   const { data, error } = await supabase
     .from("oportunidad")
     .select("valor, estado, estrategia");
-  if (error) return [];
+  if (error) {
+    console.error("[atribucion] listAtribucionPorEstrategia:", error.message);
+    return [];
+  }
 
   const map = new Map<string, { cuenta: number; valor: number; ganadas: number; perdidas: number }>();
   for (const o of (data ?? []) as { valor: number | null; estado: string; estrategia: string | null }[]) {

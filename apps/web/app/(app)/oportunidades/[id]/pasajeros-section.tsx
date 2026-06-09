@@ -124,7 +124,7 @@ export function PasajerosSection({
               </div>
               <div className="flex items-center gap-2">
                 {p.archivo_path ? (
-                  <button onClick={() => ver(p.id)} className="inline-flex items-center gap-1 text-xs text-brand-primary hover:underline" title={p.archivo_nombre ?? "Ver"}>
+                  <button type="button" onClick={() => ver(p.id)} aria-label={`Ver documento de ${p.nombre}`} className="inline-flex items-center gap-1 text-xs text-brand-primary hover:underline" title={p.archivo_nombre ?? "Ver"}>
                     <FileText className="h-3.5 w-3.5" /> Ver doc
                   </button>
                 ) : (
@@ -139,10 +139,10 @@ export function PasajerosSection({
                       className="hidden"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) subir(p.id, f); e.target.value = ""; }}
                     />
-                    <button onClick={() => fileRefs.current[p.id]?.click()} disabled={busy === p.id} className="text-gray-400 hover:text-brand-primary" title="Subir/cambiar documento">
+                    <button type="button" onClick={() => fileRefs.current[p.id]?.click()} disabled={busy === p.id} aria-label={`Subir documento de ${p.nombre}`} className="text-gray-400 hover:text-brand-primary" title="Subir/cambiar documento">
                       {busy === p.id ? <Upload className="h-4 w-4 animate-pulse" /> : <Paperclip className="h-4 w-4" />}
                     </button>
-                    <button onClick={() => eliminar(p.id)} className="text-gray-400 hover:text-status-danger" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => eliminar(p.id)} aria-label={`Eliminar a ${p.nombre}`} className="text-gray-400 hover:text-status-danger" title="Eliminar"><Trash2 className="h-4 w-4" /></button>
                   </>
                 )}
               </div>

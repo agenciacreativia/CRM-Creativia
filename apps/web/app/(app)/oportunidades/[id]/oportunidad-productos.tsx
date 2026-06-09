@@ -119,6 +119,10 @@ export function OportunidadProductos({
   }
 
   async function useAsValue() {
+    if (!Number.isFinite(total) || total <= 0) {
+      setError("El total debe ser un número mayor a 0 antes de usarlo como valor.");
+      return;
+    }
     const res = await setOportunidadValorAction(oportunidadId, total);
     if (!res.ok) setError(res.error ?? "Error");
     else refresh();
@@ -236,8 +240,8 @@ export function OportunidadProductos({
                           type="number"
                           min="0"
                           value={r.cantidad}
-                          onChange={(e) => patchLocal(r.id, { cantidad: Number(e.target.value) })}
-                          onBlur={(e) => commit(r.id, { cantidad: Number(e.target.value) })}
+                          onChange={(e) => { const n = Number(e.target.value); patchLocal(r.id, { cantidad: Number.isFinite(n) && n >= 0 ? n : 0 }); }}
+                          onBlur={(e) => { const n = Number(e.target.value); commit(r.id, { cantidad: Number.isFinite(n) && n >= 0 ? n : 0 }); }}
                           className="text-right"
                         />
                       ) : (
@@ -251,8 +255,8 @@ export function OportunidadProductos({
                           min="0"
                           step="0.01"
                           value={r.precio_unitario}
-                          onChange={(e) => patchLocal(r.id, { precio_unitario: Number(e.target.value) })}
-                          onBlur={(e) => commit(r.id, { precio_unitario: Number(e.target.value) })}
+                          onChange={(e) => { const n = Number(e.target.value); patchLocal(r.id, { precio_unitario: Number.isFinite(n) && n >= 0 ? n : 0 }); }}
+                          onBlur={(e) => { const n = Number(e.target.value); commit(r.id, { precio_unitario: Number.isFinite(n) && n >= 0 ? n : 0 }); }}
                           className="text-right"
                         />
                       ) : (
