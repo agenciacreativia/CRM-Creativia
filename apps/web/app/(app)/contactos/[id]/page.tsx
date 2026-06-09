@@ -18,6 +18,9 @@ import { ContactoAside } from "./contacto-aside";
 import { DeleteContactoButton } from "./delete-contacto-button";
 import { getMyPermisos } from "@/lib/db/roles";
 import { can } from "@/lib/permissions";
+import { listEmpresasSecundarias } from "@/lib/db/contacto-empresas";
+import { listEmpresas } from "@/lib/db/empresas";
+import { EmpresasSecundariasPanel } from "./empresas-secundarias-panel";
 
 type Params = Promise<{ id: string }>;
 
@@ -35,7 +38,7 @@ export default async function ContactoDetailPage({ params }: { params: Params })
   const canEdit = user?.rol === "admin";
   const canDelete = can(perms.permisos, "contactos", "eliminar", perms.es_admin);
 
-  const [notas, campos, cambios, documentos, nivel, oportunidades, empresasAsociadas] = await Promise.all([
+  const [notas, campos, cambios, documentos, nivel, oportunidades, empresasAsociadas, empresasSecundarias, todasEmpresas] = await Promise.all([
     listNotas({ tipo: "contacto", entity_id: id }),
     listCampos("contacto"),
     listHistorialCambios("contacto", id),
@@ -43,6 +46,8 @@ export default async function ContactoDetailPage({ params }: { params: Params })
     nivelDeContacto(id),
     listOportunidadesDeContacto(id),
     listEmpresasDeContacto(id),
+    listEmpresasSecundarias(id),
+    canEdit ? listEmpresas({ limit: 1000 }) : Promise.resolve([]),
   ]);
 
   const historialEntries = cambios.map((x) => ({ id: x.id, texto: x.descripcion, autor: x.autor, fecha: x.fecha }));
@@ -103,6 +108,14 @@ export default async function ContactoDetailPage({ params }: { params: Params })
       {/* Two columns */}
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
+          <EmpresasSecundariasPanel
+            contactoId={id}
+            empresaPrincipalId={c.empresa_id}
+            empresaPrincipalNombre={c.empresa_nombre}
+            secundarias={empresasSecundarias}
+            empresasDisponibles={todasEmpresas.map((e) => ({ id: e.id, nombre: e.nombre }))}
+            canEdit={canEdit}
+          />
           <EmpresasList items={empresasAsociadas} />
           <OportunidadesList items={oportunidades} />
 

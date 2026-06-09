@@ -11,6 +11,8 @@ import { sortRows } from "@/lib/filters/sort";
 import { Badge } from "@/components/ui/badge";
 import { getMyPermisos } from "@/lib/db/roles";
 import { can } from "@/lib/permissions";
+import { listUsuarios } from "@/lib/db/usuarios";
+import { BulkEmpresasBar, BulkRowCheckbox } from "@/components/bulk/bulk-empresas-bar";
 
 type SearchParams = Promise<{ filtros?: string; orden?: string; q?: string }>;
 
@@ -39,11 +41,13 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
   // para evaluarlos en memoria, pero seguimos siendo finitos: detectamos si tocamos el
   // tope para avisar al usuario que los resultados pueden estar incompletos.
   const fetchLimit = hasAdvanced || q ? 2000 : 200;
-  const [rowsRaw, filterFields, perms] = await Promise.all([
+  const [rowsRaw, filterFields, perms, usuarios] = await Promise.all([
     listEmpresas({ limit: fetchLimit }),
     getFilterFields("empresa"),
     getMyPermisos(),
+    listUsuarios({ activo: "activos" }),
   ]);
+  const puedeEditarMasivo = can(perms.permisos, "empresas", "editar", perms.es_admin);
   const truncated = (hasAdvanced || q) && rowsRaw.length >= fetchLimit;
   const puedeCrear = can(perms.permisos, "empresas", "crear", perms.es_admin);
 
@@ -82,10 +86,15 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
         </div>
       )}
 
+      {puedeEditarMasivo && (
+        <BulkEmpresasBar usuarios={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))} />
+      )}
+
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
+              {puedeEditarMasivo && <Th className="w-8" aria-label="Selección" />}
               <Th className="font-bold">Nombre</Th>
               <Th className="font-bold">Estado</Th>
               <Th className="font-bold">Ciudad</Th>
@@ -97,7 +106,7 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center text-gray-500 py-8">
+                <td colSpan={puedeEditarMasivo ? 7 : 6} className="text-center text-gray-500 py-8">
                   {q
                     ? <>No hay empresas que coincidan con <strong>{q}</strong>.</>
                     : <>No hay empresas todavía. Importá tu base desde <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">Datos → Importar</Link> o creá una nueva.</>}
@@ -106,6 +115,9 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
             )}
             {rows.map((e, idx) => (
               <tr key={e.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
+                {puedeEditarMasivo && (
+                  <Td className="text-center"><BulkRowCheckbox id={e.id} scope="empresas" /></Td>
+                )}
                 <Td>
                   <Link href={`/empresas/${e.id}`} className="text-brand-primary hover:underline font-medium">
                     {e.nombre}
