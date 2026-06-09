@@ -93,7 +93,7 @@ export function PasajerosSection({
       {adding && (
         <div className="mb-4 grid grid-cols-1 gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 md:grid-cols-6">
           <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre completo" className="md:col-span-2" />
-          <Select value={tipo} onChange={(e) => setTipo(e.target.value as "adulto")}>
+          <Select value={tipo} onChange={(e) => setTipo(e.target.value as "adulto" | "nino" | "bebe")}>
             <option value="adulto">Adulto</option>
             <option value="nino">Niño</option>
             <option value="bebe">Bebé</option>

@@ -102,12 +102,33 @@ export async function listCampanias(): Promise<Campania[]> {
 
 export type CampaniaInput = { nombre: string; asunto: string; cuerpo_html: string; segmento: Campania["segmento"] };
 
+/**
+ * Sanitización mínima del HTML del cuerpo: elimina <script>, <iframe>, atributos
+ * on*= (onclick, onerror, etc.) y javascript: en hrefs. Es defensa en profundidad
+ * — el envío por Gmail también filtra mucho del lado del cliente, pero queremos
+ * que el HTML guardado en DB ya esté limpio para evitar XSS si se renderiza en
+ * preview dentro del CRM.
+ */
+function sanitizeHtml(html: string): string {
+  if (!html) return "";
+  let s = html;
+  // Bloques peligrosos
+  s = s.replace(/<\s*(script|iframe|object|embed|link|meta|style)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, "");
+  s = s.replace(/<\s*(script|iframe|object|embed|link|meta|style)\b[^>]*\/?>/gi, "");
+  // Event handlers inline (on*= en cualquier tag)
+  s = s.replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+  // javascript: en href/src
+  s = s.replace(/(href|src)\s*=\s*("(?:\s*javascript:[^"]*)"|'(?:\s*javascript:[^']*)'|\s*javascript:[^\s>]+)/gi, '$1="#"');
+  return s;
+}
+
 export async function createCampania(input: CampaniaInput): Promise<string> {
   const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
+  const sanitized = { ...input, cuerpo_html: sanitizeHtml(input.cuerpo_html) };
   const { data, error } = await supabase
     .from("campania")
-    .insert({ ...input, tenant_id: caller.tenantId, creada_por: caller.id })
+    .insert({ ...sanitized, tenant_id: caller.tenantId, creada_por: caller.id })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -115,9 +136,9 @@ export async function createCampania(input: CampaniaInput): Promise<string> {
 }
 
 export async function deleteCampania(id: string): Promise<void> {
-  await ensureAdmin();
+  const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("campania").delete().eq("id", id);
+  const { error } = await supabase.from("campania").delete().eq("id", id).eq("tenant_id", caller.tenantId!);
   if (error) throw new Error(error.message);
 }
 

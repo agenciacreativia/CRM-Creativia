@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -17,9 +17,15 @@ export function ResetPasswordForm() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recoveryReady, setRecoveryReady] = useState(false);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
   const newPassword = watch("password");
+
+  // Cleanup del setTimeout si el componente se desmonta antes de los 3.5 seg.
+  useEffect(() => () => {
+    if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+  }, []);
 
   // Supabase fires a PASSWORD_RECOVERY event after the user clicks the
   // email link. We wait for that before allowing the user to set a new
@@ -55,7 +61,9 @@ export function ResetPasswordForm() {
       return;
     }
     setDone(true);
-    setTimeout(() => router.push("/login"), 1800);
+    // 3.5s — más tiempo del que el ojo necesita para leer el aviso y darle a
+    // "Login" manualmente. Se cancela si el componente se desmonta.
+    redirectTimerRef.current = setTimeout(() => router.push("/login"), 3500);
   }
 
   if (done) {

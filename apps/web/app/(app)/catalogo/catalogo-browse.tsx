@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, Check, MapPin, Plane, Search, ChevronDown, ChevronUp, Filter, X, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,13 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+
+  // Reset de "done"/"selected" cuando cambian los productos (recarga, navegación).
+  // Sin esto el Set se quedaba con IDs viejos y se marcaban como copiados productos nuevos.
+  useEffect(() => {
+    setDone(new Set());
+    setSelected(new Set());
+  }, [productos]);
 
   // Catálogos para los selects (derivados).
   const origenes = useMemo(() => [...new Set(productos.map((p) => p.origen).filter((s): s is string => !!s))].sort(), [productos]);
@@ -131,7 +138,8 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
     if (!res.ok) setError(res.error ?? "Error");
     else {
       setDone((s) => { const n = new Set(s); selected.forEach((id) => n.add(id)); return n; });
-      setBulkMsg(`${res.count} producto${res.count === 1 ? "" : "s"} copiado${res.count === 1 ? "" : "s"} a tu catálogo`);
+      const count = res.count ?? selected.size;
+      setBulkMsg(`${count} producto${count === 1 ? "" : "s"} copiado${count === 1 ? "" : "s"} a tu catálogo`);
       setSelected(new Set());
       router.refresh();
     }

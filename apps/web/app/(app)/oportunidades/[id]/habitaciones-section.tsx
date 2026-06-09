@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BedDouble, Plus, Trash2, AlertTriangle, Check } from "lucide-react";
 import { Select } from "@/components/ui/select";
@@ -12,6 +12,7 @@ import {
   validarHabitaciones,
   type HabLite,
   type PaxLite,
+  type TipoHabitacion,
 } from "@/lib/habitaciones-types";
 import { crearHabitacionAction, eliminarHabitacionAction, asignarPasajeroAction } from "./habitaciones-actions";
 
@@ -30,7 +31,9 @@ export function HabitacionesSection({
 }) {
   const router = useRouter();
   const [pax, setPax] = useState<PaxLite[]>(pasajeros);
-  const [nuevoTipo, setNuevoTipo] = useState<"sencilla" | "doble" | "triple">("doble");
+  // Re-sync cuando el server re-renderiza con nuevos pasajeros (post router.refresh).
+  useEffect(() => { setPax(pasajeros); }, [pasajeros]);
+  const [nuevoTipo, setNuevoTipo] = useState<TipoHabitacion>("doble");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -68,7 +71,7 @@ export function HabitacionesSection({
         <h2 className="flex items-center gap-2 text-sm font-bold uppercase text-gray-500"><BedDouble className="h-4 w-4" /> Habitaciones</h2>
         {canEdit && (
           <div className="flex items-center gap-2">
-            <Select value={nuevoTipo} onChange={(e) => setNuevoTipo(e.target.value as "doble")} className="w-32">
+            <Select value={nuevoTipo} onChange={(e) => setNuevoTipo(e.target.value as TipoHabitacion)} className="w-32">
               {TIPOS_HABITACION.map((t) => <option key={t} value={t}>{HABITACION_LABEL[t]} ({HABITACION_CAP[t]})</option>)}
             </Select>
             <Button type="button" size="sm" onClick={agregar} disabled={busy} className="inline-flex items-center gap-1.5">

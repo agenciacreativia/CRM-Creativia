@@ -70,11 +70,11 @@ export function CampaniasManager({ initial, metricas = {} }: { initial: Campania
               </div>
               <div className="flex items-center gap-2">
                 {c.estado === "borrador" && (
-                  <button onClick={() => onEnviar(c.id)} disabled={busy === c.id} className="inline-flex items-center gap-1 rounded border border-brand-primary bg-brand-primary px-2 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50">
+                  <button type="button" onClick={() => onEnviar(c.id)} disabled={busy === c.id} className="inline-flex items-center gap-1 rounded border border-brand-primary bg-brand-primary px-2 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50">
                     <Send className="h-3.5 w-3.5" /> {busy === c.id ? "Enviando…" : "Enviar"}
                   </button>
                 )}
-                <button onClick={() => onEliminar(c.id)} className="text-gray-400 hover:text-status-danger"><Trash2 className="h-4 w-4" /></button>
+                <button type="button" onClick={() => onEliminar(c.id)} className="text-gray-400 hover:text-status-danger"><Trash2 className="h-4 w-4" /></button>
               </div>
             </li>
           ))}
@@ -101,7 +101,12 @@ function Form({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }
   }
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-5">
+    <form
+      method="POST"
+      action="#"
+      onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); guardar(); }}
+      className="space-y-4 rounded-lg border border-gray-200 bg-white p-5"
+    >
       {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Nombre interno"><Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Promo invierno" /></Field>
@@ -120,9 +125,9 @@ function Form({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }
         <p className="mt-1 text-[11px] text-gray-400">Variables disponibles: <code>{"{{nombre}}"}</code>, <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>.</p>
       </Field>
       <div className="flex items-center gap-2 border-t border-gray-100 pt-4">
-        <Button type="button" onClick={guardar} disabled={saving}>{saving ? "Guardando…" : "Crear campaña"}</Button>
+        <Button type="submit" disabled={saving}>{saving ? "Guardando…" : "Crear campaña"}</Button>
         <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>
       </div>
-    </div>
+    </form>
   );
 }

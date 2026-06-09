@@ -35,6 +35,7 @@ export async function createListaEnvio(input: { nombre: string; descripcion: str
     .insert({ ...input, tenant_id: user.tenantId, creado_por: user.id })
     .select("id").single();
   if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("No se pudo crear la lista de envío");
   return data.id as string;
 }
 

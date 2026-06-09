@@ -32,7 +32,8 @@ export function AgenciasManager({ initial, planes }: { initial: Agencia[]; plane
   const [creada, setCreada] = useState<Creada | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const litePlan = planes.find((p) => p.nombre.toLowerCase() === "lite") ?? planes[0];
+  // Buscamos "lite" como inicio del nombre para tolerar variantes ("Lite", "Lite QA", "Lite Starter").
+  const litePlan = planes.find((p) => p.nombre.trim().toLowerCase().startsWith("lite")) ?? planes[0];
 
   const [verBusy, setVerBusy] = useState<string | null>(null);
   async function verComo(id: string) {
@@ -108,6 +109,8 @@ export function AgenciasManager({ initial, planes }: { initial: Agencia[]; plane
                   </td>
                   <td className="px-4 py-2.5">
                     <input
+                      // Re-mount on prop change para que el defaultValue refleje cambios desde otros tabs / refreshes.
+                      key={`nit-${a.id}-${a.nit ?? ""}`}
                       type="text"
                       defaultValue={a.nit ?? ""}
                       placeholder="NIT"

@@ -629,6 +629,9 @@ export async function createActividad(input: NewActividad): Promise<string> {
 export async function toggleActividad(id: string, completada: boolean) {
   await ensureSession();
   const supabase = await createServerSupabase();
+  // Tomamos el oportunidad_id ANTES de la mutación. Si la actividad se borra
+  // en otro request entre UPDATE y SELECT, perdíamos el log.
+  const { data: act } = await supabase.from("actividad").select("oportunidad_id").eq("id", id).maybeSingle();
   const { error } = await supabase
     .from("actividad")
     .update({
@@ -637,7 +640,6 @@ export async function toggleActividad(id: string, completada: boolean) {
     })
     .eq("id", id);
   if (error) throw new Error(error.message);
-  const { data: act } = await supabase.from("actividad").select("oportunidad_id").eq("id", id).maybeSingle();
   if (act?.oportunidad_id)
     await logCambio("oportunidad", act.oportunidad_id, completada ? "Completó una actividad" : "Reabrió una actividad");
 }
