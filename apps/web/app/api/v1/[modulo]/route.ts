@@ -65,23 +65,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
 
   const admin = createAdminSupabase();
 
-  // Sobre cap → desviar a lista de espera (solo para contactos/oportunidades).
+  // Sobre cap → desviar a lista de espera usando la columna `en_espera`
+  // (mecanismo existente desde migración 0021 — el row queda guardado pero
+  // oculto por RLS hasta que el admin lo libere). Solo para contactos/oportunidades.
   if (a.exceeded && (modulo === "contactos" || modulo === "oportunidades")) {
-    const { data: le, error: leErr } = await admin
-      .from("lista_espera")
-      .insert({
-        tenant_id: a.tenantId,
-        tipo: modulo === "contactos" ? "contacto" : "oportunidad",
-        payload: body,
-        origen: "api",
-        motivo: "limite_api_excedido",
-      })
-      .select("id")
-      .single();
-    if (leErr) return NextResponse.json({ error: leErr.message }, { status: 400, headers: CORS });
+    // Auto-empresa para contactos sin empresa_id (igual que el flujo normal de abajo)
+    if (modulo === "contactos" && !body.empresa_id) {
+      const { data: emp } = await admin.from("empresa").select("id").eq("tenant_id", a.tenantId).ilike("nombre", "API").maybeSingle();
+      if (emp) body.empresa_id = emp.id;
+      else {
+        const { data: created, error } = await admin.from("empresa").insert({ tenant_id: a.tenantId, nombre: "API", estado_empresa: "prospecto", en_espera: true }).select("id").single();
+        if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: CORS });
+        body.empresa_id = created.id;
+      }
+    }
+    const insertHeld: Record<string, unknown> = { tenant_id: a.tenantId, en_espera: true, ...body };
+    const { data: held, error: heldErr } = await admin.from(t.tabla).insert(insertHeld).select("id").single();
+    if (heldErr) return NextResponse.json({ error: heldErr.message }, { status: 400, headers: CORS });
     return NextResponse.json({
-      data: { id: le.id, en_lista_espera: true },
-      mensaje: "Tu cuenta excedió el límite mensual de la API. El lead quedó en lista de espera y se procesará cuando se libere cupo o subas tu plan.",
+      data: { id: held.id, en_lista_espera: true },
+      mensaje: "Tu cuenta excedió el límite mensual de la API. El lead quedó en lista de espera (en_espera=true) y se libera al subir el plan o al pasar el mes.",
       uso: { usados: a.usados, limite: a.limite },
     }, { status: 202, headers: CORS });
   }
