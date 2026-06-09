@@ -76,6 +76,12 @@ export type Campania = {
   segmento: { estado_empresa?: string; con_email?: boolean };
   estado: "borrador" | "enviada" | "cancelada";
   enviados: number;
+  // Métricas detalladas agregadas en migration 0040. Si esa migración aún no
+  // fue corrida en el proyecto de Supabase del usuario, los reads siguen
+  // funcionando (defensa: defaults a 0 / null y el SELECT cae por debajo).
+  errores?: number;
+  destinatarios_total?: number;
+  error_resumen?: string | null;
   creada_en: string;
   enviada_en: string | null;
 };
@@ -88,13 +94,31 @@ async function ensureAdmin() {
 }
 
 export async function listCampanias(): Promise<Campania[]> {
+  // Defensa: si la migración 0040 (errores, destinatarios_total, error_resumen)
+  // todavía no se corrió, hacemos un fallback al SELECT viejo y rellenamos los
+  // campos nuevos con defaults. Evita pantalla rota mientras el admin migra.
+  const isMissingMetricsColumn = (msg: string | undefined): boolean =>
+    !!msg && /column\s+["']?(errores|destinatarios_total|error_resumen)/i.test(msg);
+
   try {
     const supabase = await createServerSupabase();
-    const { data } = await supabase
+    const full = await supabase
       .from("campania")
-      .select("id, nombre, asunto, cuerpo_html, segmento, estado, enviados, creada_en, enviada_en")
+      .select("id, nombre, asunto, cuerpo_html, segmento, estado, enviados, errores, destinatarios_total, error_resumen, creada_en, enviada_en")
       .order("creada_en", { ascending: false });
-    return (data ?? []) as Campania[];
+    if (full.error && isMissingMetricsColumn(full.error.message)) {
+      const legacy = await supabase
+        .from("campania")
+        .select("id, nombre, asunto, cuerpo_html, segmento, estado, enviados, creada_en, enviada_en")
+        .order("creada_en", { ascending: false });
+      return (legacy.data ?? []).map((r) => ({
+        ...(r as Campania),
+        errores: 0,
+        destinatarios_total: 0,
+        error_resumen: null,
+      }));
+    }
+    return (full.data ?? []) as Campania[];
   } catch {
     return [];
   }
@@ -205,10 +229,15 @@ export async function enviarCampania(campaniaId: string): Promise<{ enviados: nu
 
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   let enviados = 0, errores = 0;
+  // Capturamos el último error textual para mostrarlo en la card.
+  // No persistimos todos porque podrían ser ruidosos (cientos de filas);
+  // por destinatario, el detalle queda en `correo_enviado`.
+  let lastError: string | null = null;
+
   for (const d of destinatarios) {
     if (!emailRe.test(d.email)) {
-      // Email malformado — saltamos. Contamos como error para que el admin lo vea.
       errores++;
+      lastError = `Email inválido: ${d.email}`;
       continue;
     }
     try {
@@ -218,19 +247,34 @@ export async function enviarCampania(campaniaId: string): Promise<{ enviados: nu
       const html = track ? aplicarTracking(c.cuerpo_html as string, track.pixelUrl, track.clickRedirectBase) : (c.cuerpo_html as string);
       await sendGmail(accessToken, { to: d.email, subject: c.asunto as string, html });
       enviados++;
-    } catch {
+    } catch (e) {
       errores++;
+      lastError = e instanceof Error ? e.message : "Error desconocido";
     }
   }
 
-  const { error: finErr } = await admin
-    .from("campania")
-    .update({ estado: "enviada", enviados, enviada_en: new Date().toISOString() })
-    .eq("id", campaniaId);
+  // Persistir métricas. Si la migración 0040 no se corrió aún, los campos
+  // nuevos se ignoran limpiamente — reintentamos sin ellos.
+  const finalPatch = {
+    estado: "enviada" as const,
+    enviados,
+    errores,
+    destinatarios_total: destinatarios.length,
+    error_resumen: lastError ? lastError.slice(0, 500) : null,
+    enviada_en: new Date().toISOString(),
+  };
+  const { error: finErr } = await admin.from("campania").update(finalPatch).eq("id", campaniaId);
   if (finErr) {
-    // Si no podemos persistir el estado final, lo registramos pero NO tiramos error
-    // porque los correos ya fueron enviados. El admin lo verá en el listado.
-    console.error("[campania] no se pudo actualizar estado final:", finErr.message);
+    if (/column.*(errores|destinatarios_total|error_resumen)/i.test(finErr.message)) {
+      // Fallback al esquema legacy (sin métricas detalladas).
+      const { error: legacyErr } = await admin
+        .from("campania")
+        .update({ estado: "enviada", enviados, enviada_en: finalPatch.enviada_en })
+        .eq("id", campaniaId);
+      if (legacyErr) console.error("[campania] estado final legacy:", legacyErr.message);
+    } else {
+      console.error("[campania] no se pudo actualizar estado final:", finErr.message);
+    }
   }
 
   return { enviados, errores };

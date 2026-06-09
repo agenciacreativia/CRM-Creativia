@@ -60,7 +60,31 @@ export function CampaniasManager({ initial, metricas = {} }: { initial: Campania
                   <span className="font-medium text-gray-900">{c.nombre}</span>
                   <Badge variant={c.estado === "enviada" ? "success" : c.estado === "cancelada" ? "default" : "info"}>{c.estado}</Badge>
                 </div>
-                <p className="text-xs text-gray-500">{c.asunto}{c.estado === "enviada" ? ` · ${c.enviados} enviado(s)` : ""}</p>
+                <p className="text-xs text-gray-500">
+                  {c.asunto}
+                  {c.estado === "enviada" && (
+                    <>
+                      {" "}·{" "}
+                      <span className={c.enviados === 0 ? "text-status-danger" : ""}>
+                        {c.enviados} enviado(s)
+                      </span>
+                      {/* Si la mig 0040 ya corrió, mostramos cuántos contactos eran
+                          el target original + cuántos fallaron — útil para
+                          diagnosticar "0 enviados" vs "ningún destinatario". */}
+                      {typeof c.destinatarios_total === "number" && c.destinatarios_total > 0 && (
+                        <> de {c.destinatarios_total}</>
+                      )}
+                      {typeof c.errores === "number" && c.errores > 0 && (
+                        <> · <span className="text-status-danger">{c.errores} con error</span></>
+                      )}
+                    </>
+                  )}
+                </p>
+                {c.estado === "enviada" && c.error_resumen && (
+                  <p className="mt-1 rounded border border-red-200 bg-red-50 px-2 py-1 text-[11px] text-status-danger" title="Último error registrado durante el envío">
+                    ⚠ {c.error_resumen}
+                  </p>
+                )}
                 {c.estado === "enviada" && metricas[c.id] && (
                   <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-gray-600">
                     <span title="Tasa de apertura">📨 Aperturas: <strong>{metricas[c.id].tasa_apertura ?? "—"}%</strong> ({metricas[c.id].abiertos_unicos})</span>
