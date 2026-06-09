@@ -17,11 +17,12 @@ function money(v: number, m: string) {
 
 export default async function ReportesPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  // Filtros compartidos entre todos los cuadros del dashboard:
-  // pipeline, asesor, desde, hasta van a loadDashboard / atribucion / campanias-perf.
-  // producto todavía no se aplica (es una dimensión sin tabla puente con oportunidad_id directa).
+  // Filtros compartidos entre todos los cuadros del dashboard.
+  // `producto` ahora se aplica también a loadDashboard vía pre-fetch a la
+  // tabla puente oportunidad_producto (ver dashboard.ts).
   const sharedFilters = {
     pipeline: params.pipeline || undefined,
+    producto: params.producto || undefined,
     asesor: params.asesor || undefined,
     desde: params.desde || undefined,
     hasta: params.hasta || undefined,
@@ -49,14 +50,9 @@ export default async function ReportesPage({ searchParams }: { searchParams: Sea
         asesores={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))}
         activos={params}
       />
-      {params.producto && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800">
-          ⚠️ El filtro por producto se aplica solo a la tabla de campañas UTM. Para filtrar por producto en KPIs/embudo se necesita el join oportunidad_producto en cada query — próxima iteración.
-        </div>
-      )}
-      {(params.pipeline || params.asesor || params.desde || params.hasta) && (
+      {(params.pipeline || params.producto || params.asesor || params.desde || params.hasta) && (
         <div className="rounded-md border border-green-200 bg-green-50 px-4 py-2 text-xs text-green-800">
-          ✓ Filtros aplicados: KPIs, embudo (pipeline elegido), atribución, asesores, forecast y campañas.
+          ✓ Filtros aplicados: KPIs, embudo, atribución, asesores, forecast y campañas.
         </div>
       )}
 

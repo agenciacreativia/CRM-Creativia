@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Megaphone, Plus, Send, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,13 @@ export function CampaniasManager({ initial, metricas = {} }: { initial: Campania
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <Megaphone className="h-4 w-4 text-brand-primary" />
-                  <span className="font-medium text-gray-900">{c.nombre}</span>
+                  {c.estado === "enviada" ? (
+                    <Link href={`/campanias/${c.id}`} className="font-medium text-brand-primary hover:underline">
+                      {c.nombre}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-gray-900">{c.nombre}</span>
+                  )}
                   <Badge variant={c.estado === "enviada" ? "success" : c.estado === "cancelada" ? "default" : "info"}>{c.estado}</Badge>
                 </div>
                 <p className="text-xs text-gray-500">

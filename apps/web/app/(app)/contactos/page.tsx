@@ -10,6 +10,9 @@ import { rowMatches } from "@/lib/filters/evaluate";
 import { sortRows } from "@/lib/filters/sort";
 import { getMyPermisos } from "@/lib/db/roles";
 import { can } from "@/lib/permissions";
+import { listUsuarios } from "@/lib/db/usuarios";
+import { BulkContactosBar } from "@/components/bulk/bulk-contactos-bar";
+import { BulkRowCheckbox } from "@/components/bulk/bulk-empresas-bar";
 
 type SearchParams = Promise<{ filtros?: string; orden?: string; q?: string }>;
 
@@ -29,12 +32,14 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
   const hasAdvanced = specHasConditions(spec);
   const q = params.q?.trim() ?? "";
 
-  const [rowsRaw, filterFields, perms] = await Promise.all([
+  const [rowsRaw, filterFields, perms, usuarios] = await Promise.all([
     listContactos({ limit: hasAdvanced || q ? 2000 : 200 }),
     getFilterFields("contacto"),
     getMyPermisos(),
+    listUsuarios({ activo: "activos" }),
   ]);
   const puedeCrear = can(perms.permisos, "contactos", "crear", perms.es_admin);
+  const puedeEditarMasivo = can(perms.permisos, "contactos", "editar", perms.es_admin);
 
   let filtered = hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
   if (q) filtered = filtered.filter((r) => quickMatch(r, q));
@@ -61,10 +66,15 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
         </div>
       </div>
 
+      {puedeEditarMasivo && (
+        <BulkContactosBar usuarios={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))} />
+      )}
+
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
+              {puedeEditarMasivo && <Th className="w-8" aria-label="Selección" />}
               <Th className="font-bold">Nombre</Th>
               <Th className="font-bold">Cargo</Th>
               <Th className="font-bold">Empresa</Th>
@@ -76,7 +86,7 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center text-gray-500 py-8">
+                <td colSpan={puedeEditarMasivo ? 7 : 6} className="text-center text-gray-500 py-8">
                   {q
                     ? <>No hay contactos que coincidan con <strong>{q}</strong>.</>
                     : <>No hay contactos todavía. <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">Importar →</Link></>}
@@ -85,6 +95,9 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
             )}
             {rows.map((c, idx) => (
               <tr key={c.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
+                {puedeEditarMasivo && (
+                  <Td className="text-center"><BulkRowCheckbox id={c.id} scope="contactos" /></Td>
+                )}
                 <Td>
                   <Link href={`/contactos/${c.id}`} className="text-brand-primary hover:underline font-medium">
                     {c.nombre}

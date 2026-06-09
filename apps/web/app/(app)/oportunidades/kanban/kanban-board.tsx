@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Pencil } from "lucide-react";
 import {
   DndContext,
   type DragEndEvent,
@@ -24,9 +23,14 @@ import { cn } from "@/lib/utils";
 // Column header dot per stage (uses position in pipeline for color rotation).
 const COL_DOTS = ["bg-brand-sky", "bg-brand-navy", "bg-brand-green", "bg-brand-orange", "bg-brand-navy-soft"];
 
-const URGENT_LABEL: Partial<Record<KanbanCard["color"], string>> = {
-  red: "URGENTE",
-  yellow: "ALERTA",
+// Mapeo de urgencia a clase de borde izquierdo de la card. Antes se mostraba
+// un badge de texto ("URGENTE"/"ALERTA") arriba de la card; con el lote UX
+// pasamos a un stripe izquierdo, más limpio y consistente con tabla.
+const URGENT_BORDER: Record<KanbanCard["color"], string> = {
+  red: "border-l-4 border-l-status-danger",
+  yellow: "border-l-4 border-l-brand-orange",
+  green: "border-l-4 border-l-brand-green/70",
+  gray: "border-l border-l-gray-200",
 };
 
 function formatCurrency(value: number | null, moneda: string): string {
@@ -40,11 +44,15 @@ function formatCurrency(value: number | null, moneda: string): string {
 
 export function KanbanBoard({
   initialBoard,
-  manageHref,
+  // manageHref se mantiene como prop opcional por compat con la page parent,
+  // pero ya no se usa adentro (el acceso a "gestionar embudo" pasó al header
+  // único de /oportunidades/kanban).
+  manageHref: _manageHref,
 }: {
   initialBoard: KanbanColumn[];
   manageHref?: string | null;
 }) {
+  void _manageHref;
   const [board, setBoard] = useState(initialBoard);
   const [activeCard, setActiveCard] = useState<KanbanCard | null>(null);
   const [, startTransition] = useTransition();
@@ -183,7 +191,7 @@ export function KanbanBoard({
         */}
         <div className="flex gap-3 pb-4 overflow-x-auto md:overflow-x-visible">
           {displayEtapas.map((stage, idx) => (
-            <Column key={stage.id} stage={stage} manageHref={manageHref} colorIndex={idx} />
+            <Column key={stage.id} stage={stage} colorIndex={idx} />
           ))}
         </div>
         <DragOverlay>
@@ -197,10 +205,8 @@ export function KanbanBoard({
 function Column({
   colorIndex = 0,
   stage,
-  manageHref,
 }: {
   stage: KanbanColumn["etapas"][number];
-  manageHref?: string | null;
   colorIndex?: number;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
@@ -215,22 +221,14 @@ function Column({
         isOver && "ring-2 ring-brand-navy",
       )}
     >
+      {/* Lote UX: quitamos el lápiz "editar etapa" por columna. El acceso a
+          gestionar el embudo queda en el lápiz único del header principal. */}
       <header className="mb-3 flex items-center justify-between px-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("h-2 w-2 rounded-full shrink-0", COL_DOTS[colorIndex % COL_DOTS.length])} />
           <h3 className="truncate text-[11px] font-bold uppercase tracking-wider text-gray-700">{stage.nombre}</h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">{stage.oportunidades.length}</span>
         </div>
-        {manageHref && (
-          <Link
-            href={manageHref}
-            className="text-gray-400 hover:text-brand-navy"
-            title="Editar etapa"
-            aria-label="Editar etapa"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Link>
-        )}
       </header>
       {(totalValue > 0 || stage.dias_maximo_alerta != null) && (
         <p className="mb-2 px-1.5 text-[11px] text-gray-500">
@@ -273,26 +271,25 @@ function initials(name?: string | null) {
 }
 
 function Card({ card, isDragging }: { card: KanbanCard; isDragging?: boolean }) {
-  const urgentLabel = URGENT_LABEL[card.color];
   return (
     <Link
       href={`/oportunidades/${card.id}`}
       onClick={(e) => isDragging && e.preventDefault()}
+      title={
+        card.color === "red"
+          ? "Urgente: la oportunidad excedió los días recomendados en esta etapa"
+          : card.color === "yellow"
+            ? "Alerta: se está acercando al límite de días en esta etapa"
+            : undefined
+      }
       className={cn(
+        // Lote UX: indicamos la urgencia con un borde izquierdo de color en
+        // lugar del badge de texto ("URGENTE"/"ALERTA"). El tooltip explica.
         "relative block overflow-hidden rounded-lg border border-gray-200 bg-white p-3 transition-all hover:-translate-y-[1px] hover:border-gray-300 hover:shadow-lift",
+        URGENT_BORDER[card.color],
         isDragging && "ring-2 ring-brand-navy cursor-grabbing shadow-elevated",
       )}
     >
-      {urgentLabel && (
-        <span
-          className={cn(
-            "mb-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white",
-            card.color === "red" ? "bg-status-danger" : "bg-brand-orange",
-          )}
-        >
-          {urgentLabel}
-        </span>
-      )}
       <p className="truncate text-sm font-semibold text-gray-900">{card.nombre}</p>
       <p className="mt-0.5 truncate text-xs text-gray-500">{card.empresa_nombre}</p>
       <div className="mt-3 flex items-center justify-between">

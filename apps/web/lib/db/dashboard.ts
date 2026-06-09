@@ -116,6 +116,19 @@ export async function loadDashboard(filters: DashboardFilters = {}): Promise<{
   const supabase = await createServerSupabase();
   const scope: Scope = user.rol === "admin" ? "admin" : "me";
 
+  // Si hay filtro por producto, prefetch los IDs de oportunidad que tienen
+  // ese producto en oportunidad_producto y usamos esos como .in(...) abajo.
+  // Si la tabla no existe o no hay matches, queda como [] → el .in([]) devuelve
+  // siempre 0 filas y los KPIs/embudo muestran "—" correctamente.
+  let opIdsByProducto: string[] | null = null;
+  if (filters.producto) {
+    const { data: opRows } = await supabase
+      .from("oportunidad_producto")
+      .select("oportunidad_id")
+      .eq("producto_id", filters.producto);
+    opIdsByProducto = ((opRows ?? []) as { oportunidad_id: string }[]).map((r) => r.oportunidad_id);
+  }
+
   // Fire every query in parallel — they're independent.
   let oppSelect = supabase
     .from("oportunidad")
@@ -130,6 +143,12 @@ export async function loadDashboard(filters: DashboardFilters = {}): Promise<{
   if (filters.pipeline) oppSelect = oppSelect.eq("pipeline_id", filters.pipeline);
   if (filters.desde) oppSelect = oppSelect.gte("creado_en", filters.desde);
   if (filters.hasta) oppSelect = oppSelect.lte("creado_en", `${filters.hasta}T23:59:59.999Z`);
+  if (opIdsByProducto !== null) {
+    // Si el producto no matchea ninguna oportunidad, devolvemos vacío
+    // explícitamente — un .in([], "id") con array vacío en Supabase / PostgREST
+    // devolvería TODAS las rows. Usamos un UUID imposible.
+    oppSelect = oppSelect.in("id", opIdsByProducto.length > 0 ? opIdsByProducto : ["00000000-0000-0000-0000-000000000000"]);
+  }
   const oppPromise = oppSelect;
 
   // Pull all pending activities (not just 15) — we need them for "vencidas" too.

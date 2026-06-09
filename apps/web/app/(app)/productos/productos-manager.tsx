@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,8 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
 import type { Producto } from "@/lib/db/productos";
-import { saveProductoAction, deleteProductoAction } from "./actions";
+import { saveProductoAction } from "./actions";
 import { ItinerarioMiniEditor } from "@/components/producto/itinerario-mini-editor";
+import {
+  bulkActivarProductosAction,
+  bulkCambiarCategoriaProductosAction,
+  bulkEliminarProductosAction,
+} from "@/components/bulk/bulk-productos-actions";
 
 const MONEDAS = ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"];
 const PRODUCTO_CATEGORIAS = ["Paquete", "Vuelo", "Hotel", "Crucero", "Tour", "Traslado", "Asistencia", "Otro"];
@@ -38,9 +43,36 @@ export function ProductosManager({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [, startTransition] = useTransition();
   const [tab, setTab] = useState<"propios" | "turistea">("propios");
   const [search, setSearch] = useState("");
+  // Bulk selection: solo aplicable a la pestaña "propios" (los del catálogo
+  // Turistea son read-only desde acá).
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+  async function runBulk<T>(label: string, fn: () => Promise<T & { ok: boolean; error?: string; afectados?: number }>) {
+    setBulkBusy(true);
+    setError(null);
+    const res = await fn();
+    setBulkBusy(false);
+    if (!res.ok) {
+      setError(res.error ?? `Error en ${label}`);
+      return;
+    }
+    clearSelection();
+    router.refresh();
+  }
   const propios = initial.filter((p) => p.origen === "propio");
   const turistea = initial.filter((p) => p.origen === "turistea");
   const base = tab === "propios" ? propios : turistea;
@@ -73,14 +105,8 @@ export function ProductosManager({
     router.refresh();
   }
 
-  function onDelete(id: string) {
-    if (!confirm("¿Eliminar este producto?")) return;
-    startTransition(async () => {
-      const res = await deleteProductoAction(id);
-      if (!res.ok) setError(res.error ?? "Error");
-      else router.refresh();
-    });
-  }
+  // onDelete por fila se removió en el lote UX (botón papelera por row eliminado).
+  // El borrado ahora pasa por el detalle del producto o por bulk delete.
 
   if (showForm) {
     return (
@@ -197,6 +223,7 @@ export function ProductosManager({
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
+              {canEditar && tab === "propios" && <th className="w-8 px-2 py-3" aria-label="Selección" />}
               <th className="px-4 py-3 font-bold">Nombre</th>
               <th className="px-4 py-3 font-bold">Categoría</th>
               <th className="px-4 py-3 font-bold">Destino</th>
@@ -207,12 +234,24 @@ export function ProductosManager({
           </thead>
           <tbody>
             {visible.length === 0 && (
-              <tr><td colSpan={6} className="py-8 text-center text-gray-500">
+              <tr><td colSpan={canEditar && tab === "propios" ? 7 : 6} className="py-8 text-center text-gray-500">
                 {tab === "propios" ? "Aún no tenés productos propios. Crealos con + Nuevo producto o copialos del catálogo." : "Aún no cargaste productos del catálogo Turistea."}
               </td></tr>
             )}
             {visible.map((row, idx) => (
               <tr key={row.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
+                {canEditar && tab === "propios" && (
+                  <td className="px-2 py-2.5 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(row.id)}
+                      onChange={() => toggleSelected(row.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded"
+                      aria-label={`Seleccionar ${row.nombre}`}
+                    />
+                  </td>
+                )}
                 <td className="px-4 py-2.5 font-medium text-gray-900">
                   <Link href={`/productos/${row.id}`} className="text-brand-navy hover:underline">{row.nombre}</Link>
                 </td>
@@ -222,26 +261,86 @@ export function ProductosManager({
                 <td className="px-4 py-2.5">
                   <Badge variant={row.activo ? "success" : "default"}>{row.activo ? "activo" : "inactivo"}</Badge>
                 </td>
+                {/* Lote UX: quitamos lápiz + papelera por fila. La edición se hace
+                    clickeando el nombre del producto (link a /productos/[id])
+                    y desde ahí se accede a editar/eliminar. Para acciones
+                    masivas (incluida la eliminación), la barra inferior. */}
                 <td className="px-4 py-2.5 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    {canEditar && row.origen === "propio" && (
-                      <button type="button" data-edit-id={row.id} onClick={() => setEditing(row)} aria-label={`Editar producto ${row.nombre}`} className="text-gray-400 hover:text-brand-primary" title="Editar">
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    )}
-                    {canEliminar && row.origen === "propio" && (
-                      <button type="button" onClick={() => onDelete(row.id)} aria-label={`Eliminar producto ${row.nombre}`} className="text-gray-400 hover:text-status-danger" title="Eliminar">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                    {row.origen !== "propio" && <span className="text-xs italic text-gray-400">Turistea</span>}
-                  </div>
+                  {row.origen !== "propio" && <span className="text-xs italic text-gray-400">Turistea</span>}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Barra inferior de acciones masivas — solo en tab "propios" con permiso. */}
+      {canEditar && tab === "propios" && selectedIds.size > 0 && (
+        <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2 shadow-lg">
+            <span className="text-sm font-medium text-gray-700">
+              <strong>{selectedIds.size}</strong> seleccionado(s)
+            </span>
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={() => runBulk("activar", () => bulkActivarProductosAction([...selectedIds], true))}
+              className="rounded border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {bulkBusy ? "Procesando…" : "Activar"}
+            </button>
+            <button
+              type="button"
+              disabled={bulkBusy}
+              onClick={() => runBulk("desactivar", () => bulkActivarProductosAction([...selectedIds], false))}
+              className="rounded border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Desactivar
+            </button>
+            <select
+              defaultValue=""
+              disabled={bulkBusy}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!v) return;
+                runBulk("cambiar categoría", () =>
+                  bulkCambiarCategoriaProductosAction([...selectedIds], v === "__null__" ? null : v),
+                );
+                e.target.value = "";
+              }}
+              className="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+            >
+              <option value="">Categoría…</option>
+              <option value="__null__">(sin categoría)</option>
+              {PRODUCTO_CATEGORIAS.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            {canEliminar && (
+              <button
+                type="button"
+                disabled={bulkBusy}
+                onClick={() => {
+                  if (!confirm(`¿Eliminar ${selectedIds.size} producto(s)? No se podrá deshacer.`)) return;
+                  runBulk("eliminar", () => bulkEliminarProductosAction([...selectedIds]));
+                }}
+                className="inline-flex items-center gap-1 rounded border border-red-200 bg-white px-2.5 py-1 text-xs text-status-danger hover:bg-red-50 disabled:opacity-50"
+              >
+                <Trash2 className="h-3 w-3" /> Eliminar
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Limpiar selección"
+              title="Limpiar selección"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
