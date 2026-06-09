@@ -51,7 +51,10 @@ export async function listContactos(opts: { q?: string; empresa_id?: string; asi
 
   let query = supabase
     .from("contacto")
-    .select("id, nombre, cargo, email, telefono, origen, empresa_id, empresa(nombre), asignado_id, asignado:usuario!contacto_asignado_id_fkey(nombre), campos_custom, oportunidad(count)")
+    // Embed explícito de empresa via FK principal. Necesario desde la mig 0042
+    // (contacto_empresa_secundaria) — PostgREST ve dos relaciones (la principal
+    // y la M-N) y rechaza `empresa(...)` ambiguo con PGRST201.
+    .select("id, nombre, cargo, email, telefono, origen, empresa_id, empresa:empresa!contacto_empresa_id_fkey(nombre), asignado_id, asignado:usuario!contacto_asignado_id_fkey(nombre), campos_custom, oportunidad(count)")
     .order("nombre", { ascending: true })
     .range(offset, offset + limit - 1);
 
@@ -89,7 +92,7 @@ export async function getContacto(id: string): Promise<ContactoDetail | null> {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("contacto")
-    .select("*, empresa(nombre), asignado:usuario!contacto_asignado_id_fkey(nombre), oportunidad(count)")
+    .select("*, empresa:empresa!contacto_empresa_id_fkey(nombre), asignado:usuario!contacto_asignado_id_fkey(nombre), oportunidad(count)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;

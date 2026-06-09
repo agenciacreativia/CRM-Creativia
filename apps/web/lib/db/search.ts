@@ -25,7 +25,8 @@ export async function globalSearch(q: string): Promise<SearchHit[]> {
       .limit(PER_TYPE_LIMIT),
     supabase
       .from("contacto")
-      .select("id, nombre, email, cargo, empresa(nombre)")
+      // Embed explícito via FK principal (mig 0042 introdujo ambigüedad).
+      .select("id, nombre, email, cargo, empresa:empresa!contacto_empresa_id_fkey(nombre)")
       .or(`nombre.ilike.${like},email.ilike.${like},cargo.ilike.${like}`)
       .limit(PER_TYPE_LIMIT),
     supabase

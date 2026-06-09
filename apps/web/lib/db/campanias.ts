@@ -177,7 +177,9 @@ type RawContactoRow = {
 
 async function resolverDestinatarios(tenantId: string, segmento: Campania["segmento"]): Promise<{ id: string; email: string }[]> {
   const admin = createAdminSupabase();
-  let query = admin.from("contacto").select("id, email, empresa_id, empresa:empresa_id(estado_empresa)").eq("tenant_id", tenantId);
+  // Embed explícito via FK principal (mig 0042 introdujo ambigüedad entre la
+  // FK directa contacto.empresa_id y la M-N de contacto_empresa_secundaria).
+  let query = admin.from("contacto").select("id, email, empresa_id, empresa:empresa!contacto_empresa_id_fkey(estado_empresa)").eq("tenant_id", tenantId);
   if (segmento.con_email !== false) query = query.not("email", "is", null).neq("email", "");
   const { data, error } = await query;
   if (error) {

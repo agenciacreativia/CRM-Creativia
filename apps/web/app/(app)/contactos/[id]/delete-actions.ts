@@ -32,7 +32,8 @@ export async function getDeleteContactoContext(id: string): Promise<{
   // Marcamos los que comparten empresa para que el UI los muestre primero.
   const { data: others } = await supabase
     .from("contacto")
-    .select("id, nombre, empresa_id, empresa:empresa_id(nombre)")
+    // Embed explícito (mig 0042 introdujo ambigüedad con la M-N).
+    .select("id, nombre, empresa_id, empresa:empresa!contacto_empresa_id_fkey(nombre)")
     .neq("id", id)
     .limit(500);
   type EmpresaRel = { nombre: string | null } | { nombre: string | null }[] | null;

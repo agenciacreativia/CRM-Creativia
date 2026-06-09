@@ -74,7 +74,8 @@ export async function listEmpresasDeContacto(contactoId: string): Promise<Empres
   const supabase = await createServerSupabase();
   const { data: c } = await supabase
     .from("contacto")
-    .select("empresa_id, empresa(id, nombre, estado_empresa)")
+    // Embed explícito via FK principal (mig 0042 introdujo ambigüedad).
+    .select("empresa_id, empresa:empresa!contacto_empresa_id_fkey(id, nombre, estado_empresa)")
     .eq("id", contactoId)
     .maybeSingle();
   const { data: ops } = await supabase

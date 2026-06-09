@@ -24,7 +24,8 @@ export async function findDuplicadosContactos(): Promise<Grupo<DupContacto>[]> {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("contacto")
-    .select("id, nombre, email, empresa(nombre), oportunidad(count)")
+    // Embed explícito via FK principal (mig 0042 introdujo ambigüedad).
+    .select("id, nombre, email, empresa:empresa!contacto_empresa_id_fkey(nombre), oportunidad(count)")
     .not("email", "is", null)
     .neq("email", "");
   if (error) return [];
