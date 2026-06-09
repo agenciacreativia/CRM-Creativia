@@ -11,7 +11,7 @@ const pagoSchema = z.object({
   oportunidadId: z.string().uuid(),
   monto: z.number().positive("El monto debe ser mayor a 0"),
   moneda: z.string().max(8).default("USD"),
-  fecha_pago: z.string().min(4),
+  fecha_pago: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (YYYY-MM-DD)"),
   metodo: z.string().trim().min(1, "Indicá el método"),
   referencia: z.string().trim().max(120).optional(),
 });

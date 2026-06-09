@@ -19,6 +19,10 @@ export function GoogleTasks({ initial }: { initial: GoogleTask[] }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [, startTransition] = useTransition();
+  // Set local de IDs ocultos optimistamente para evitar el lag visual
+  // entre completeTaskAction y la re-hidratacion de props via router.refresh.
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const visible = initial.filter((t) => !hiddenIds.has(t.id));
 
   async function onAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,10 +41,24 @@ export function GoogleTasks({ initial }: { initial: GoogleTask[] }) {
   }
 
   function complete(id: string) {
+    // Ocultamos la tarea de inmediato; si falla, la restauramos.
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     startTransition(async () => {
       const res = await completeTaskAction(id);
-      if (!res.ok) setError(res.error ?? "Error");
-      else router.refresh();
+      if (!res.ok) {
+        setError(res.error ?? "Error");
+        setHiddenIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      } else {
+        router.refresh();
+      }
     });
   }
 
@@ -64,13 +82,13 @@ export function GoogleTasks({ initial }: { initial: GoogleTask[] }) {
         </form>
       )}
 
-      {initial.length === 0 ? (
+      {visible.length === 0 ? (
         <p className="py-4 text-center text-sm text-gray-500">Sin tareas pendientes.</p>
       ) : (
         <ul className="divide-y divide-gray-100">
-          {initial.map((t) => (
+          {visible.map((t) => (
             <li key={t.id} className="flex items-center gap-3 py-2.5">
-              <button onClick={() => complete(t.id)} className="text-gray-300 hover:text-[var(--green-tag)]" title="Completar">
+              <button type="button" onClick={() => complete(t.id)} className="text-gray-300 hover:text-[var(--green-tag)]" title="Completar" aria-label="Marcar tarea como completada">
                 <CheckCircle2 className="h-5 w-5" />
               </button>
               <div className="min-w-0 flex-1">

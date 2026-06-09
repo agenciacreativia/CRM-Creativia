@@ -27,6 +27,25 @@ function loginUrl(subdominio: string): string {
   return `${scheme}://${subdominio}.${env.BASE_DOMAIN}/login`;
 }
 
+// Forma de cada fila devuelta por el select de listAgencias(). Se extrae para
+// no depender de un type assertion inline (Supabase puede cambiar la forma de
+// los embeddings/aggregates en versiones futuras y queremos un único punto a
+// actualizar).
+type ListAgenciasRow = {
+  id: string;
+  nombre_empresa: string;
+  subdominio: string;
+  estado: Agencia["estado"];
+  admin_email: string;
+  nit: string | null;
+  plan_id: string | null;
+  trial_termina_en: string | null;
+  creado_en: string;
+  es_plataforma?: boolean;
+  plan: { nombre: string } | { nombre: string }[] | null;
+  usuario?: { count: number }[] | { count: number } | null;
+};
+
 /** List client agencies (excludes the platform tenant). */
 export async function listAgencias(): Promise<Agencia[]> {
   const admin = createAdminSupabase();
@@ -35,14 +54,11 @@ export async function listAgencias(): Promise<Agencia[]> {
     .select("id, nombre_empresa, subdominio, estado, admin_email, nit, plan_id, trial_termina_en, creado_en, es_plataforma, plan(nombre), usuario(count)")
     .order("creado_en", { ascending: false });
   if (error) return [];
-  return (data ?? [])
-    .filter((t: { es_plataforma?: boolean }) => !t.es_plataforma)
-    .map((t: {
-      id: string; nombre_empresa: string; subdominio: string; estado: Agencia["estado"];
-      admin_email: string; nit: string | null; plan_id: string | null; trial_termina_en: string | null; creado_en: string;
-      plan: { nombre: string } | { nombre: string }[] | null; usuario?: { count: number }[];
-    }) => {
+  return ((data ?? []) as ListAgenciasRow[])
+    .filter((t) => !t.es_plataforma)
+    .map((t) => {
       const plan = Array.isArray(t.plan) ? t.plan[0] : t.plan;
+      const usuario = Array.isArray(t.usuario) ? t.usuario[0] : t.usuario;
       return {
         id: t.id,
         nombre_empresa: t.nombre_empresa,
@@ -53,7 +69,7 @@ export async function listAgencias(): Promise<Agencia[]> {
         plan_id: t.plan_id,
         plan_nombre: plan?.nombre ?? null,
         trial_termina_en: t.trial_termina_en,
-        usuarios_count: t.usuario?.[0]?.count ?? 0,
+        usuarios_count: usuario?.count ?? 0,
         creado_en: t.creado_en,
       };
     });

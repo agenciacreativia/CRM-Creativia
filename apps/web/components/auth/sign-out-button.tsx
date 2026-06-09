@@ -11,7 +11,16 @@ export function SignOutButton() {
 
   async function handleSignOut() {
     const supabase = createBrowserSupabase();
-    await supabase.auth.signOut();
+    // Validamos el resultado: si la sesion esta corrupta signOut puede rechazar,
+    // igualmente forzamos la navegacion a /login para evitar quedar en estado colgado.
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error al cerrar sesion:", error.message);
+      }
+    } catch (err) {
+      console.error("Excepcion al cerrar sesion:", err);
+    }
     router.push("/login");
     router.refresh();
   }

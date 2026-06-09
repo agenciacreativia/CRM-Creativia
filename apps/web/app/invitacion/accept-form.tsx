@@ -55,7 +55,13 @@ export function AcceptForm({ token, email, nombre: initialNombre }: { token: str
         <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
       </Field>
       <Field label="Repetir contraseña">
-        <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        {/* Bloqueamos paste en la confirmación: forzamos retipear para detectar errores antes del submit. */}
+        <Input
+          type="password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          onPaste={(e) => e.preventDefault()}
+        />
       </Field>
 
       <Button type="button" onClick={submit} disabled={saving} className="w-full">

@@ -21,10 +21,15 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
   const spec = decodeFilterSpec(params.filtros);
   const hasAdvanced = specHasConditions(spec);
 
+  // Limite de filas a traer del backend. Cuando hay filtros avanzados subimos el tope
+  // para evaluarlos en memoria, pero seguimos siendo finitos: detectamos si tocamos el
+  // tope para avisar al usuario que los resultados pueden estar incompletos.
+  const fetchLimit = hasAdvanced ? 2000 : 200;
   const [rowsRaw, filterFields] = await Promise.all([
-    listEmpresas({ limit: hasAdvanced ? 2000 : 200 }),
+    listEmpresas({ limit: fetchLimit }),
     getFilterFields("empresa"),
   ]);
+  const truncated = hasAdvanced && rowsRaw.length >= fetchLimit;
 
   const filtered =
     hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
@@ -37,6 +42,16 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
         <ListOrder fields={filterFields} />
         <FilterBuilder fields={filterFields} />
       </div>
+
+      {truncated && (
+        <div
+          role="alert"
+          className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+        >
+          Mostrando los primeros {fetchLimit} registros. Aplicá filtros más específicos para
+          asegurar resultados completos.
+        </div>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">

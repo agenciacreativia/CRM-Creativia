@@ -21,8 +21,14 @@ export default function HandoffPage() {
     const refresh_token = hash.get("refresh_token");
     const nextRaw = hash.get("next") || "/dashboard";
     const imp = hash.get("imp") === "1";
-    const agencia = hash.get("agencia") || "";
-    const volver = hash.get("volver") || "";
+    // Sanitización anti-XSS: `agencia` se muestra luego en el banner de impersonación.
+    // Limitamos a caracteres seguros (letras, números, espacios y signos básicos) y
+    // recortamos longitud para evitar inyección de HTML/JS vía localStorage.
+    const agenciaRaw = hash.get("agencia") || "";
+    const agencia = agenciaRaw.replace(/[<>"'`\\]/g, "").slice(0, 120);
+    // `volver` debe ser una ruta relativa segura (mismo criterio que `next`).
+    const volverRaw = hash.get("volver") || "";
+    const volver = /^\/[^/]/.test(volverRaw) ? volverRaw.slice(0, 500) : "";
     // Defensa anti open-redirect: el `next` debe ser una ruta relativa que arranca
     // con "/" y NO con "//" (URLs protocol-relative que escapan al mismo host).
     const next = /^\/[^/]/.test(nextRaw) ? nextRaw : "/dashboard";

@@ -23,7 +23,14 @@ function isEmpty(v: unknown): boolean {
 
 function asNumber(v: unknown): number | null {
   if (v === null || v === undefined || v === "") return null;
-  const n = typeof v === "number" ? v : Number(String(v).replace(/[^0-9.\-]/g, ""));
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  // Limpiar el string: quitar todo lo que no sea dígito, punto o signo menos,
+  // y luego conservar como máximo un signo menos inicial y un único punto decimal
+  // para evitar que strings como "1.5-20" se interpreten como un número válido.
+  const cleaned = String(v).replace(/[^0-9.\-]/g, "");
+  const match = cleaned.match(/^-?\d+(\.\d+)?/);
+  if (!match) return null;
+  const n = parseFloat(match[0]);
   return Number.isFinite(n) ? n : null;
 }
 

@@ -20,6 +20,15 @@ export async function crearHabitacion(oportunidadId: string, tipo: TipoHabitacio
   const user = await getSessionUser();
   if (!user?.tenantId) throw new Error("Tenant ausente");
   const supabase = await createServerSupabase();
+  // Verificar que la oportunidad exista y pertenezca al tenant actual
+  const { data: oportunidad, error: oportunidadError } = await supabase
+    .from("oportunidad")
+    .select("id")
+    .eq("id", oportunidadId)
+    .eq("tenant_id", user.tenantId)
+    .maybeSingle();
+  if (oportunidadError) throw new Error(oportunidadError.message);
+  if (!oportunidad) throw new Error("Oportunidad no encontrada");
   const { data: ult } = await supabase
     .from("habitacion")
     .select("orden")

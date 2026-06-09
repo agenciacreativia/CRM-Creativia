@@ -50,7 +50,7 @@ export default async function FacturacionPage() {
           <p className="text-xs text-gray-600">
             {conectado
               ? "El cobro recurrente y la suspensión por impago están activos."
-              : "Cuando estés al aire, agregá STRIPE_SECRET_KEY y STRIPE_WEBHOOK_SECRET al entorno para activar el cobro automático. Por ahora la gestión de planes y trials es manual."}
+              : "Cuando estés al aire, agregá STRIPE_SECRET_KEY y STRIPE_WEBHOOK_SECRET al entorno (ambas variables son obligatorias) para activar el cobro automático. Por ahora la gestión de planes y trials es manual."}
           </p>
         </div>
       </div>
@@ -80,7 +80,14 @@ export default async function FacturacionPage() {
                   <Badge variant={ESTADO_BADGE[r.estado_suscripcion] ?? "default"}>{ESTADO_LABEL[r.estado_suscripcion] ?? r.estado_suscripcion}</Badge>
                 </td>
                 <td className="px-4 py-2.5 text-xs text-gray-500">
-                  {r.periodo_fin ? `hasta ${fmtDate(r.periodo_fin)}` : `trial: ${fmtDate(r.trial_termina_en)}`}
+                  {/* Mostrar período, trial o estado indefinido según corresponda */}
+                  {r.periodo_fin
+                    ? `hasta ${fmtDate(r.periodo_fin)}`
+                    : r.trial_termina_en
+                    ? `trial: ${fmtDate(r.trial_termina_en)}`
+                    : r.estado_suscripcion === "activa"
+                    ? "Activa sin vencimiento"
+                    : "—"}
                 </td>
               </tr>
             ))}

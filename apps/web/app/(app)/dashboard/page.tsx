@@ -208,7 +208,7 @@ export default async function DashboardPage() {
 
       {/* ---------- Próximas actividades pendientes ---------- */}
       {dash.actividades_proximas.length > 0 && (
-        <section id="actividades-pendientes" className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-20">
+        <section id="actividades-pendientes" role="region" aria-live="polite" aria-label="Próximas actividades pendientes" className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-20">
           <h2 className="text-sm font-bold uppercase text-gray-500 mb-3">Próximas actividades pendientes</h2>
           <ul className="divide-y divide-gray-100">
             {dash.actividades_proximas.map((a) => (

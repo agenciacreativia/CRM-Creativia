@@ -25,7 +25,9 @@ export async function setImagenAction(productoId: string, fd: FormData): Promise
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true, contentType: file.type });
     if (upErr) throw upErr;
     const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    const url = pub?.publicUrl ?? path;
+    // Validar que la URL publica sea http(s) valida antes de persistir; si no, guardamos el path como fallback
+    const publicUrl = pub?.publicUrl;
+    const url = typeof publicUrl === "string" && /^https?:\/\//i.test(publicUrl) ? publicUrl : path;
     const { error } = await supabase.from("producto").update({ imagen_path: url }).eq("id", productoId);
     if (error) throw error;
     revalidatePath(`/productos/${productoId}`);

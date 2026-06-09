@@ -43,6 +43,7 @@ export function NpsForm({ token, contacto }: { token: string; contacto: string |
             <button
               key={i}
               type="button"
+              aria-label={`Puntaje ${i} de 10`}
               onClick={() => setPuntaje(i)}
               className={`rounded-md border py-2 text-sm font-bold transition ${sel ? color + " ring-2 ring-offset-1 ring-brand-primary" : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"}`}
             >{i}</button>

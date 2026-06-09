@@ -32,15 +32,19 @@ const schema = z.object({
 
 export async function saveProductoAction(id: string | null, formData: FormData): Promise<ProductoResult> {
   const parsed = schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  if (!parsed.success) {
+    // Mostrar hasta los 3 primeros errores para que el usuario vea todos los campos invalidos
+    return { ok: false, error: parsed.error.issues.slice(0, 3).map((i) => i.message).join(", ") };
+  }
   try {
     if (id) {
       await updateProducto(id, parsed.data);
-      revalidatePath("/productos");
+      // Revalidar layout completo para invalidar /productos, /productos/[id] y /productos/[id]/editar
+      revalidatePath("/productos", "layout");
       return { ok: true, id };
     }
     const newId = await createProducto(parsed.data);
-    revalidatePath("/productos");
+    revalidatePath("/productos", "layout");
     return { ok: true, id: newId };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error" };
@@ -50,7 +54,7 @@ export async function saveProductoAction(id: string | null, formData: FormData):
 export async function deleteProductoAction(id: string): Promise<ProductoResult> {
   try {
     await deleteProducto(id);
-    revalidatePath("/productos");
+    revalidatePath("/productos", "layout");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error" };

@@ -107,6 +107,7 @@ export function ResetPasswordForm() {
           id="password"
           type="password"
           autoComplete="new-password"
+          aria-label="Nueva contraseña"
           required
           minLength={8}
           {...register("password", { required: true, minLength: 8 })}
@@ -122,6 +123,7 @@ export function ResetPasswordForm() {
           id="confirm"
           type="password"
           autoComplete="new-password"
+          aria-label="Confirmar contraseña"
           required
           minLength={8}
           {...register("confirm", {
@@ -138,7 +140,7 @@ export function ResetPasswordForm() {
         <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-status-danger">{error}</div>
       )}
 
-      <Button type="submit" disabled={submitting} className="w-full">
+      <Button type="submit" disabled={submitting} aria-label="Actualizar contraseña" className="w-full">
         {submitting ? "Guardando..." : "Actualizar contraseña"}
       </Button>
     </form>

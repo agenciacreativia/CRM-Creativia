@@ -7,13 +7,17 @@ export type ListaEnvio = {
   filtros: Record<string, unknown>; contactos: number; creado_en: string;
 };
 
-export async function listListasEnvio(): Promise<ListaEnvio[]> {
+// Paginación: limit por defecto acotado para evitar descargar miles de filas.
+export async function listListasEnvio(opts?: { limit?: number; offset?: number }): Promise<ListaEnvio[]> {
   try {
+    const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200);
+    const offset = Math.max(opts?.offset ?? 0, 0);
     const supabase = await createServerSupabase();
     const { data } = await supabase
       .from("lista_envio")
       .select("id, nombre, descripcion, filtros, contactos, creado_en")
-      .order("creado_en", { ascending: false });
+      .order("creado_en", { ascending: false })
+      .range(offset, offset + limit - 1);
     return (data ?? []) as ListaEnvio[];
   } catch { return []; }
 }

@@ -74,7 +74,18 @@ export type ComisionConfigInput = {
 export async function setComisionConfig(usuarioId: string, input: ComisionConfigInput): Promise<void> {
   const caller = await getSessionUser();
   if (caller?.rol !== "admin") throw new Error("Solo administradores");
+  if (!caller?.tenantId) throw new Error("Sesión inválida");
   const admin = createAdminSupabase();
+  // Validar que el usuario destino pertenezca al tenant del caller antes de actualizar
+  const { data: target, error: lookupError } = await admin
+    .from("usuario")
+    .select("tenant_id")
+    .eq("id", usuarioId)
+    .maybeSingle();
+  if (lookupError) throw new Error(lookupError.message);
+  if (!target || target.tenant_id !== caller.tenantId) {
+    throw new Error("Usuario no pertenece al tenant");
+  }
   const { error } = await admin
     .from("usuario")
     .update({
@@ -82,6 +93,7 @@ export async function setComisionConfig(usuarioId: string, input: ComisionConfig
       comision_pct: input.comision_pct,
       meta_mensual: input.meta_mensual,
     })
-    .eq("id", usuarioId);
+    .eq("id", usuarioId)
+    .eq("tenant_id", caller.tenantId);
   if (error) throw new Error(error.message);
 }

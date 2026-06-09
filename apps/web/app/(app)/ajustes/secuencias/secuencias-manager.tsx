@@ -118,7 +118,7 @@ function SecuenciaForm({ editing, onDone, onCancel }: { editing: Secuencia | nul
             </div>
             <div className="w-24">
               <label className="mb-1 block text-xs text-gray-500">Día</label>
-              <Input type="number" min="0" value={paso.dias} onChange={(e) => update(i, { ...paso, dias: Number(e.target.value) })} />
+              <Input type="number" min="0" step="1" value={paso.dias} onChange={(e) => update(i, { ...paso, dias: Math.max(0, Math.floor(Number(e.target.value) || 0)) })} />
             </div>
             <div className="min-w-40 flex-1">
               <label className="mb-1 block text-xs text-gray-500">Descripción</label>

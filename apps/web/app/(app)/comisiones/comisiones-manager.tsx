@@ -20,13 +20,22 @@ export function ComisionesManager({ initial }: { initial: ComisionAsesor[] }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const totalVentas = initial.reduce((s, a) => s + a.ventas, 0);
-  const totalComision = initial.reduce((s, a) => s + a.comision, 0);
+  // Elegimos la moneda dominante (la del primer asesor con ventas) y solo sumamos
+  // los asesores que comparten esa moneda para evitar mezclar USD/ARS en el KPI.
   const moneda = initial.find((a) => a.ventas > 0)?.moneda ?? "USD";
+  const enMoneda = initial.filter((a) => a.moneda === moneda);
+  const totalVentas = enMoneda.reduce((s, a) => s + a.ventas, 0);
+  const totalComision = enMoneda.reduce((s, a) => s + a.comision, 0);
+  const monedasDistintas = new Set(initial.filter((a) => a.ventas > 0).map((a) => a.moneda)).size > 1;
 
   return (
     <div className="space-y-3">
       {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {monedasDistintas && (
+        <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+          Hay asesores con monedas distintas. Los totales mostrados solo incluyen los registros en {moneda}.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <Kpi label="Ventas ganadas (mes)" value={money(totalVentas, moneda)} />

@@ -75,8 +75,11 @@ export async function dispatchWebhook(tenantId: string, evento: string, payload:
         const sig = crypto.createHmac("sha256", w.secret as string).update(body).digest("hex");
         headers["X-CRM-Signature"] = sig;
       }
-      fetch(w.url as string, { method: "POST", headers, body })
+      // Timeout de 5s via AbortSignal para evitar requests colgados en memoria
+      fetch(w.url as string, { method: "POST", headers, body, signal: AbortSignal.timeout(5000) })
         .then(async (r) => {
+          // Consumimos y descartamos el body para evitar memory leaks con respuestas grandes
+          try { await r.text(); } catch { /* ignorar */ }
           admin.from("webhook").update({ ultimo_envio: new Date().toISOString(), ultimo_estado: r.status }).eq("id", w.id).then(() => {}, () => {});
         })
         .catch(() => {

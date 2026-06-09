@@ -42,14 +42,18 @@ function oneOf<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
 }
 
-export async function listContactos(opts: { q?: string; empresa_id?: string; asignado_id?: string; limit?: number } = {}): Promise<ContactoListItem[]> {
+export async function listContactos(opts: { q?: string; empresa_id?: string; asignado_id?: string; limit?: number; offset?: number } = {}): Promise<ContactoListItem[]> {
   const supabase = await createServerSupabase();
+
+  // Paginacion: limit acotado y offset opcional para evitar cargas grandes
+  const limit = Math.min(Math.max(opts.limit ?? 200, 1), 2000);
+  const offset = Math.max(opts.offset ?? 0, 0);
 
   let query = supabase
     .from("contacto")
     .select("id, nombre, cargo, email, telefono, origen, empresa_id, empresa(nombre), asignado_id, asignado:usuario!contacto_asignado_id_fkey(nombre), campos_custom, oportunidad(count)")
     .order("nombre", { ascending: true })
-    .limit(opts.limit ?? 200);
+    .range(offset, offset + limit - 1);
 
   if (opts.q) {
     const s = `%${opts.q}%`;

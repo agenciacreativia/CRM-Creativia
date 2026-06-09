@@ -20,9 +20,18 @@ export function ProductoMediaUpload({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Limites de tamano: 10MB para imagenes, 25MB para adjuntos generales
+  const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+  const MAX_ADJUNTO_BYTES = 25 * 1024 * 1024;
+
   async function onImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("La imagen supera el tamano maximo permitido (10MB)");
+      e.target.value = "";
+      return;
+    }
     setBusy(true); setError(null);
     const fd = new FormData();
     fd.append("file", file);
@@ -35,6 +44,11 @@ export function ProductoMediaUpload({
   async function onAdjunto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_ADJUNTO_BYTES) {
+      setError("El adjunto supera el tamano maximo permitido (25MB)");
+      e.target.value = "";
+      return;
+    }
     setBusy(true); setError(null);
     const fd = new FormData();
     fd.append("file", file);

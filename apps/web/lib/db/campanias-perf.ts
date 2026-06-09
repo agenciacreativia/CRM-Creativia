@@ -23,10 +23,11 @@ export type UtmOptions = {
 export async function getCampaniasPerf(): Promise<CampaniaPerf[]> {
   try {
     const supabase = await createServerSupabase();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("oportunidad")
       .select("utm_source, utm_medium, utm_campaign, estado, valor")
       .neq("estado", "eliminado");
+    if (error) console.error("[getCampaniasPerf] error consultando oportunidad:", error);
     const map = new Map<string, { oportunidades: number; ganadas: number; valor: number }>();
     for (const o of (data ?? []) as { utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; estado: string; valor: number | null }[]) {
       const key = `${o.utm_source ?? "—"}|${o.utm_medium ?? "—"}|${o.utm_campaign ?? "—"}`;
@@ -42,7 +43,8 @@ export async function getCampaniasPerf(): Promise<CampaniaPerf[]> {
       const [source, medium, campaign] = k.split("|");
       return { source, medium, campaign, ...v, tasa: v.oportunidades > 0 ? Math.round((v.ganadas / v.oportunidades) * 100) : null };
     }).sort((a, b) => b.valor - a.valor);
-  } catch {
+  } catch (err) {
+    console.error("[getCampaniasPerf] excepcion inesperada:", err);
     return [];
   }
 }

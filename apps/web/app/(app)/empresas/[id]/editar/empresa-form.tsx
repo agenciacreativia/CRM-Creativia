@@ -55,9 +55,11 @@ export function EmpresaForm({
         </Field>
 
         <Field label="Sitio web" htmlFor="sitio_web" error={e.sitio_web}>
+          {/* type="url" agrega validacion de URL nativa del navegador */}
           <Input
             id="sitio_web"
             name="sitio_web"
+            type="url"
             defaultValue={empresa.sitio_web ?? ""}
             placeholder="https://..."
           />

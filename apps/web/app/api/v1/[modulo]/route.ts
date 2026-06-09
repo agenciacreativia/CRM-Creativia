@@ -18,10 +18,28 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+// Regex estándar para UUID v1-v5 (validación de formato previa a consultar la DB).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Verifica que un id exista en una tabla para el tenant dado.
+ * Devuelve true si pertenece al tenant, false en caso contrario.
+ */
+async function perteneceAlTenant(
+  admin: ReturnType<typeof createAdminSupabase>,
+  tabla: string,
+  id: string,
+  tenantId: string,
+): Promise<boolean> {
+  const { data, error } = await admin.from(tabla).select("id").eq("id", id).eq("tenant_id", tenantId).maybeSingle();
+  if (error) return false;
+  return !!data;
+}
+
 const TABLAS: Record<string, { tabla: string; cols: string; required: string[] }> = {
   contactos: { tabla: "contacto", cols: "id, nombre, email, telefono, empresa_id, creado_en", required: ["nombre", "email"] },
   empresas: { tabla: "empresa", cols: "id, nombre, estado_empresa, telefono, creado_en", required: ["nombre"] },
-  oportunidades: { tabla: "oportunidad", cols: "id, nombre, valor, moneda, estado, pipeline_id, etapa_id, contacto_id, empresa_id, creado_en", required: ["nombre", "contacto_id", "empresa_id"] },
+  oportunidades: { tabla: "oportunidad", cols: "id, nombre, valor, moneda, estado, pipeline_id, etapa_id, contacto_id, empresa_id, creado_en", required: ["nombre", "contacto_id", "empresa_id", "pipeline_id", "etapa_id"] },
   productos: { tabla: "producto", cols: "id, nombre, categoria, destino, precio_desde, moneda, activo, creado_en", required: ["nombre"] },
 };
 
@@ -41,7 +59,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ modu
   if (!t) return NextResponse.json({ error: "modulo desconocido", soportados: Object.keys(TABLAS) }, { status: 404, headers: CORS });
   const a = await auth(req);
   if (!a) return NextResponse.json({ error: "unauthorized" }, { status: 401, headers: CORS });
-  // Rate limit consume cuenta sólo para escrituras; lectura sólo informativo
+  // Lectura devuelve uso pero no incrementa contador (sólo escrituras consumen cuota).
   const admin = createAdminSupabase();
   const limit = Math.min(200, Number(req.nextUrl.searchParams.get("limit") ?? "50"));
   const { data, error } = await admin.from(t.tabla).select(t.cols).eq("tenant_id", a.tenantId).order("creado_en", { ascending: false }).limit(limit);
@@ -63,7 +81,36 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
   const missing = t.required.filter((k) => !body[k] || String(body[k]).trim() === "");
   if (missing.length) return NextResponse.json({ error: `campos requeridos: ${missing.join(", ")}` }, { status: 400, headers: CORS });
 
+  // Validación de formato UUID para todas las FKs provistas en el body.
+  // Evita inserts con strings inválidos que devolverían un error genérico de Postgres.
+  const camposUuid = ["contacto_id", "empresa_id", "pipeline_id", "etapa_id"] as const;
+  for (const campo of camposUuid) {
+    const valor = body[campo];
+    if (valor !== undefined && valor !== null && valor !== "" && !UUID_RE.test(String(valor))) {
+      return NextResponse.json({ error: `${campo} no es un UUID válido` }, { status: 400, headers: CORS });
+    }
+  }
+
   const admin = createAdminSupabase();
+
+  // Validación de pertenencia al tenant para FKs provistas explícitamente.
+  // Previene cross-tenant: si el id existe pero pertenece a otro tenant,
+  // se rechaza con un mensaje claro en lugar de fallar silenciosamente por RLS.
+  const fkValidaciones: Array<{ campo: string; tabla: string }> = [
+    { campo: "empresa_id", tabla: "empresa" },
+    { campo: "contacto_id", tabla: "contacto" },
+  ];
+  if (modulo === "oportunidades") {
+    fkValidaciones.push({ campo: "pipeline_id", tabla: "pipeline" });
+    fkValidaciones.push({ campo: "etapa_id", tabla: "etapa" });
+  }
+  for (const { campo, tabla } of fkValidaciones) {
+    const valor = body[campo];
+    if (valor !== undefined && valor !== null && valor !== "") {
+      const ok = await perteneceAlTenant(admin, tabla, String(valor), a.tenantId);
+      if (!ok) return NextResponse.json({ error: `${campo} no existe o no pertenece al tenant` }, { status: 400, headers: CORS });
+    }
+  }
 
   // Sobre cap → desviar a lista de espera usando la columna `en_espera`
   // (mecanismo existente desde migración 0021 — el row queda guardado pero

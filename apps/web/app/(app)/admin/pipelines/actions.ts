@@ -27,7 +27,8 @@ const pipelineSchema = z.object({
 const etapaSchema = z.object({
   nombre: z.string().trim().min(1).max(80),
   orden: z.preprocess(numOrNull, z.number().int().nonnegative().nullable()),
-  dias_maximo_alerta: z.preprocess(numOrNull, z.number().int().positive().nullable()),
+  // Limite maximo de 365 dias para evitar overflow visual en el kanban
+  dias_maximo_alerta: z.preprocess(numOrNull, z.number().int().positive().max(365).nullable()),
 });
 
 type ActionResult = { ok: true; id?: string } | { ok: false; error: string };

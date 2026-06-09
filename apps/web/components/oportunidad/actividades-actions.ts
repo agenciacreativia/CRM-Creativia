@@ -66,6 +66,24 @@ const schema = z.object({
 
 type Result = { ok: true } | { ok: false; error: string };
 
+/** Mapea errores internos de Supabase/DB a mensajes amigables, sin filtrar detalles. */
+function friendlyError(e: unknown): string {
+  const raw = e instanceof Error ? e.message.toLowerCase() : "";
+  if (!raw) return "Error";
+  if (raw.includes("unique") || raw.includes("duplicate") || raw.includes("duplicated")) {
+    return "Ya existe un registro con esos datos";
+  }
+  if (raw.includes("permission") || raw.includes("rls") || raw.includes("not authorized")) {
+    return "No tienes permiso para realizar esta acción";
+  }
+  if (raw.includes("foreign key") || raw.includes("violates")) {
+    return "Datos inválidos o referencia inexistente";
+  }
+  if (raw.includes("not found")) return "Recurso no encontrado";
+  if (raw.includes("network") || raw.includes("fetch")) return "Error de conexión";
+  return "No se pudo completar la operación";
+}
+
 export async function createActividadAction(formData: FormData): Promise<Result> {
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
@@ -85,7 +103,7 @@ export async function createActividadAction(formData: FormData): Promise<Result>
     revalidatePath(`/oportunidades/${parsed.data.oportunidad_id}`);
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Error" };
+    return { ok: false, error: friendlyError(e) };
   }
 }
 
@@ -95,7 +113,7 @@ export async function toggleActividadAction(id: string, completada: boolean): Pr
     revalidatePath("/oportunidades");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Error" };
+    return { ok: false, error: friendlyError(e) };
   }
 }
 
@@ -105,6 +123,6 @@ export async function deleteActividadAction(id: string): Promise<Result> {
     revalidatePath("/oportunidades");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Error" };
+    return { ok: false, error: friendlyError(e) };
   }
 }

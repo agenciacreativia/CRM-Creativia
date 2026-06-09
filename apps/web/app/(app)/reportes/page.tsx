@@ -161,31 +161,40 @@ export default async function ReportesPage({ searchParams }: { searchParams: Sea
         />
       )}
 
-      <Section
-        title="Desempeño de campañas (UTM)"
-        exportName="desempeno-campanias.csv"
-        rows={campanias.map((c) => ({
-          Source: c.source, Medium: c.medium, Campaign: c.campaign,
-          Oportunidades: c.oportunidades, Ganadas: c.ganadas,
-          "Tasa %": c.tasa ?? "", Valor: c.valor,
-        }))}
-        head={["Source", "Medium", "Campaign", "Oportunidades", "Ganadas", "Tasa cierre", "Valor"]}
-        body={campanias.length === 0 ? [["—", "—", "—", "—", "—", "—", "—"]] : campanias.map((c) => [
-          c.source, c.medium, c.campaign,
-          String(c.oportunidades), String(c.ganadas),
-          c.tasa != null ? `${c.tasa}%` : "—", money(c.valor, moneda),
-        ])}
-      />
+      {campanias.length > 0 && (
+        <Section
+          title="Desempeño de campañas (UTM)"
+          exportName="desempeno-campanias.csv"
+          rows={campanias.map((c) => ({
+            Source: c.source, Medium: c.medium, Campaign: c.campaign,
+            Oportunidades: c.oportunidades, Ganadas: c.ganadas,
+            "Tasa %": c.tasa ?? "", Valor: c.valor,
+          }))}
+          head={["Source", "Medium", "Campaign", "Oportunidades", "Ganadas", "Tasa cierre", "Valor"]}
+          body={campanias.map((c) => [
+            c.source, c.medium, c.campaign,
+            String(c.oportunidades), String(c.ganadas),
+            c.tasa != null ? `${c.tasa}%` : "—", money(c.valor, moneda),
+          ])}
+        />
+      )}
       <p className="text-xs text-gray-400">UTM: cargá <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> y <code>utm_term</code> en cada oportunidad para alimentar este reporte (campos predictivos con autocompletado disponibles en la edición de la oportunidad).</p>
     </div>
   );
 }
 
 function Kpi({ label, value }: { label: string; value: string }) {
+  // Si el valor es "—" mostramos tooltip explicando por qué falta el dato
+  const esVacio = value === "—";
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4">
       <p className="text-xs text-gray-500">{label}</p>
-      <p className="mt-1 text-xl font-bold text-gray-900">{value}</p>
+      <p
+        className={`mt-1 text-xl font-bold ${esVacio ? "cursor-help text-gray-400" : "text-gray-900"}`}
+        title={esVacio ? "Sin datos suficientes para calcular este valor" : undefined}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -221,11 +230,19 @@ function Section({
           <tbody>
             {body.map((row, ri) => (
               <tr key={ri} className="border-t border-gray-100">
-                {row.map((cell, ci) => (
-                  <td key={ci} className={`px-5 py-2.5 ${ci === 0 ? "font-medium text-gray-900" : "text-right text-gray-700"}`}>
-                    {cell}
-                  </td>
-                ))}
+                {row.map((cell, ci) => {
+                  // Tooltip explicativo cuando el valor es "—" (sin datos suficientes para calcularlo)
+                  const esVacio = cell === "—";
+                  return (
+                    <td
+                      key={ci}
+                      className={`px-5 py-2.5 ${ci === 0 ? "font-medium text-gray-900" : "text-right text-gray-700"}`}
+                      title={esVacio ? "Sin datos suficientes para calcular este valor" : undefined}
+                    >
+                      {esVacio ? <span className="cursor-help text-gray-400">{cell}</span> : cell}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

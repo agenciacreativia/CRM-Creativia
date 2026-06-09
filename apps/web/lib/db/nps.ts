@@ -53,18 +53,31 @@ export async function listNps(): Promise<NpsItem[]> {
       .order("respondido_en", { ascending: false, nullsFirst: false })
       .order("enviado_en", { ascending: false })
       .limit(200);
-    return ((data ?? []) as unknown as Record<string, unknown>[]).map((r) => {
-      const c = (Array.isArray(r.contacto) ? r.contacto[0] : r.contacto) as { nombre: string } | null;
-      const o = (Array.isArray(r.oportunidad) ? r.oportunidad[0] : r.oportunidad) as { nombre: string } | null;
+    // Tipado explicito de la fila devuelta por Supabase (relaciones pueden venir como objeto o array)
+    type RelNombre = { nombre: string } | null;
+    type FilaNps = {
+      id: string;
+      puntaje: number | null;
+      comentario: string | null;
+      estado: string;
+      enviado_en: string;
+      respondido_en: string | null;
+      contacto: RelNombre | RelNombre[];
+      oportunidad: RelNombre | RelNombre[];
+    };
+    const filas: FilaNps[] = (data ?? []) as unknown as FilaNps[];
+    return filas.map((r) => {
+      const c: RelNombre = Array.isArray(r.contacto) ? r.contacto[0] ?? null : r.contacto;
+      const o: RelNombre = Array.isArray(r.oportunidad) ? r.oportunidad[0] ?? null : r.oportunidad;
       return {
-        id: r.id as string,
+        id: r.id,
         contacto_nombre: c?.nombre ?? null,
         oportunidad_nombre: o?.nombre ?? null,
-        puntaje: (r.puntaje as number | null) ?? null,
-        comentario: (r.comentario as string | null) ?? null,
-        estado: r.estado as string,
-        enviado_en: r.enviado_en as string,
-        respondido_en: (r.respondido_en as string | null) ?? null,
+        puntaje: r.puntaje ?? null,
+        comentario: r.comentario ?? null,
+        estado: r.estado,
+        enviado_en: r.enviado_en,
+        respondido_en: r.respondido_en ?? null,
       };
     });
   } catch {

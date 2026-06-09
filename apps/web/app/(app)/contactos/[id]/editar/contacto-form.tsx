@@ -28,6 +28,15 @@ export function ContactoForm({
   const [state, formAction, isPending] = useActionState(action, INITIAL);
   const e = state.fieldErrors ?? {};
 
+  // Fallback: si el contacto está asignado a un usuario que no está en la lista
+  // (p. ej. eliminado o sin permisos), mostramos una opción placeholder para
+  // que el Select refleje el valor actual y no quede sin marcar.
+  const asignadoExisteEnLista =
+    contacto.asignado_id != null &&
+    usuarios.some((u) => u.id === contacto.asignado_id);
+  const mostrarFallbackAsignado =
+    contacto.asignado_id != null && !asignadoExisteEnLista;
+
   return (
     <form action={formAction} className="space-y-5">
       {state.error && (
@@ -89,6 +98,11 @@ export function ContactoForm({
         <Field label="Asignado a" htmlFor="asignado_id" error={e.asignado_id}>
           <Select id="asignado_id" name="asignado_id" defaultValue={contacto.asignado_id ?? ""}>
             <option value="">(no asignado)</option>
+            {mostrarFallbackAsignado && contacto.asignado_id && (
+              <option value={contacto.asignado_id}>
+                (usuario no disponible)
+              </option>
+            )}
             {usuarios.map((u) => (
               <option key={u.id} value={u.id}>{u.nombre} · {u.rol}</option>
             ))}

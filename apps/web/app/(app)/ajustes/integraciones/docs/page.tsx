@@ -70,8 +70,9 @@ export default function ApiDocsPage() {
 
       <Section title="Lista de espera y plan">
         <p>El límite mensual se reinicia el día 1 de cada mes. Mientras el contador supere el límite, todos los nuevos
-        contactos y oportunidades entrantes se desvían a la <strong>lista de espera</strong> (estado <Code>en_espera</Code>) sin perderse.
-        Cuando subís de plan o pasa el mes, podés correr el job manual de re-ingreso desde Ajustes → Plan.</p>
+        contactos y oportunidades entrantes se marcan con el estado <Code>en_espera</Code> (columna presente en cada tabla,
+        no es una tabla separada) sin perderse. Cuando subís de plan o pasa el mes, podés correr el job manual de re-ingreso
+        desde Ajustes → Plan.</p>
       </Section>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { InlineEditField, type InlineEditType } from "@/components/ui/inline-edit";
 import type { CampoPersonalizado } from "@/lib/db/campos";
@@ -37,12 +37,19 @@ export function ContactoAside({
 }) {
   const c = contacto;
   const [campos_custom, setCampos] = useState<Record<string, unknown>>(c.campos_custom ?? {});
+  // Sincroniza el estado local cuando el prop cambia (ej. actualizaciones del padre)
+  useEffect(() => {
+    setCampos(c.campos_custom ?? {});
+  }, [c.campos_custom]);
 
   async function saveCampo(campo: CampoPersonalizado, value: string) {
     const tipo = campo.tipo;
     const parsed = tipo === "checkbox" ? value === "true" : value === "" ? null : value;
+    // Normaliza el valor de checkbox a boolean para comparar de forma consistente
+    // (puede venir como boolean o como string "true"/"false" desde la DB)
+    const toBool = (raw: unknown): boolean => raw === true || raw === "true";
     const disp = (raw: unknown) =>
-      tipo === "checkbox" ? (raw ? "Sí" : "No") : raw == null || raw === "" ? "(vacío)" : String(raw);
+      tipo === "checkbox" ? (toBool(raw) ? "Sí" : "No") : raw == null || raw === "" ? "(vacío)" : String(raw);
     const desc = `Editó ${campo.etiqueta}: ${disp(campos_custom[campo.clave])} → ${disp(parsed)}`;
     const next = { ...campos_custom, [campo.clave]: parsed };
     const res = await saveContactoCampos(c.id, next, desc);
@@ -75,6 +82,8 @@ export function ContactoAside({
         {campos.map((cp) => {
           const raw = campos_custom[cp.clave];
           const valueStr = raw == null ? "" : String(raw);
+          // Normaliza checkbox a boolean (acepta boolean o string "true"/"false" desde la DB)
+          const rawBool = raw === true || raw === "true";
           const options =
             cp.tipo === "checkbox"
               ? [{ value: "true", label: "Sí" }, { value: "false", label: "No" }]
@@ -87,8 +96,8 @@ export function ContactoAside({
               label={cp.etiqueta}
               type={campoType(cp.tipo)}
               options={options}
-              value={cp.tipo === "checkbox" ? (raw ? "true" : "false") : valueStr}
-              display={cp.tipo === "checkbox" ? (raw ? "Sí" : "No") : valueStr === "" ? "—" : valueStr}
+              value={cp.tipo === "checkbox" ? (rawBool ? "true" : "false") : valueStr}
+              display={cp.tipo === "checkbox" ? (rawBool ? "Sí" : "No") : valueStr === "" ? "—" : valueStr}
               editable={canEdit}
               onSave={(v) => saveCampo(cp, v)}
             />

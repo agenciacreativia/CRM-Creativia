@@ -28,12 +28,17 @@ export default async function BusquedaAvanzadaPage({ searchParams }: { searchPar
   const spec = decodeFilterSpec(params.filtros);
   const hasAdvanced = specHasConditions(spec);
 
+  // Límite ampliado para búsqueda avanzada: el filtrado se hace en memoria con rowMatches,
+  // así que necesitamos traer un universo más amplio. Para tenants con más de SEARCH_SCAN_LIMIT
+  // registros se muestra una advertencia y se sugiere refinar filtros server-side simples primero.
+  const SEARCH_SCAN_LIMIT = 2000;
   let rows: Array<{ id: string } & Record<string, unknown>> = [];
   if (hasAdvanced) {
-    if (modulo === "contacto") rows = (await listContactos({})) as Array<{ id: string } & Record<string, unknown>>;
-    else if (modulo === "empresa") rows = (await listEmpresas({})) as Array<{ id: string } & Record<string, unknown>>;
-    else rows = (await listOportunidades({})) as Array<{ id: string } & Record<string, unknown>>;
+    if (modulo === "contacto") rows = (await listContactos({ limit: SEARCH_SCAN_LIMIT })) as Array<{ id: string } & Record<string, unknown>>;
+    else if (modulo === "empresa") rows = (await listEmpresas({ limit: SEARCH_SCAN_LIMIT })) as Array<{ id: string } & Record<string, unknown>>;
+    else rows = (await listOportunidades({ limit: SEARCH_SCAN_LIMIT })) as Array<{ id: string } & Record<string, unknown>>;
   }
+  const scanTruncated = rows.length >= SEARCH_SCAN_LIMIT;
   const matches = hasAdvanced && spec ? rows.filter((r) => rowMatches(r, spec, fields)) : [];
   const cfg = MODULOS.find((m) => m.value === modulo)!;
 
@@ -68,6 +73,11 @@ export default async function BusquedaAvanzadaPage({ searchParams }: { searchPar
           <header className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
             <h2 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{cfg.label} · {matches.length} resultado{matches.length === 1 ? "" : "s"}</h2>
           </header>
+          {scanTruncated && (
+            <p className="border-b border-amber-100 bg-amber-50 px-5 py-2 text-xs text-amber-800">
+              Se analizaron los primeros {SEARCH_SCAN_LIMIT} registros. Si esperás más resultados, refiná los filtros para acotar el universo.
+            </p>
+          )}
           {matches.length === 0 ? (
             <p className="px-5 py-6 text-center text-sm text-gray-500">Sin coincidencias.</p>
           ) : (

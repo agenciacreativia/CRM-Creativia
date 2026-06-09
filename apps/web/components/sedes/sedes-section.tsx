@@ -132,8 +132,8 @@ function SedeCard({
         </div>
         {canWrite && (
           <div className="flex items-center gap-1">
-            <Button type="button" size="sm" variant="ghost" onClick={onEdit}>Editar</Button>
-            <Button type="button" size="sm" variant="ghost" onClick={onDelete} className="text-status-danger">Eliminar</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={onEdit} aria-label={`Editar sede ${sede.nombre}`}>Editar</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={onDelete} className="text-status-danger" aria-label={`Eliminar sede ${sede.nombre}`}>Eliminar</Button>
           </div>
         )}
       </div>
@@ -206,6 +206,8 @@ function SedeFields({ sede }: { sede?: Sede }) {
         </Field>
       </div>
       <label className="flex items-center gap-2 text-sm">
+        {/* Hidden input garantiza que el campo siempre llegue como "false" si el checkbox no se marca */}
+        <input type="hidden" name="es_principal" value="false" />
         <input type="checkbox" name="es_principal" value="true" defaultChecked={sede?.es_principal} className="rounded" />
         Marcar como sede principal
       </label>

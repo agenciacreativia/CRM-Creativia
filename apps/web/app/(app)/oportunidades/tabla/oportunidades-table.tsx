@@ -71,6 +71,7 @@ export function OportunidadesTable({
                 defaultValue="" disabled={pending}
                 onChange={(e) => { if (e.target.value) run(() => bulkReasignarAction(ids, e.target.value === "_none" ? null : e.target.value)); e.target.value = ""; }}
                 className="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+                aria-label="Asignar oportunidades seleccionadas a usuario"
               >
                 <option value="">Asignar a…</option>
                 <option value="_none">Sin asignar</option>
@@ -80,6 +81,7 @@ export function OportunidadesTable({
                 defaultValue="" disabled={pending}
                 onChange={(e) => { if (e.target.value) run(() => bulkEstadoAction(ids, e.target.value as "activo" | "ganado" | "perdido")); e.target.value = ""; }}
                 className="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+                aria-label="Cambiar estado de oportunidades seleccionadas"
               >
                 <option value="">Cambiar estado…</option>
                 <option value="activo">Activo</option>
@@ -91,6 +93,7 @@ export function OportunidadesTable({
                   defaultValue="" disabled={pending}
                   onChange={(e) => { if (e.target.value) run(() => bulkEtiquetaAction(ids, e.target.value)); e.target.value = ""; }}
                   className="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+                  aria-label="Agregar etiqueta a oportunidades seleccionadas"
                 >
                   <option value="">Agregar etiqueta…</option>
                   {etiquetas.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}

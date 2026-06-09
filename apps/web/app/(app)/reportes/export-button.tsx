@@ -13,7 +13,7 @@ export function ExportCsvButton({ filename, rows }: { filename: string; rows: Ro
       headers.join(","),
       ...rows.map((r) => headers.map((h) => esc(r[h])).join(",")),
     ].join("\r\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -26,6 +26,7 @@ export function ExportCsvButton({ filename, rows }: { filename: string; rows: Ro
     <button
       type="button"
       onClick={exportCsv}
+      aria-label="Exportar datos a CSV"
       disabled={rows.length === 0}
       className="inline-flex items-center gap-1.5 text-sm text-brand-primary hover:underline disabled:opacity-40"
     >

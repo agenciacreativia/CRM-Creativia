@@ -132,7 +132,15 @@ export function InlineEditField({
         />
       )}
 
-      {error && <p className="mt-1 text-xs text-status-danger">{error}</p>}
+      {error && (
+        // Animacion sutil para indicar que el valor fue revertido por error
+        <p
+          role="alert"
+          className="mt-1 animate-pulse text-xs text-status-danger"
+        >
+          {error} · Se revirtio al valor anterior.
+        </p>
+      )}
     </div>
   );
 }

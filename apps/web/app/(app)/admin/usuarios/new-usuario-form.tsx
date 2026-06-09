@@ -56,7 +56,7 @@ export function NewUsuarioForm() {
           error={e.password}
           hint="Mínimo 8 caracteres. El usuario puede cambiarla después."
         >
-          <Input id="password" name="password" type="text" autoComplete="off" required minLength={8} />
+          <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} aria-label="Contraseña inicial" />
         </Field>
       </div>
 

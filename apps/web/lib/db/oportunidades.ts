@@ -125,6 +125,42 @@ export type KanbanCard = {
   color: "green" | "yellow" | "red" | "gray";
 };
 
+// Tipo helper para relaciones embebidas de Supabase: pueden venir como objeto
+// o como array (segun cardinalidad inferida). Reutilizado en este modulo.
+type EmbeddedRef<T> = T | T[] | null;
+
+// Forma cruda de una oportunidad para el tablero Kanban.
+type RawKanbanOpp = {
+  id: string;
+  nombre: string;
+  valor: number | null;
+  moneda: string;
+  etapa_id: string;
+  fecha_entrado_etapa: string;
+  empresa: EmbeddedRef<{ nombre: string }>;
+  usuario: EmbeddedRef<{ nombre: string }>;
+};
+
+// Forma cruda de una oportunidad para el listado.
+type RawOpportunityRow = {
+  id: string;
+  nombre: string;
+  valor: number | null;
+  moneda: string;
+  estado: "activo" | "ganado" | "perdido" | "eliminado";
+  empresa_id: string;
+  asignado_id: string | null;
+  probabilidad_cierre: number | null;
+  fecha_esperada_cierre: string | null;
+  creado_en: string;
+  campos_custom: Record<string, unknown> | null;
+  empresa: EmbeddedRef<{ nombre: string }>;
+  contacto: EmbeddedRef<{ nombre: string }>;
+  pipeline: EmbeddedRef<{ nombre: string }>;
+  etapa_pipeline: EmbeddedRef<{ nombre: string }>;
+  usuario: EmbeddedRef<{ nombre: string }>;
+};
+
 export type EtapaItem = {
   id: string;
   nombre: string;
@@ -146,40 +182,45 @@ export async function listEtapasDePipeline(pipelineId: string): Promise<EtapaIte
 
 export async function getKanbanBoard(pipeline_id?: string): Promise<KanbanColumn[]> {
   const supabase = await createServerSupabase();
-  const { data: pipelines } = await supabase
+  // Carga de pipelines con manejo de error: si falla, log y retorno vacio
+  const { data: pipelines, error: pipelinesError } = await supabase
     .from("pipeline")
     .select("id, nombre, es_default")
     .order("es_default", { ascending: false })
     .order("nombre", { ascending: true });
+  if (pipelinesError) {
+    console.error("[getKanbanBoard] error cargando pipelines:", pipelinesError.message);
+    return [];
+  }
 
   const selectedPipelineId = pipeline_id ?? (pipelines ?? [])[0]?.id;
   if (!selectedPipelineId) return [];
 
-  const { data: etapas } = await supabase
+  // Carga de etapas del pipeline seleccionado
+  const { data: etapas, error: etapasError } = await supabase
     .from("etapa_pipeline")
     .select("id, nombre, orden, dias_maximo_alerta, pipeline_id")
     .eq("pipeline_id", selectedPipelineId)
     .order("orden", { ascending: true });
+  if (etapasError) {
+    console.error("[getKanbanBoard] error cargando etapas:", etapasError.message);
+    return [];
+  }
 
-  const { data: opportunities } = await supabase
+  // Carga de oportunidades activas del pipeline
+  const { data: opportunities, error: oportunidadesError } = await supabase
     .from("oportunidad")
     .select("id, nombre, valor, moneda, etapa_id, fecha_entrado_etapa, empresa(nombre), usuario!oportunidad_asignado_id_fkey(nombre)")
     .eq("pipeline_id", selectedPipelineId)
     .eq("estado", "activo");
+  if (oportunidadesError) {
+    console.error("[getKanbanBoard] error cargando oportunidades:", oportunidadesError.message);
+    return [];
+  }
 
   const cardsByEtapa = new Map<string, KanbanCard[]>();
   const now = Date.now();
-  type RawOpp = {
-    id: string;
-    nombre: string;
-    valor: number | null;
-    moneda: string;
-    etapa_id: string;
-    fecha_entrado_etapa: string;
-    empresa: { nombre: string } | { nombre: string }[] | null;
-    usuario: { nombre: string } | { nombre: string }[] | null;
-  };
-  for (const o of (opportunities ?? []) as RawOpp[]) {
+  for (const o of (opportunities ?? []) as RawKanbanOpp[]) {
     const oneOf = <T>(v: T | T[] | null | undefined): T | null =>
       Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
     const dias = Math.floor((now - new Date(o.fecha_entrado_etapa).getTime()) / (1000 * 60 * 60 * 24));
@@ -289,7 +330,7 @@ export async function listOportunidades(opts: {
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data ?? []).map((row: { id: string; nombre: string; valor: number | null; moneda: string; estado: "activo" | "ganado" | "perdido" | "eliminado"; empresa_id: string; asignado_id: string | null; probabilidad_cierre: number | null; fecha_esperada_cierre: string | null; creado_en: string; campos_custom: Record<string, unknown> | null; empresa: { nombre: string } | { nombre: string }[] | null; contacto: { nombre: string } | { nombre: string }[] | null; pipeline: { nombre: string } | { nombre: string }[] | null; etapa_pipeline: { nombre: string } | { nombre: string }[] | null; usuario: { nombre: string } | { nombre: string }[] | null }) => {
+  return (data ?? []).map((row: RawOpportunityRow) => {
     const oneOf = <T extends { nombre: string }>(v: T | T[] | null): T | null =>
       Array.isArray(v) ? v[0] ?? null : v;
     return {

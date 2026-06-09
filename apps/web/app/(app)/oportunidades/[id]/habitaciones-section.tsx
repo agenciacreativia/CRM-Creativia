@@ -71,7 +71,13 @@ export function HabitacionesSection({
         <h2 className="flex items-center gap-2 text-sm font-bold uppercase text-gray-500"><BedDouble className="h-4 w-4" /> Habitaciones</h2>
         {canEdit && (
           <div className="flex items-center gap-2">
-            <Select value={nuevoTipo} onChange={(e) => setNuevoTipo(e.target.value as TipoHabitacion)} className="w-32">
+            <Select
+              aria-label="Tipo de habitación a agregar"
+              title="Tipo de habitación a agregar"
+              value={nuevoTipo}
+              onChange={(e) => setNuevoTipo(e.target.value as TipoHabitacion)}
+              className="w-32"
+            >
               {TIPOS_HABITACION.map((t) => <option key={t} value={t}>{HABITACION_LABEL[t]} ({HABITACION_CAP[t]})</option>)}
             </Select>
             <Button type="button" size="sm" onClick={agregar} disabled={busy} className="inline-flex items-center gap-1.5">
@@ -146,6 +152,8 @@ export function HabitacionesSection({
                 <td className="px-3 py-2 text-gray-600">{p.tipo === "adulto" ? "Adulto" : p.tipo === "nino" ? "Niño" : "Bebé"}</td>
                 <td className="px-3 py-2">
                   <Select
+                    aria-label={`Habitación asignada a ${p.nombre}`}
+                    title={`Habitación asignada a ${p.nombre}`}
                     value={p.habitacion_id ?? ""}
                     onChange={(e) => asignar(p.id, e.target.value || null)}
                     disabled={!canEdit || habitaciones.length === 0}

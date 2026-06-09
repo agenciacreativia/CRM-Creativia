@@ -44,15 +44,15 @@ export function FilterBuilder({ fields, paramName = "filtros" }: Props) {
   const [and, setAnd] = useState<FilterCondition[]>([]);
   const [or, setOr] = useState<FilterCondition[]>([]);
 
-  // Sync local state from the URL whenever the dialog opens.
+  // Sincroniza el estado local desde la URL al abrir el diálogo,
+  // o si los parámetros cambian mientras el diálogo está abierto.
   useEffect(() => {
     if (open) {
       const spec = decodeFilterSpec(searchParams.get(paramName));
       setAnd(spec?.and ?? []);
       setOr(spec?.or ?? []);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, searchParams, paramName]);
 
   function apply() {
     const spec: FilterSpec = { and, or };

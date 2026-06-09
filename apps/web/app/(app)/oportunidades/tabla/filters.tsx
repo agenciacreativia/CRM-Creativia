@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+// Tipo para mensajes de error de validacion del formulario
+type FormErrors = { valor?: string };
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,13 +15,22 @@ type Props = {
   currentUserId: string | null;
 };
 
-const ADVANCED_KEYS = ["asignado", "pipeline", "cierre_desde", "cierre_hasta", "valor_min", "valor_max"];
+const ADVANCED_KEYS = ["asignado", "pipeline", "cierre_desde", "cierre_hasta", "valor_min", "valor_max", "estado"];
+
+// Opciones validas para el filtro de estado de la oportunidad
+const ESTADO_OPTIONS = [
+  { value: "activo", label: "Activo" },
+  { value: "ganado", label: "Ganado" },
+  { value: "perdido", label: "Perdido" },
+  { value: "eliminado", label: "Eliminado" },
+] as const;
 
 export function OportunidadFilters({ usuarios, pipelines, currentUserId }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const [open, setOpen] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [, startTransition] = useTransition();
 
   const isMine = params.get("mine") === "1";
@@ -42,20 +53,35 @@ export function OportunidadFilters({ usuarios, pipelines, currentUserId }: Props
   function clearAll() {
     const next = new URLSearchParams();
     if (params.get("q")) next.set("q", params.get("q")!);
-    if (params.get("estado")) next.set("estado", params.get("estado")!);
+    setErrors({});
     startTransition(() => router.replace(`${pathname}?${next.toString()}`));
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const valorMinStr = (fd.get("valor_min") as string) || "";
+    const valorMaxStr = (fd.get("valor_max") as string) || "";
+
+    // Validacion: si ambos valores existen, valor_min debe ser <= valor_max
+    if (valorMinStr !== "" && valorMaxStr !== "") {
+      const min = Number(valorMinStr);
+      const max = Number(valorMaxStr);
+      if (Number.isFinite(min) && Number.isFinite(max) && min > max) {
+        setErrors({ valor: "El valor minimo no puede ser mayor al valor maximo." });
+        return;
+      }
+    }
+
+    setErrors({});
     update({
       asignado: (fd.get("asignado") as string) || null,
       pipeline: (fd.get("pipeline") as string) || null,
       cierre_desde: (fd.get("cierre_desde") as string) || null,
       cierre_hasta: (fd.get("cierre_hasta") as string) || null,
-      valor_min: (fd.get("valor_min") as string) || null,
-      valor_max: (fd.get("valor_max") as string) || null,
+      valor_min: valorMinStr || null,
+      valor_max: valorMaxStr || null,
+      estado: (fd.get("estado") as string) || null,
     });
     setOpen(false);
   }
@@ -106,6 +132,15 @@ export function OportunidadFilters({ usuarios, pipelines, currentUserId }: Props
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold mb-4">Filtros avanzados</h3>
             <form onSubmit={onSubmit} className="space-y-4">
+              <Field label="Estado" htmlFor="estado">
+                <Select id="estado" name="estado" defaultValue={params.get("estado") ?? ""}>
+                  <option value="">— todos —</option>
+                  {ESTADO_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </Select>
+              </Field>
+
               <Field label="Asignado a" htmlFor="asignado">
                 <Select id="asignado" name="asignado" defaultValue={params.get("asignado") ?? ""}>
                   <option value="">— todos —</option>
@@ -142,6 +177,9 @@ export function OportunidadFilters({ usuarios, pipelines, currentUserId }: Props
                   <Input id="valor_max" name="valor_max" type="number" min="0" step="0.01" defaultValue={params.get("valor_max") ?? ""} />
                 </Field>
               </div>
+              {errors.valor && (
+                <p role="alert" className="text-xs text-status-danger">{errors.valor}</p>
+              )}
 
               <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
                 <Button type="submit">Aplicar</Button>

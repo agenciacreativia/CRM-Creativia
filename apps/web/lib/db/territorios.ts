@@ -59,10 +59,18 @@ export async function listTerritorios(): Promise<Territorio[]> {
     ventasPorAsesor.set(id, (ventasPorAsesor.get(id) ?? 0) + ((o.valor as number) ?? 0));
   }
 
+  // Pre-agrupamos asesores por territorio para evitar O(territorios * usuarios) al filtrar.
+  const asesoresPorTerritorio = new Map<string, { id: string; nombre: string }[]>();
+  for (const u of (usuarios ?? []) as { id: string; nombre: string; territorio_id: string | null }[]) {
+    if (!u.territorio_id) continue;
+    const arr = asesoresPorTerritorio.get(u.territorio_id);
+    const entry = { id: u.id, nombre: u.nombre };
+    if (arr) arr.push(entry);
+    else asesoresPorTerritorio.set(u.territorio_id, [entry]);
+  }
+
   return (territorios ?? []).map((t: { id: string; nombre: string; descripcion: string | null; meta: number; moneda: string; activo: boolean }) => {
-    const asesores = ((usuarios ?? []) as { id: string; nombre: string; territorio_id: string | null }[])
-      .filter((u) => u.territorio_id === t.id)
-      .map((u) => ({ id: u.id, nombre: u.nombre }));
+    const asesores = asesoresPorTerritorio.get(t.id) ?? [];
     const ventas = asesores.reduce((s, a) => s + (ventasPorAsesor.get(a.id) ?? 0), 0);
     const cumplimiento_pct = t.meta > 0 ? Math.round((ventas / t.meta) * 100) : null;
     return { id: t.id, nombre: t.nombre, descripcion: t.descripcion, meta: Number(t.meta) || 0, moneda: t.moneda, activo: t.activo, asesores, ventas, cumplimiento_pct };

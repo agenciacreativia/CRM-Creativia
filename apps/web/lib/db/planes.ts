@@ -193,11 +193,14 @@ export async function getListaEsperaResumen(): Promise<ListaEsperaResumen | null
     const items: { tipo: string; label: string; count: number }[] = [];
     let total = 0;
     for (const [tabla, label] of tablas) {
-      const { count } = await admin
+      const { count, error } = await admin
         .from(tabla)
         .select("id", { count: "exact", head: true })
         .eq("tenant_id", u.tenantId)
         .eq("en_espera", true);
+      // Si RLS o la columna falla, propagamos para que el catch externo
+      // devuelva null y no ocultemos el error sumando 0.
+      if (error) throw error;
       const c = count ?? 0;
       if (c > 0) items.push({ tipo: tabla, label, count: c });
       total += c;

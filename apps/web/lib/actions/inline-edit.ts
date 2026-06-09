@@ -49,7 +49,7 @@ async function prevValue(table: string, id: string, field: string): Promise<unkn
     console.error(`[inline-edit] prevValue(${table}, ${field}):`, error.message);
     return null;
   }
-  return data ? (data as unknown as Record<string, unknown>)[field] : null;
+  return data ? (data as unknown as Record<string, unknown>)[field] ?? null : null;
 }
 
 async function usuarioNombre(id: unknown): Promise<string> {
@@ -85,7 +85,19 @@ const OPP_FIELDS: Record<string, FieldDef> = {
   fecha_esperada_cierre: { coerce: str, label: "Cierre esperado" },
   descripcion: { coerce: str, label: "Descripción" },
   asignado_id: { coerce: str, label: "Asignado" },
-  moneda: { coerce: (v) => v, label: "Moneda" },
+  moneda: {
+    coerce: (v) => {
+      // Validar que el valor sea una de las monedas permitidas.
+      const allowed = ["ARS", "USD", "EUR", "BRL", "CLP", "UYU"] as const;
+      const t = v.trim().toUpperCase();
+      if (!t) return null;
+      if (!(allowed as readonly string[]).includes(t)) {
+        throw new Error("Moneda inválida");
+      }
+      return t;
+    },
+    label: "Moneda",
+  },
   estrategia: { coerce: str, label: "Estrategia" },
 };
 
@@ -104,7 +116,18 @@ const EMPRESA_FIELDS: Record<string, FieldDef> = {
   ciudad: { coerce: str, label: "Ciudad" },
   pais: { coerce: str, label: "País" },
   sitio_web: { coerce: str, label: "Sitio web" },
-  estado_empresa: { coerce: (v) => v, label: "Estado" },
+  estado_empresa: {
+    coerce: (v) => {
+      // Validar que el valor sea uno de los enum permitidos para estado_empresa.
+      const allowed = ["prospecto", "cliente", "inactivo"] as const;
+      const t = v.trim();
+      if (!(allowed as readonly string[]).includes(t)) {
+        throw new Error("Estado inválido");
+      }
+      return t;
+    },
+    label: "Estado",
+  },
 };
 
 /* ---------------- field saves ---------------- */

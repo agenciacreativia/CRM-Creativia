@@ -38,8 +38,9 @@ export function ReportesFiltersBar({
         <Filter className="h-3.5 w-3.5" /> Filtros
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Embudo</label>
+        <label htmlFor="filtro-embudo" className="mb-1 block text-[11px] text-gray-500">Embudo</label>
         <select
+          id="filtro-embudo"
           value={activos.pipeline ?? ""}
           onChange={(e) => set("pipeline", e.target.value)}
           className="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm"
@@ -49,8 +50,9 @@ export function ReportesFiltersBar({
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Producto</label>
+        <label htmlFor="filtro-producto" className="mb-1 block text-[11px] text-gray-500">Producto</label>
         <select
+          id="filtro-producto"
           value={activos.producto ?? ""}
           onChange={(e) => set("producto", e.target.value)}
           className="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm"
@@ -60,8 +62,9 @@ export function ReportesFiltersBar({
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Asesor</label>
+        <label htmlFor="filtro-asesor" className="mb-1 block text-[11px] text-gray-500">Asesor</label>
         <select
+          id="filtro-asesor"
           value={activos.asesor ?? ""}
           onChange={(e) => set("asesor", e.target.value)}
           className="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm"
@@ -71,8 +74,9 @@ export function ReportesFiltersBar({
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Desde</label>
+        <label htmlFor="filtro-desde" className="mb-1 block text-[11px] text-gray-500">Desde</label>
         <input
+          id="filtro-desde"
           type="date"
           value={activos.desde ?? ""}
           onChange={(e) => set("desde", e.target.value)}
@@ -80,8 +84,9 @@ export function ReportesFiltersBar({
         />
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Hasta</label>
+        <label htmlFor="filtro-hasta" className="mb-1 block text-[11px] text-gray-500">Hasta</label>
         <input
+          id="filtro-hasta"
           type="date"
           value={activos.hasta ?? ""}
           onChange={(e) => set("hasta", e.target.value)}
@@ -89,7 +94,7 @@ export function ReportesFiltersBar({
         />
       </div>
       {has && (
-        <button onClick={reset} className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+        <button type="button" onClick={reset} className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
           <RotateCcw className="h-3.5 w-3.5" /> Limpiar
         </button>
       )}

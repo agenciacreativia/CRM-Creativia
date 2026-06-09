@@ -51,8 +51,11 @@ export function LoginForm() {
       // If we're already on a tenant subdomain, the session cookie is set for the
       // right host — just continue to the app.
       if (currentSubdomain()) {
-        router.push(next);
+        // Refrescamos antes de navegar para que el JWT recién emitido se propague
+        // a los Server Components; navegar primero podría dejar al usuario en
+        // 'next' con un árbol RSC stale.
         router.refresh();
+        router.push(next);
         return;
       }
 
@@ -67,7 +70,14 @@ export function LoginForm() {
             refresh_token: data.session.refresh_token,
             next,
           });
-          window.location.href = `${window.location.protocol}//${subdomain}.${env.BASE_DOMAIN}/auth/handoff#${hash.toString()}`;
+          // Construimos la URL con la API URL para evitar URLs malformadas si el
+          // subdomain o BASE_DOMAIN contienen caracteres inesperados.
+          const handoffUrl = new URL(
+            "/auth/handoff",
+            `${window.location.protocol}//${subdomain}.${env.BASE_DOMAIN}`,
+          );
+          handoffUrl.hash = hash.toString();
+          window.location.href = handoffUrl.href;
           return;
         }
       } catch {
@@ -137,7 +147,7 @@ export function LoginForm() {
 
       <div className="text-center">
         <Link href="/forgot-password" className="text-sm text-gray-500 hover:text-brand-primary hover:underline">
-          ¿Olvidaste tu contraseña?
+          {t("login.forgot_password")}
         </Link>
       </div>
     </form>

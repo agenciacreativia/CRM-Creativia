@@ -19,7 +19,12 @@ const schema = z.object({
   fecha_nacimiento: z.string().nullable().optional().default(null),
   doc_vencimiento: z.string().nullable().optional().default(null),
   tipo: z.enum(["adulto", "nino", "bebe"]).default("adulto"),
-  email: z.string().trim().max(160).nullable().optional().default(null),
+  // Email opcional: acepta null, vacio o un email valido (max 160)
+  email: z
+    .union([z.literal(""), z.string().trim().email("Email inválido").max(160)])
+    .nullable()
+    .optional()
+    .default(null),
   telefono: z.string().trim().max(40).nullable().optional().default(null),
 });
 

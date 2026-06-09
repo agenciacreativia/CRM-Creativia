@@ -32,23 +32,25 @@ function shapeOpp(r: Record<string, unknown>): OppRel {
 
 export async function listOportunidadesDeContacto(contactoId: string): Promise<OppRel[]> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("oportunidad")
     .select(OPP_COLS)
     .eq("contacto_id", contactoId)
     .neq("estado", "eliminado")
     .order("creado_en", { ascending: false });
+  if (error) throw error;
   return (data ?? []).map((r) => shapeOpp(r as Record<string, unknown>));
 }
 
 export async function listOportunidadesDeEmpresa(empresaId: string): Promise<OppRel[]> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("oportunidad")
     .select(OPP_COLS)
     .eq("empresa_id", empresaId)
     .neq("estado", "eliminado")
     .order("creado_en", { ascending: false });
+  if (error) throw error;
   return (data ?? []).map((r) => shapeOpp(r as Record<string, unknown>));
 }
 
@@ -98,11 +100,11 @@ export async function listContactosDeEmpresa(empresaId: string): Promise<Contact
   const supabase = await createServerSupabase();
   const { data } = await supabase
     .from("contacto")
-    .select("id, nombre, cargo, email, telefono, usuario:asignado_id(nombre)")
+    .select("id, nombre, cargo, email, telefono, asignado:usuario!contacto_asignado_id_fkey(nombre)")
     .eq("empresa_id", empresaId)
     .order("nombre");
   return ((data ?? []) as unknown as Record<string, unknown>[]).map((r) => {
-    const u = (Array.isArray(r.usuario) ? r.usuario[0] : r.usuario) as { nombre: string } | null;
+    const u = (Array.isArray(r.asignado) ? r.asignado[0] : r.asignado) as { nombre: string } | null;
     return {
       id: r.id as string,
       nombre: r.nombre as string,

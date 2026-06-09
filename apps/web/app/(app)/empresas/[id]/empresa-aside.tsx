@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { InlineEditField, type InlineEditType } from "@/components/ui/inline-edit";
 import type { CampoPersonalizado } from "@/lib/db/campos";
 import { saveEmpresaField, saveEmpresaCampos } from "@/lib/actions/inline-edit";
@@ -37,6 +37,11 @@ export function EmpresaAside({
 }) {
   const e = empresa;
   const [campos_custom, setCampos] = useState<Record<string, unknown>>(e.campos_custom ?? {});
+
+  // Sincroniza el estado local cuando el padre recibe nuevos datos del servidor
+  useEffect(() => {
+    setCampos(e.campos_custom ?? {});
+  }, [e.campos_custom]);
 
   async function saveCampo(campo: CampoPersonalizado, value: string) {
     const tipo = campo.tipo;

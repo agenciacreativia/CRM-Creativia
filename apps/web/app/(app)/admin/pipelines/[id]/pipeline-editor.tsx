@@ -63,8 +63,10 @@ export function PipelineEditor({ pipeline }: { pipeline: PipelineDetail }) {
     setError(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
-    // Auto-orden: last
-    fd.set("orden", String(etapas.length));
+    // Auto-orden: max(orden) + 1 para evitar duplicados si se borraron
+    // etapas intermedias (p. ej. quedan órdenes 0,1,3 → next debe ser 4, no 3).
+    const nextOrden = etapas.length === 0 ? 0 : Math.max(...etapas.map((x) => x.orden)) + 1;
+    fd.set("orden", String(nextOrden));
     const res = await createEtapaAction(pipeline.id, fd);
     if (!res.ok) {
       setError(res.error);
