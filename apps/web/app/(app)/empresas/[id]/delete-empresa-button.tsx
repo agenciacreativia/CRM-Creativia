@@ -59,11 +59,11 @@ export function DeleteEmpresaButton({ id, nombre }: { id: string; nombre: string
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
           onClick={() => !loading && setOpen(false)}
         >
           <div
-            className="w-full max-w-lg space-y-4 rounded-lg bg-white p-6 shadow-xl"
+            className="w-full max-h-[90vh] space-y-4 overflow-y-auto rounded-t-lg bg-white p-5 shadow-xl sm:max-w-lg sm:rounded-lg sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">

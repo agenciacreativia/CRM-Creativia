@@ -89,8 +89,9 @@ export function FilterBuilder({ fields, paramName = "filtros" }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8">
-          <div className="w-full max-w-3xl rounded-2xl border border-gray-200 bg-white surface-white shadow-2xl">
+        // Mobile: drawer full-screen desde abajo. Desktop: modal centrado.
+        <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/40 sm:items-start sm:p-8">
+          <div className="w-full max-h-[95vh] overflow-y-auto rounded-t-2xl border border-gray-200 bg-white surface-white shadow-2xl sm:max-w-3xl sm:rounded-2xl">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
               <h2 className="text-lg font-bold text-gray-900">Filtros avanzados</h2>

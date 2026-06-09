@@ -65,11 +65,11 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
         ← Empresas
       </Link>
 
-      {/* Top container */}
-      <div className="flex items-start justify-between gap-4 rounded-lg border border-gray-200 bg-white p-5">
+      {/* Top container — apilamos en mobile: título arriba, acciones abajo. */}
+      <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-2xl font-bold text-gray-900">{empresa.nombre}</h1>
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">{empresa.nombre}</h1>
             <Badge variant={ESTADO_BADGE[empresa.estado_empresa] ?? "default"}>{empresa.estado_empresa}</Badge>
           </div>
           <p className="mt-1 text-sm text-gray-500">
@@ -84,7 +84,7 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
           {canEdit && (
             <Link
               href={`/empresas/${empresa.id}/editar`}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
+              className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 sm:flex-none"
             >
               Editar
             </Link>

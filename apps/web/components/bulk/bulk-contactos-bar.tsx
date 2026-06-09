@@ -47,8 +47,8 @@ export function BulkContactosBar({ usuarios }: { usuarios: UsuarioOption[] }) {
   if (ids.length === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2 shadow-lg">
+    <div className="fixed inset-x-0 bottom-0 z-40 sm:bottom-4 sm:flex sm:justify-center sm:px-4" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white px-3 py-2 shadow-lg sm:gap-3 sm:rounded-lg sm:border sm:px-4">
         <span className="text-sm font-medium text-gray-700">
           <strong>{ids.length}</strong> seleccionado(s)
         </span>

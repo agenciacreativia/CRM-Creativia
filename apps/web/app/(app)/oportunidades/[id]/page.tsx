@@ -143,11 +143,11 @@ export default async function OportunidadDetailPage({ params }: { params: Params
         ← Oportunidades
       </Link>
 
-      {/* Top container: title + embudo */}
-      <div className="flex items-start justify-between gap-4 rounded-lg border border-gray-200 bg-white p-5">
+      {/* Top container: title + embudo. Mobile: apilamos. */}
+      <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-2xl font-bold text-gray-900">{o.nombre}</h1>
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">{o.nombre}</h1>
             <Badge variant={ESTADO_BADGE[o.estado] ?? "default"}>{o.estado}</Badge>
           </div>
           <p className="mt-1 text-sm text-gray-500">
@@ -165,7 +165,7 @@ export default async function OportunidadDetailPage({ params }: { params: Params
           </div>
         </div>
         {canEdit && o.estado !== "eliminado" && (
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <EnrollButton oportunidadId={id} secuencias={secuencias.map((s) => ({ id: s.id, nombre: s.nombre, pasos: s.pasos.length }))} />
             {o.estado === "ganado" && <EnviarNpsButton oportunidadId={id} contactoId={o.contacto_id} />}
             <Link

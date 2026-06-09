@@ -31,14 +31,14 @@ export function QuickSearch({ placeholder = "Buscar…" }: { placeholder?: strin
   }, [value]);
 
   return (
-    <div className="relative">
+    <div className="relative flex-1 sm:flex-none">
       <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
       <input
         type="search"
         value={value}
         onChange={(ev) => setValue(ev.target.value)}
         placeholder={placeholder}
-        className="w-56 rounded-md border border-gray-300 bg-white py-1.5 pl-8 pr-2.5 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none"
+        className="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-8 pr-2.5 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none sm:w-56"
       />
     </div>
   );

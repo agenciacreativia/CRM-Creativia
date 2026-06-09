@@ -25,6 +25,8 @@ import {
   Mail,
   Search,
   Eye,
+  Menu as MenuIcon,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { verComoAgenciaAction } from "@/app/(app)/ajustes/agencias/actions";
@@ -78,6 +80,9 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
   const { t } = useTranslation();
 
   const [collapsed, setCollapsed] = useState(false);
+  // Mobile drawer (<md). El sidebar normal está oculto bajo md y se reemplaza
+  // por este drawer overlay que se abre desde el hamburguesa del topbar.
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -87,12 +92,25 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
     if (window.localStorage.getItem(SIDEBAR_KEY) === "1") setCollapsed(true);
   }, []);
 
-  // Close menus on route change
+  // Close menus + mobile drawer on route change
   useEffect(() => {
     setAddOpen(false);
     setUserOpen(false);
     setNotifOpen(false);
+    setMobileOpen(false);
   }, [pathname]);
+
+  // Bloquear scroll del body cuando el drawer móvil está abierto, para que el
+  // contenido detrás no se mueva con scroll inercial en iOS.
+  useEffect(() => {
+    if (mobileOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [mobileOpen]);
 
   function toggleCollapsed() {
     setCollapsed((c) => {
@@ -105,6 +123,11 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
       return next;
     });
   }
+
+  // En el drawer móvil siempre mostramos labels — el "collapsed" (icons-only)
+  // solo aplica al sidebar lateral md+. Sin esto, abrir el drawer en celu
+  // mostraría solo iconos si el user había colapsado en escritorio.
+  const sidebarCollapsed = collapsed && !mobileOpen;
 
   // Daily CRM navigation — lives in the left rail. Each item maps to a
   // permission module; hidden when the role lacks "ver" (admins see all).
@@ -146,21 +169,36 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
 
   return (
     <div className="flex min-h-screen">
-      {/* ---------------- LEFT SIDEBAR ---------------- */}
+      {/* Backdrop del drawer móvil — solo visible bajo md, cubre la pantalla. */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      {/* ---------------- LEFT SIDEBAR ----------------
+          - md+: sticky lateral (60px collapsed, 240px expanded)
+          - <md: drawer overlay slide-in desde la izquierda, abre/cierra con
+            el hamburguesa del topbar. Ancho fijo más cómodo en celu. */}
       <aside
         className={cn(
-          "sticky top-0 z-30 flex h-screen shrink-0 flex-col transition-[width] duration-200 surface-sidebar",
-          collapsed ? "w-16" : "w-60",
+          "fixed inset-y-0 left-0 z-50 flex h-screen shrink-0 flex-col surface-sidebar transition-all duration-200",
+          "md:sticky md:top-0 md:translate-x-0 md:transition-[width]",
+          collapsed ? "md:w-16" : "md:w-60",
+          // Mobile width + slide
+          mobileOpen ? "w-64 translate-x-0 shadow-2xl" : "w-64 -translate-x-full md:translate-x-0",
         )}
       >
         {/* Brand + collapse toggle */}
         <div
           className={cn(
             "flex h-16 items-center border-b border-white/5",
-            collapsed ? "justify-center px-0" : "justify-between px-4",
+            sidebarCollapsed ? "justify-center px-0" : "justify-between px-4",
           )}
         >
-          {!collapsed && (
+          {!sidebarCollapsed && (
             <Link href="/dashboard" aria-label="Turistea" className="flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-green text-brand-navy-deep">
                 <Briefcase className="h-4 w-4" strokeWidth={2.5} />
@@ -171,14 +209,15 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
               </span>
             </Link>
           )}
+          {/* En mobile el botón de cierre del drawer; en desktop, el collapse. */}
           <button
             type="button"
-            onClick={toggleCollapsed}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-            title={collapsed ? "Expandir" : "Colapsar"}
+            onClick={() => (mobileOpen ? setMobileOpen(false) : toggleCollapsed())}
+            className="flex h-9 w-9 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            aria-label={mobileOpen ? "Cerrar menú" : sidebarCollapsed ? "Expandir menú" : "Colapsar menú"}
+            title={mobileOpen ? "Cerrar" : sidebarCollapsed ? "Expandir" : "Colapsar"}
           >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {mobileOpen ? <X className="h-4 w-4" /> : sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         </div>
 
@@ -191,24 +230,24 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
               <Link
                 key={item.href}
                 href={item.href}
-                title={collapsed ? item.label : undefined}
+                title={sidebarCollapsed ? item.label : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-md py-2.5 text-sm font-medium transition-colors",
-                  collapsed ? "justify-center px-0" : "px-3",
+                  sidebarCollapsed ? "justify-center px-0" : "px-3",
                   active
                     ? "nav-active"
                     : "text-white/70 hover:bg-white/5 hover:text-white",
                 )}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
+                {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
         {/* "+ Crear" CTA orange (anchored above footer) */}
-        {!collapsed && addItems.length > 0 && (
+        {!sidebarCollapsed && addItems.length > 0 && (
           <div className="px-3 pb-2">
             <button
               type="button"
@@ -221,7 +260,7 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
         )}
 
         {/* Footer */}
-        {!collapsed && (
+        {!sidebarCollapsed && (
           <div className="border-t border-white/5 px-4 py-3 text-[11px] text-white/40">
             <a href="https://agenciacreativia.com/" target="_blank" rel="noopener noreferrer" className="block hover:text-brand-green">
               Agencia Creativia
@@ -235,12 +274,22 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top strip: search + add + user */}
         <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
-          <div className="flex h-14 items-center gap-3 px-4 sm:px-6">
-            {/* Section title (left) */}
-            <h1 className="truncate text-lg font-bold text-gray-900">{currentTitle}</h1>
+          <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-6">
+            {/* Hamburguesa para abrir el sidebar en mobile. Oculto md+. */}
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Abrir menú"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-gray-600 transition-colors hover:bg-gray-100 md:hidden"
+            >
+              <MenuIcon className="h-5 w-5" />
+            </button>
 
-            {/* Search + add (centered group) */}
-            <div className="mx-auto flex items-center gap-2">
+            {/* Section title (left) — más chico en mobile para dejar lugar a la búsqueda. */}
+            <h1 className="min-w-0 truncate text-base font-bold text-gray-900 sm:text-lg">{currentTitle}</h1>
+
+            {/* Search + add (centered group) — mx-auto en md+, alineado a la derecha en mobile */}
+            <div className="ml-auto flex items-center gap-1 sm:gap-2 md:mx-auto md:ml-auto">
               <SearchModal />
 
               {/* + Add button — icon only (hidden if the role can't create anything) */}
@@ -252,7 +301,7 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
                   setAddOpen((o) => !o);
                   setUserOpen(false);
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-orange text-white transition-colors hover:brightness-110"
+                className="flex h-10 w-10 items-center justify-center rounded-md bg-brand-orange text-white transition-colors hover:brightness-110 sm:h-9 sm:w-9"
                 aria-haspopup="menu"
                 aria-expanded={addOpen}
                 aria-label="Agregar"
@@ -293,7 +342,7 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
               <button
                 type="button"
                 onClick={() => { setNotifOpen((o) => !o); setUserOpen(false); setAddOpen(false); }}
-                className="relative flex h-9 w-9 items-center justify-center rounded-md text-gray-600 transition-colors hover:bg-gray-100"
+                className="relative flex h-10 w-10 items-center justify-center rounded-md text-gray-600 transition-colors hover:bg-gray-100 sm:h-9 sm:w-9"
                 aria-haspopup="menu"
                 aria-expanded={notifOpen}
                 aria-label="Notificaciones"
@@ -444,8 +493,10 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
           </div>
         </header>
 
-        {/* Full-width content */}
-        <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        {/* Full-width content. Padding x reducido en mobile para aprovechar
+            mejor el ancho útil de pantalla. pb extra en mobile para no quedar
+            tapado por bulk action bars o por la barra de navegación nativa. */}
+        <main className="w-full flex-1 px-3 pb-24 pt-4 sm:px-6 sm:py-6 sm:pb-6 lg:px-8">{children}</main>
       </div>
 
       {/* Create-record modals (opened from the "+" menu) */}

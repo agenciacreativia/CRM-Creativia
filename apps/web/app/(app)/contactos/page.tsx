@@ -47,22 +47,32 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex items-center justify-between gap-2 sm:justify-start sm:gap-3">
           <QuickSearch placeholder="Buscar contacto…" />
-          <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <ListOrder fields={filterFields} />
-          <FilterBuilder fields={filterFields} />
           {puedeCrear && (
             <Link
               href="/contactos/nuevo"
-              className="inline-flex items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep sm:hidden"
             >
-              <Plus className="h-3.5 w-3.5" /> Nuevo contacto
+              <Plus className="h-3.5 w-3.5" /> Nuevo
             </Link>
           )}
+        </div>
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
+          <div className="flex items-center gap-2">
+            <ListOrder fields={filterFields} />
+            <FilterBuilder fields={filterFields} />
+            {puedeCrear && (
+              <Link
+                href="/contactos/nuevo"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep"
+              >
+                <Plus className="h-3.5 w-3.5" /> Nuevo contacto
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -70,7 +80,7 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
         <BulkContactosBar usuarios={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))} />
       )}
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="hidden md:block bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
@@ -116,6 +126,39 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* MOBILE: cards */}
+      <div className="md:hidden space-y-2">
+        {rows.length === 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+            {q
+              ? <>No hay contactos que coincidan con <strong>{q}</strong>.</>
+              : <>No hay contactos todavía. <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">Importar →</Link></>}
+          </div>
+        )}
+        {rows.map((c) => (
+          <div key={c.id} className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 active:bg-gray-50">
+            {puedeEditarMasivo && (
+              <div className="shrink-0">
+                <BulkRowCheckbox id={c.id} scope="contactos" />
+              </div>
+            )}
+            <Link href={`/contactos/${c.id}`} className="flex flex-1 min-w-0 flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate font-semibold text-gray-900">{c.nombre}</span>
+                <span className="shrink-0 text-xs text-gray-500">{c.oportunidades_count} ops</span>
+              </div>
+              <p className="truncate text-xs text-gray-500">
+                {c.cargo ? `${c.cargo} · ` : ""}{c.empresa_nombre}
+              </p>
+              <p className="truncate text-xs text-gray-500">{c.email}</p>
+              {c.asignado_nombre && (
+                <p className="text-xs text-gray-400">👤 {c.asignado_nombre}</p>
+              )}
+            </Link>
+          </div>
+        ))}
       </div>
     </div>
   );

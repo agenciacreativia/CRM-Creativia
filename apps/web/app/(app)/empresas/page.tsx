@@ -57,22 +57,34 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      {/* Toolbar superior. En mobile arma 2 filas: búsqueda + crear arriba,
+          filtros/orden debajo. En md+ todo en una línea. */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex items-center justify-between gap-2 sm:justify-start sm:gap-3">
           <QuickSearch placeholder="Buscar empresa…" />
-          <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <ListOrder fields={filterFields} />
-          <FilterBuilder fields={filterFields} />
           {puedeCrear && (
             <Link
               href="/empresas/nueva"
-              className="inline-flex items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep sm:hidden"
             >
-              <Plus className="h-3.5 w-3.5" /> Nueva empresa
+              <Plus className="h-3.5 w-3.5" /> Nueva
             </Link>
           )}
+        </div>
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
+          <div className="flex items-center gap-2">
+            <ListOrder fields={filterFields} />
+            <FilterBuilder fields={filterFields} />
+            {puedeCrear && (
+              <Link
+                href="/empresas/nueva"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep"
+              >
+                <Plus className="h-3.5 w-3.5" /> Nueva empresa
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -90,7 +102,8 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
         <BulkEmpresasBar usuarios={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))} />
       )}
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      {/* === DESKTOP/TABLET ≥md: tabla === */}
+      <div className="hidden md:block bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
@@ -134,6 +147,37 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* === MOBILE <md: cards apiladas === */}
+      <div className="md:hidden space-y-2">
+        {rows.length === 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+            {q
+              ? <>No hay empresas que coincidan con <strong>{q}</strong>.</>
+              : <>No hay empresas todavía. Importá desde <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">Datos → Importar</Link> o creá una nueva.</>}
+          </div>
+        )}
+        {rows.map((e) => (
+          <div key={e.id} className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 active:bg-gray-50">
+            {puedeEditarMasivo && (
+              <div className="shrink-0">
+                <BulkRowCheckbox id={e.id} scope="empresas" />
+              </div>
+            )}
+            <Link href={`/empresas/${e.id}`} className="flex flex-1 min-w-0 flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate font-semibold text-gray-900">{e.nombre}</span>
+                <Badge variant={ESTADO_BADGE[e.estado_empresa] ?? "default"}>{e.estado_empresa}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                {e.ciudad && <span>📍 {e.ciudad}</span>}
+                {e.asignado_nombre && <span>👤 {e.asignado_nombre}</span>}
+                <span>{e.contactos_count} contactos · {e.oportunidades_count} ops</span>
+              </div>
+            </Link>
+          </div>
+        ))}
       </div>
     </div>
   );

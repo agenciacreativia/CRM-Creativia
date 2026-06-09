@@ -182,21 +182,21 @@ export function ProductosManager({
     <div className="space-y-4">
       {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex rounded-md border border-gray-200 bg-white p-0.5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="inline-flex w-full rounded-md border border-gray-200 bg-white p-0.5 sm:w-auto">
           <button
             type="button"
             onClick={() => setTab("propios")}
-            className={`rounded px-3 py-1.5 text-sm font-medium ${tab === "propios" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium sm:flex-none ${tab === "propios" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Mis productos <span className="ml-1 text-xs opacity-70">({propios.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setTab("turistea")}
-            className={`rounded px-3 py-1.5 text-sm font-medium ${tab === "turistea" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium sm:flex-none ${tab === "turistea" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
           >
-            Catálogo Turistea <span className="ml-1 text-xs opacity-70">({turistea.length})</span>
+            Catálogo <span className="ml-1 text-xs opacity-70">({turistea.length})</span>
           </button>
         </div>
         <input
@@ -204,22 +204,24 @@ export function ProductosManager({
           value={search}
           onChange={(ev) => setSearch(ev.target.value)}
           placeholder="Buscar producto…"
-          className="w-56 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none"
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none sm:w-56"
         />
-        <p className="text-sm text-gray-500">{visible.length} {tab === "propios" ? "propios" : "del catálogo"}</p>
-        {canCrear && tab === "propios" && (
-          <Button type="button" size="sm" onClick={() => setCreating(true)} className="ml-auto inline-flex items-center gap-1.5">
-            <Plus className="h-4 w-4" /> Nuevo producto
-          </Button>
-        )}
-        {tab === "turistea" && (
-          <Link href="/catalogo" className="ml-auto rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
-            Ir al catálogo Turistea
-          </Link>
-        )}
+        <div className="flex items-center justify-between gap-2 sm:ml-auto">
+          <p className="text-sm text-gray-500">{visible.length}</p>
+          {canCrear && tab === "propios" && (
+            <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
+              <Plus className="h-4 w-4" /> Nuevo producto
+            </Button>
+          )}
+          {tab === "turistea" && (
+            <Link href="/catalogo" className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
+              Ir al catálogo
+            </Link>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="hidden md:block overflow-hidden rounded-lg border border-gray-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
             <tr>
@@ -274,10 +276,45 @@ export function ProductosManager({
         </table>
       </div>
 
-      {/* Barra inferior de acciones masivas — solo en tab "propios" con permiso. */}
+      {/* MOBILE: cards apiladas */}
+      <div className="md:hidden space-y-2">
+        {visible.length === 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+            {tab === "propios" ? "Aún no tenés productos propios. Crealos con + Nuevo producto." : "Aún no cargaste productos del catálogo Turistea."}
+          </div>
+        )}
+        {visible.map((row) => (
+          <div key={row.id} className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 active:bg-gray-50">
+            {canEditar && tab === "propios" && (
+              <input
+                type="checkbox"
+                checked={selectedIds.has(row.id)}
+                onChange={() => toggleSelected(row.id)}
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 rounded"
+                aria-label={`Seleccionar ${row.nombre}`}
+              />
+            )}
+            <Link href={`/productos/${row.id}`} className="flex flex-1 min-w-0 flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate font-semibold text-gray-900">{row.nombre}</span>
+                <Badge variant={row.activo ? "success" : "default"}>{row.activo ? "activo" : "inactivo"}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                {row.categoria && <span>{row.categoria}</span>}
+                {row.destino && <span>📍 {row.destino}</span>}
+                <span className="font-medium text-gray-700">{fmtPrice(row.precio_desde, row.moneda)}</span>
+              </div>
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      {/* Barra inferior de acciones masivas — solo en tab "propios" con permiso.
+          En mobile: full-width al pie. En sm+: isla flotante centrada. */}
       {canEditar && tab === "propios" && selectedIds.size > 0 && (
-        <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
-          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2 shadow-lg">
+        <div className="fixed inset-x-0 bottom-0 z-40 sm:bottom-4 sm:flex sm:justify-center sm:px-4" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+          <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white px-3 py-2 shadow-lg sm:gap-3 sm:rounded-lg sm:border sm:px-4">
             <span className="text-sm font-medium text-gray-700">
               <strong>{selectedIds.size}</strong> seleccionado(s)
             </span>
