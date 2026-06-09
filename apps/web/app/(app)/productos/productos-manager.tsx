@@ -12,6 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
 import type { Producto } from "@/lib/db/productos";
 import { saveProductoAction, deleteProductoAction } from "./actions";
+import { ItinerarioMiniEditor } from "@/components/producto/itinerario-mini-editor";
 
 const MONEDAS = ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"];
 const PRODUCTO_CATEGORIAS = ["Paquete", "Vuelo", "Hotel", "Crucero", "Tour", "Traslado", "Asistencia", "Otro"];
@@ -133,6 +134,8 @@ export function ProductosManager({
             <Textarea id="no_incluye" name="no_incluye" rows={3} defaultValue={p?.no_incluye ?? ""} placeholder="Propinas, gastos personales…" />
           </Field>
         </div>
+
+        <ItinerarioMiniEditor initial={p?.itinerario ?? []} />
 
         <label className="flex items-center gap-2 text-sm text-gray-700">
           <input type="checkbox" name="activo" value="true" defaultChecked={p ? p.activo : true} className="rounded" />

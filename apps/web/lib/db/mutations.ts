@@ -194,7 +194,12 @@ export type ProductoInput = {
   no_incluye: string | null;
   proveedor: string | null;
   activo: boolean;
+  /** Plan turístico opcional. Si la mig 0041 no corrió, lo descartamos antes del INSERT/UPDATE. */
+  itinerario?: unknown[];
 };
+
+const isMissingProductoItinerarioColumn = (msg: string | undefined): boolean =>
+  !!msg && /column.*itinerario.*does not exist/i.test(msg);
 
 export async function createProducto(input: ProductoInput): Promise<string> {
   const user = await ensurePermission("productos", "crear");
@@ -202,23 +207,31 @@ export async function createProducto(input: ProductoInput): Promise<string> {
   // Admin insert: a row auto-flagged en_espera by the cap trigger would be
   // hidden by RLS, breaking the RETURNING select. Admin bypasses RLS.
   const admin = createAdminSupabase();
-  const { data, error } = await admin
-    .from("producto")
-    .insert({ ...input, tenant_id: user.tenantId, creado_por: user.id })
-    .select("id")
-    .single();
-  if (error) throw new Error(error.message);
-  return data.id;
+  const payload: Record<string, unknown> = { ...input, tenant_id: user.tenantId, creado_por: user.id };
+  let res = await admin.from("producto").insert(payload).select("id").single();
+  if (res.error && isMissingProductoItinerarioColumn(res.error.message)) {
+    // Mig 0041 no corrió todavía. Reintento sin itinerario.
+    const { itinerario: _drop, ...rest } = payload;
+    void _drop;
+    res = await admin.from("producto").insert(rest).select("id").single();
+  }
+  if (res.error) throw new Error(res.error.message);
+  return res.data!.id;
 }
 
 export async function updateProducto(id: string, patch: ProductoInput) {
   await ensurePermission("productos", "editar");
   const supabase = await createServerSupabase();
-  const { error } = await supabase
-    .from("producto")
-    .update({ ...patch, actualizado_en: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  const payload: Record<string, unknown> = { ...patch, actualizado_en: new Date().toISOString() };
+  const first = await supabase.from("producto").update(payload).eq("id", id);
+  if (first.error && isMissingProductoItinerarioColumn(first.error.message)) {
+    const { itinerario: _drop, ...rest } = payload;
+    void _drop;
+    const retry = await supabase.from("producto").update(rest).eq("id", id);
+    if (retry.error) throw new Error(retry.error.message);
+    return;
+  }
+  if (first.error) throw new Error(first.error.message);
 }
 
 export async function deleteProducto(id: string) {
@@ -336,6 +349,70 @@ export async function createContacto(
   if (error) throw new Error(error.message);
   await dispatchWebhook(user.tenantId, "contacto.creado", { id: data.id, nombre: input.nombre, email: input.email });
   return data.id;
+}
+
+/**
+ * Borrar empresa con preview de impacto.
+ *
+ * Política:
+ * - Si hay oportunidades ACTIVAS → bloqueamos. El admin debe cerrarlas
+ *   (ganar/perder) o reasignarlas antes. No borramos activos por error.
+ * - Si solo hay oportunidades cerradas + contactos → cascada: borramos
+ *   contactos y la empresa; las oportunidades cerradas se eliminan con
+ *   ON DELETE CASCADE del FK empresa_id (ya existe en el schema base).
+ *
+ * Devuelve cuántos registros relacionados se borraron, para el toast.
+ */
+export async function deleteEmpresaConCascada(
+  id: string,
+): Promise<{ contactos: number; oportunidades_cerradas: number }> {
+  await ensurePermission("empresas", "eliminar");
+  const admin = createAdminSupabase();
+
+  // 1) Validar: sin oportunidades activas.
+  const { data: activas, error: errAct } = await admin
+    .from("oportunidad")
+    .select("id, nombre")
+    .eq("empresa_id", id)
+    .eq("estado", "activo")
+    .limit(5);
+  if (errAct) throw new Error(errAct.message);
+  if ((activas?.length ?? 0) > 0) {
+    const muestra = (activas ?? []).map((o) => o.nombre).join(", ");
+    throw new Error(
+      `No se puede borrar: la empresa tiene oportunidades ACTIVAS (${activas!.length}). Cerralas o reasignalas primero: ${muestra}.`,
+    );
+  }
+
+  // 2) Contar lo que se va a borrar (para el toast post-acción).
+  const [{ count: contactosCount }, { count: cerradasCount }] = await Promise.all([
+    admin.from("contacto").select("id", { count: "exact", head: true }).eq("empresa_id", id),
+    admin.from("oportunidad").select("id", { count: "exact", head: true }).eq("empresa_id", id).neq("estado", "activo"),
+  ]);
+
+  // 3) Borrar explícitamente las oportunidades cerradas. El FK
+  //    oportunidad.empresa_id está como ON DELETE RESTRICT en el schema base
+  //    (migración 0002), por lo que un delete directo de la empresa daría
+  //    error si queda alguna. Los notas/historial/documentos colgando de
+  //    estas oportunidades caen por CASCADE de sus propios FKs.
+  if ((cerradasCount ?? 0) > 0) {
+    const { error: delOpsErr } = await admin
+      .from("oportunidad")
+      .delete()
+      .eq("empresa_id", id)
+      .neq("estado", "activo");
+    if (delOpsErr) throw new Error(`No se pudieron borrar oportunidades cerradas: ${delOpsErr.message}`);
+  }
+
+  // 4) Borrar la empresa. contacto.empresa_id está como ON DELETE CASCADE,
+  //    así que los contactos asociados caen solos.
+  const { error: delErr } = await admin.from("empresa").delete().eq("id", id);
+  if (delErr) throw new Error(delErr.message);
+
+  return {
+    contactos: contactosCount ?? 0,
+    oportunidades_cerradas: cerradasCount ?? 0,
+  };
 }
 
 /**

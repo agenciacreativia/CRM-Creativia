@@ -28,6 +28,26 @@ const schema = z.object({
   // el preprocess recibe undefined y devuelve false. Antes incluía `v === undefined`
   // como truthy, lo que invertía la semántica (desmarcado → activo).
   activo: z.preprocess((v) => v === "true" || v === "on" || v === true, z.boolean()),
+  // El itinerario viaja como JSON serializado en un input hidden. Si no llega
+  // o no parsea, queda vacío (no rompemos el guardado por eso).
+  itinerario: z.preprocess(
+    (v) => {
+      if (typeof v !== "string" || !v.trim()) return [];
+      try {
+        const parsed = JSON.parse(v);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    },
+    z.array(z.object({
+      _uid: z.string().optional(),
+      dia: z.number().int().min(1).max(99),
+      titulo: z.string().max(200),
+      ciudad: z.string().max(120).nullable().optional(),
+      descripcion: z.string().max(5000).nullable().optional(),
+    }).passthrough()).max(60),
+  ),
 });
 
 export async function saveProductoAction(id: string | null, formData: FormData): Promise<ProductoResult> {

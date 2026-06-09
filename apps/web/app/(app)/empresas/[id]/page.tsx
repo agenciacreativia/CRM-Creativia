@@ -20,6 +20,9 @@ import { SedesSection } from "@/components/sedes/sedes-section";
 import { DocumentosPanel } from "@/components/documentos/documentos-panel";
 import { HistorialSection } from "@/components/oportunidad/historial-section";
 import { EmpresaAside } from "./empresa-aside";
+import { DeleteEmpresaButton } from "./delete-empresa-button";
+import { getMyPermisos } from "@/lib/db/roles";
+import { can } from "@/lib/permissions";
 
 type Params = Promise<{ id: string }>;
 
@@ -31,9 +34,10 @@ const ESTADO_BADGE: Record<string, "info" | "success" | "default"> = {
 
 export default async function EmpresaDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const [empresa, user] = await Promise.all([getEmpresa(id), getSessionUser()]);
+  const [empresa, user, perms] = await Promise.all([getEmpresa(id), getSessionUser(), getMyPermisos()]);
   if (!empresa) notFound();
   const canEdit = user?.rol === "admin";
+  const canDelete = can(perms.permisos, "empresas", "eliminar", perms.es_admin);
 
   const [contactos, notas, sedes, campos, cambios, documentos, opps, contactosRel, todasEmpresas, usuarios] = await Promise.all([
     listContactos({ empresa_id: id }),
@@ -76,14 +80,17 @@ export default async function EmpresaDetailPage({ params }: { params: Params }) 
             )}
           </p>
         </div>
-        {canEdit && (
-          <Link
-            href={`/empresas/${empresa.id}/editar`}
-            className="shrink-0 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
-          >
-            Editar
-          </Link>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {canEdit && (
+            <Link
+              href={`/empresas/${empresa.id}/editar`}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
+            >
+              Editar
+            </Link>
+          )}
+          {canDelete && <DeleteEmpresaButton id={empresa.id} nombre={empresa.nombre} />}
+        </div>
       </div>
 
       {/* Two columns */}
