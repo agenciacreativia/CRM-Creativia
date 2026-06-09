@@ -16,13 +16,22 @@ function money(v: number, m: string) {
 
 export default async function ReportesPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
+  // Filtros compartidos entre todos los cuadros del dashboard:
+  // pipeline, asesor, desde, hasta van a loadDashboard / atribucion / campanias-perf.
+  // producto todavía no se aplica (es una dimensión sin tabla puente con oportunidad_id directa).
+  const sharedFilters = {
+    pipeline: params.pipeline || undefined,
+    asesor: params.asesor || undefined,
+    desde: params.desde || undefined,
+    hasta: params.hasta || undefined,
+  };
   const [d, atribucion, pipelines, productos, usuarios, campanias] = await Promise.all([
-    loadDashboard(),
-    listAtribucionPorEstrategia(),
+    loadDashboard(sharedFilters),
+    listAtribucionPorEstrategia(sharedFilters),
     listPipelines(),
     listProductos({ soloActivos: true }),
     listUsuarios({ activo: "activos" }),
-    getCampaniasPerf(),
+    getCampaniasPerf(sharedFilters),
   ]);
   const moneda = d.kpis.moneda_pipeline;
 
@@ -41,9 +50,14 @@ export default async function ReportesPage({ searchParams }: { searchParams: Sea
         asesores={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))}
         activos={params}
       />
-      {Object.values(params).some(Boolean) && (
+      {params.producto && (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800">
-          ⚠️ Los filtros guardan estado en la URL pero todavía no se aplican a todos los cuadros. KPIs, embudo, forecast y asesores muestran toda la actividad del tenant. Estamos plumbeando los filtros end-to-end — próxima iteración.
+          ⚠️ El filtro por producto se aplica solo a la tabla de campañas UTM. Para filtrar por producto en KPIs/embudo se necesita el join oportunidad_producto en cada query — próxima iteración.
+        </div>
+      )}
+      {(params.pipeline || params.asesor || params.desde || params.hasta) && (
+        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-2 text-xs text-green-800">
+          ✓ Filtros activos aplicados a KPIs, embudo, atribución y campañas.
         </div>
       )}
 

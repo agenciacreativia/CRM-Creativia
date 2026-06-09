@@ -4,12 +4,24 @@ import { ESTRATEGIA_LABEL } from "@/lib/estrategias-types";
 
 export type AtribucionRow = { estrategia: string; label: string; cuenta: number; valor: number; ganadas: number; perdidas: number; tasa_cierre: number | null };
 
+export type AtribucionFilters = {
+  pipeline?: string;
+  asesor?: string;
+  desde?: string;
+  hasta?: string;
+};
+
 /** Attribution by commercial strategy across all opportunities. Defensive: []. */
-export async function listAtribucionPorEstrategia(): Promise<AtribucionRow[]> {
+export async function listAtribucionPorEstrategia(filters: AtribucionFilters = {}): Promise<AtribucionRow[]> {
   const supabase = await createServerSupabase();
-  const { data, error } = await supabase
+  let query = supabase
     .from("oportunidad")
     .select("valor, estado, estrategia");
+  if (filters.pipeline) query = query.eq("pipeline_id", filters.pipeline);
+  if (filters.asesor) query = query.eq("asignado_id", filters.asesor);
+  if (filters.desde) query = query.gte("creado_en", filters.desde);
+  if (filters.hasta) query = query.lte("creado_en", `${filters.hasta}T23:59:59.999Z`);
+  const { data, error } = await query;
   if (error) {
     console.error("[atribucion] listAtribucionPorEstrategia:", error.message);
     return [];

@@ -6,9 +6,10 @@ export async function crearVistaAction(
   entidad: EntidadVista,
   nombre: string,
   query: string,
+  opts: { columnas?: string[] | null; aplica_columnas?: boolean } = {},
 ): Promise<{ ok: boolean; error?: string; vista?: Vista }> {
   try {
-    const vista = await createVista(entidad, nombre, query);
+    const vista = await createVista(entidad, nombre, query, opts);
     return { ok: true, vista };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error" };

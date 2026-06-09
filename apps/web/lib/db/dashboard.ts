@@ -92,7 +92,15 @@ type Scope = "admin" | "me";
  * tenant scope. Aggregations happen in JS — fine for the volumes expected
  * (low thousands of opportunities per tenant).
  */
-export async function loadDashboard(): Promise<{
+export type DashboardFilters = {
+  pipeline?: string;
+  producto?: string;
+  asesor?: string;
+  desde?: string;
+  hasta?: string;
+};
+
+export async function loadDashboard(filters: DashboardFilters = {}): Promise<{
   scope: Scope;
   kpis: DashboardKpis;
   charts: DashboardCharts;
@@ -109,12 +117,20 @@ export async function loadDashboard(): Promise<{
   const scope: Scope = user.rol === "admin" ? "admin" : "me";
 
   // Fire every query in parallel — they're independent.
-  const oppSelect = supabase
+  let oppSelect = supabase
     .from("oportunidad")
     .select(
       "id, nombre, valor, moneda, estado, asignado_id, motivo_perdida_id, etapa_id, pipeline_id, fecha_esperada_cierre, fecha_entrado_etapa, creado_en, empresa(nombre), etapa_pipeline(nombre, orden, dias_maximo_alerta), motivo_perdida(nombre)",
     );
-  const oppPromise = scope === "me" ? oppSelect.eq("asignado_id", user.id) : oppSelect;
+  if (scope === "me") {
+    oppSelect = oppSelect.eq("asignado_id", user.id);
+  } else if (filters.asesor) {
+    oppSelect = oppSelect.eq("asignado_id", filters.asesor);
+  }
+  if (filters.pipeline) oppSelect = oppSelect.eq("pipeline_id", filters.pipeline);
+  if (filters.desde) oppSelect = oppSelect.gte("creado_en", filters.desde);
+  if (filters.hasta) oppSelect = oppSelect.lte("creado_en", `${filters.hasta}T23:59:59.999Z`);
+  const oppPromise = oppSelect;
 
   // Pull all pending activities (not just 15) — we need them for "vencidas" too.
   // No traemos `completada` porque ya filtramos por ese campo en el .eq().

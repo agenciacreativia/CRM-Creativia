@@ -19,14 +19,26 @@ export type UtmOptions = {
   terms: string[];
 };
 
+export type CampaniasPerfFilters = {
+  pipeline?: string;
+  asesor?: string;
+  desde?: string;
+  hasta?: string;
+};
+
 /** Devuelve agregados por (source/medium/campaign) de oportunidades. */
-export async function getCampaniasPerf(): Promise<CampaniaPerf[]> {
+export async function getCampaniasPerf(filters: CampaniasPerfFilters = {}): Promise<CampaniaPerf[]> {
   try {
     const supabase = await createServerSupabase();
-    const { data, error } = await supabase
+    let query = supabase
       .from("oportunidad")
       .select("utm_source, utm_medium, utm_campaign, estado, valor")
       .neq("estado", "eliminado");
+    if (filters.pipeline) query = query.eq("pipeline_id", filters.pipeline);
+    if (filters.asesor) query = query.eq("asignado_id", filters.asesor);
+    if (filters.desde) query = query.gte("creado_en", filters.desde);
+    if (filters.hasta) query = query.lte("creado_en", `${filters.hasta}T23:59:59.999Z`);
+    const { data, error } = await query;
     if (error) console.error("[getCampaniasPerf] error consultando oportunidad:", error);
     const map = new Map<string, { oportunidades: number; ganadas: number; valor: number }>();
     for (const o of (data ?? []) as { utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; estado: string; valor: number | null }[]) {
