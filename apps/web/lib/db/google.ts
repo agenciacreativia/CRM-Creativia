@@ -76,8 +76,10 @@ export async function saveCuentaGoogle(args: {
 
 /** Disconnect: removes the current user's connection. */
 export async function deleteCuentaGoogle(): Promise<void> {
+  const user = await getSessionUser();
+  if (!user?.id) throw new Error("Sesión inválida");
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("cuenta_google").delete().neq("usuario_id", "");
+  const { error } = await supabase.from("cuenta_google").delete().eq("usuario_id", user.id);
   if (error) throw new Error(error.message);
 }
 

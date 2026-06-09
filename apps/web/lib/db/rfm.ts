@@ -15,13 +15,18 @@ export function nivelPorMonto(monto: number, cfg: TenantConfig): NivelViajero {
 /** Traveler tier for one contact, from the sum of its won opportunities. */
 export async function nivelDeContacto(contactoId: string): Promise<{ nivel: NivelViajero; monto: number; moneda: string }> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("oportunidad")
     .select("valor, moneda")
     .eq("contacto_id", contactoId)
     .eq("estado", "ganado");
+  const cfg = await getTenantConfig();
+  if (error) {
+    // Defensive: si la query falla (RLS, conexión, etc.) devolvemos bronce
+    // en vez de inflar el nivel del contacto con un monto 0.
+    return { nivel: "bronce", monto: 0, moneda: "USD" };
+  }
   const monto = (data ?? []).reduce((s, o) => s + ((o.valor as number) ?? 0), 0);
   const moneda = (data ?? [])[0]?.moneda ?? "USD";
-  const cfg = await getTenantConfig();
   return { nivel: nivelPorMonto(monto, cfg), monto, moneda };
 }

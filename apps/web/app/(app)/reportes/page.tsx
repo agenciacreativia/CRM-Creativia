@@ -41,6 +41,11 @@ export default async function ReportesPage({ searchParams }: { searchParams: Sea
         asesores={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))}
         activos={params}
       />
+      {Object.values(params).some(Boolean) && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800">
+          ⚠️ Los filtros guardan estado en la URL pero todavía no se aplican a todos los cuadros. KPIs, embudo, forecast y asesores muestran toda la actividad del tenant. Estamos plumbeando los filtros end-to-end — próxima iteración.
+        </div>
+      )}
 
       {/* KPIs rápidos */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

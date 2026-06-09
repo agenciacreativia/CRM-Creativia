@@ -18,15 +18,18 @@ function monthBounds(ym: string): { from: string; to: string } {
  * that month per advisor, applies their commission %, and compares to meta.
  */
 export async function listComisiones(ym: string): Promise<ComisionAsesor[]> {
+  const user = await getSessionUser();
+  if (!user?.tenantId) throw new Error("Sesión inválida");
   const supabase = await createServerSupabase();
   const { from, to } = monthBounds(ym);
 
   const [{ data: usuarios }, { data: ganadas }] = await Promise.all([
-    supabase.from("usuario").select("id, nombre, rol_comercial, comision_pct, meta_mensual").eq("activo", true),
+    supabase.from("usuario").select("id, nombre, rol_comercial, comision_pct, meta_mensual").eq("activo", true).eq("tenant_id", user.tenantId),
     supabase
       .from("oportunidad")
       .select("asignado_id, valor, moneda")
       .eq("estado", "ganado")
+      .eq("tenant_id", user.tenantId)
       .gte("actualizado_en", from)
       .lt("actualizado_en", to),
   ]);

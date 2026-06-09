@@ -141,12 +141,28 @@ export async function enviarCampania(campaniaId: string): Promise<{ enviados: nu
   if (!accessToken) throw new Error("Conectá Google primero para enviar la campaña.");
 
   const admin = createAdminSupabase();
-  const { data: c } = await admin.from("campania").select("nombre, asunto, cuerpo_html, segmento, estado").eq("id", campaniaId).maybeSingle();
-  if (!c) throw new Error("Campaña no encontrada");
-  if (c.estado !== "borrador") throw new Error("La campaña ya fue enviada o está cancelada");
+  // Lock atómico: ponemos enviada_en al momento de arrancar. Como antes era NULL,
+  // sólo una de varias llamadas concurrentes va a poder hacer este update y conseguir
+  // los datos de la campaña; las otras ven `null` en `data` y abortan sin reenviar.
+  const lockTime = new Date().toISOString();
+  const { data: locked, error: lockErr } = await admin
+    .from("campania")
+    .update({ enviada_en: lockTime })
+    .eq("id", campaniaId)
+    .eq("estado", "borrador")
+    .is("enviada_en", null)
+    .select("nombre, asunto, cuerpo_html, segmento")
+    .maybeSingle();
+  if (lockErr) throw new Error(lockErr.message);
+  if (!locked) throw new Error("La campaña ya fue enviada, está enviándose o fue cancelada");
+  const c = locked;
 
   const destinatarios = await resolverDestinatarios(caller.tenantId!, c.segmento as Campania["segmento"]);
-  if (destinatarios.length === 0) throw new Error("Sin destinatarios para ese segmento");
+  if (destinatarios.length === 0) {
+    // Liberamos el lock para que el admin la pueda corregir y reintentar.
+    await admin.from("campania").update({ enviada_en: null }).eq("id", campaniaId);
+    throw new Error("Sin destinatarios para ese segmento");
+  }
 
   let enviados = 0, errores = 0;
   for (const d of destinatarios) {
@@ -162,10 +178,15 @@ export async function enviarCampania(campaniaId: string): Promise<{ enviados: nu
     }
   }
 
-  await admin
+  const { error: finErr } = await admin
     .from("campania")
     .update({ estado: "enviada", enviados, enviada_en: new Date().toISOString() })
     .eq("id", campaniaId);
+  if (finErr) {
+    // Si no podemos persistir el estado final, lo registramos pero NO tiramos error
+    // porque los correos ya fueron enviados. El admin lo verá en el listado.
+    console.error("[campania] no se pudo actualizar estado final:", finErr.message);
+  }
 
   return { enviados, errores };
 }

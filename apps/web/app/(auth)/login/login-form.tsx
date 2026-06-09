@@ -36,48 +36,52 @@ export function LoginForm() {
     setSubmitting(true);
     setServerError(null);
 
-    const supabase = createBrowserSupabase();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-    if (error) {
-      setServerError(t("login.error_invalid_credentials"));
-      setSubmitting(false);
-      return;
-    }
-
-    // If we're already on a tenant subdomain, the session cookie is set for the
-    // right host — just continue to the app.
-    if (currentSubdomain()) {
-      router.push(next);
-      router.refresh();
-      return;
-    }
-
-    // Central (bare-domain) login: figure out which tenant this user belongs to
-    // and hand the session off to that subdomain.
     try {
-      const res = await fetch("/api/auth/tenant-home");
-      const session = data.session;
-      if (res.ok && session) {
-        const { subdomain } = (await res.json()) as { subdomain: string };
-        const hash = new URLSearchParams({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          next,
-        });
-        window.location.href = `${window.location.protocol}//${subdomain}.${env.BASE_DOMAIN}/auth/handoff#${hash.toString()}`;
+      const supabase = createBrowserSupabase();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error || !data?.session) {
+        setServerError(t("login.error_invalid_credentials"));
         return;
       }
-    } catch {
-      // fall through to default
-    }
 
-    // Fallback: stay on the current host.
-    router.push(next);
-    router.refresh();
+      // If we're already on a tenant subdomain, the session cookie is set for the
+      // right host — just continue to the app.
+      if (currentSubdomain()) {
+        router.push(next);
+        router.refresh();
+        return;
+      }
+
+      // Central (bare-domain) login: figure out which tenant this user belongs to
+      // and hand the session off to that subdomain.
+      try {
+        const res = await fetch("/api/auth/tenant-home");
+        if (res.ok) {
+          const { subdomain } = (await res.json()) as { subdomain: string };
+          const hash = new URLSearchParams({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            next,
+          });
+          window.location.href = `${window.location.protocol}//${subdomain}.${env.BASE_DOMAIN}/auth/handoff#${hash.toString()}`;
+          return;
+        }
+      } catch {
+        // fall through to default
+      }
+
+      // Fallback: stay on the current host.
+      router.push(next);
+      router.refresh();
+    } finally {
+      // Garantizar que el botón vuelva a habilitarse en cualquier escenario
+      // (error, success, excepción) — antes solo se reseteaba en el path de error.
+      setSubmitting(false);
+    }
   }
 
   return (

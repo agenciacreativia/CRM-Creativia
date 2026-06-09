@@ -24,7 +24,16 @@ const schema = z.object({
     z.enum(["empresa", "linkedin", "cold_call", "evento", "otro"]).nullable(),
   ),
   asignado_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
-  fecha_nacimiento: z.preprocess(emptyToNull, z.string().nullable()),
+  fecha_nacimiento: z.preprocess(
+    emptyToNull,
+    z.string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (YYYY-MM-DD)")
+      .refine((s) => {
+        const d = new Date(s + "T00:00:00Z");
+        return !isNaN(d.getTime()) && d.getUTCFullYear() >= 1900 && d.getTime() <= Date.now();
+      }, "La fecha de nacimiento debe estar entre 1900 y hoy")
+      .nullable(),
+  ),
 });
 
 export type ContactoFormState = { ok: boolean; fieldErrors?: Record<string, string>; error?: string };

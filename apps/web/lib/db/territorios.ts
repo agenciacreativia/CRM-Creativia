@@ -24,16 +24,20 @@ async function ensureAdmin() {
 
 /** Territorios + ventas ganadas del mes actual + asesores asignados. Defensive: []. */
 export async function listTerritorios(): Promise<Territorio[]> {
+  const user = await getSessionUser();
+  if (!user?.tenantId) return [];
   const supabase = await createServerSupabase();
   const { data: territorios, error } = await supabase
     .from("territorio")
     .select("id, nombre, descripcion, meta, moneda, activo")
+    .eq("tenant_id", user.tenantId)
     .order("nombre");
   if (error) return [];
 
   const { data: usuarios } = await supabase
     .from("usuario")
     .select("id, nombre, territorio_id")
+    .eq("tenant_id", user.tenantId)
     .not("territorio_id", "is", null);
 
   // Ventas del mes en curso por asesor → agrupadas por territorio.
@@ -44,6 +48,7 @@ export async function listTerritorios(): Promise<Territorio[]> {
     .from("oportunidad")
     .select("asignado_id, valor")
     .eq("estado", "ganado")
+    .eq("tenant_id", user.tenantId)
     .gte("actualizado_en", from)
     .lt("actualizado_en", to);
 

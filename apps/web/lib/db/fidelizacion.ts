@@ -12,13 +12,15 @@ export type VencimientoItem = {
 };
 
 function diasAlProximoCumple(iso: string): { dias: number; cumple: number } {
-  const nac = new Date(iso + "T00:00:00");
+  // Parse YYYY-MM-DD como UTC para que el cálculo sea idéntico en cualquier TZ del server.
+  const [y, m, d] = iso.split("-").map((s) => parseInt(s, 10));
+  if (!y || !m || !d) return { dias: 9999, cumple: 0 };
   const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  let prox = new Date(hoy.getFullYear(), nac.getMonth(), nac.getDate());
-  if (prox < hoy) prox = new Date(hoy.getFullYear() + 1, nac.getMonth(), nac.getDate());
-  const dias = Math.round((prox.getTime() - hoy.getTime()) / 86_400_000);
-  return { dias, cumple: prox.getFullYear() - nac.getFullYear() };
+  const hoyUtc = Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate());
+  let proxUtc = Date.UTC(hoy.getUTCFullYear(), m - 1, d);
+  if (proxUtc < hoyUtc) proxUtc = Date.UTC(hoy.getUTCFullYear() + 1, m - 1, d);
+  const dias = Math.round((proxUtc - hoyUtc) / 86_400_000);
+  return { dias, cumple: new Date(proxUtc).getUTCFullYear() - y };
 }
 
 export type Fidelizacion = { cumpleanos: CumpleItem[]; vencimientos: VencimientoItem[] };

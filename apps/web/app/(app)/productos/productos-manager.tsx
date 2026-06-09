@@ -209,7 +209,7 @@ export function ProductosManager({
                         <Pencil className="h-4 w-4" />
                       </button>
                     )}
-                    {canEliminar && (
+                    {canEliminar && row.origen === "propio" && (
                       <button onClick={() => onDelete(row.id)} className="text-gray-400 hover:text-status-danger" title="Eliminar">
                         <Trash2 className="h-4 w-4" />
                       </button>

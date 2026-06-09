@@ -153,8 +153,15 @@ export async function crearAgencia(input: CrearAgenciaInput): Promise<CrearAgenc
       tempPassword,
     };
   } catch (e) {
-    // Roll back the tenant if the admin account couldn't be provisioned.
-    await admin.from("tenant").delete().eq("id", tenantId);
+    // Rollback best-effort del tenant si la provisión del admin falló. Si el
+    // delete del rollback también falla, NO pisamos el error original (con eso
+    // perderíamos el "por qué" se rompió). Logueamos y propagamos el causante.
+    try {
+      const { error: rbErr } = await admin.from("tenant").delete().eq("id", tenantId);
+      if (rbErr) console.error(`[crearAgencia] rollback de tenant ${tenantId} falló:`, rbErr.message);
+    } catch (rbExc) {
+      console.error(`[crearAgencia] rollback de tenant ${tenantId} lanzó excepción:`, rbExc);
+    }
     throw e;
   }
 }

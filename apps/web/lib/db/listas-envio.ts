@@ -39,7 +39,10 @@ export async function createListaEnvio(input: { nombre: string; descripcion: str
 }
 
 export async function deleteListaEnvio(id: string): Promise<void> {
+  const user = await getSessionUser();
+  if (!user?.tenantId) throw new Error("Sesión inválida");
+  if (user.rol !== "admin") throw new Error("Solo administradores pueden eliminar listas de envío");
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("lista_envio").delete().eq("id", id);
+  const { error } = await supabase.from("lista_envio").delete().eq("id", id).eq("tenant_id", user.tenantId);
   if (error) throw new Error(error.message);
 }

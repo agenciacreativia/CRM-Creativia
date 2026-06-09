@@ -91,7 +91,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
 
   // Inserción normal. Si es contacto y no se da empresa_id, autocrear empresa "API".
   if (modulo === "contactos" && !body.empresa_id) {
-    const { data: emp } = await admin.from("empresa").select("id").eq("tenant_id", a.tenantId).ilike("nombre", "API").maybeSingle();
+    const { data: emp, error: empErr } = await admin.from("empresa").select("id").eq("tenant_id", a.tenantId).ilike("nombre", "API").maybeSingle();
+    if (empErr) return NextResponse.json({ error: empErr.message }, { status: 500, headers: CORS });
     if (emp) body.empresa_id = emp.id;
     else {
       const { data: created, error } = await admin.from("empresa").insert({ tenant_id: a.tenantId, nombre: "API", estado_empresa: "prospecto" }).select("id").single();
