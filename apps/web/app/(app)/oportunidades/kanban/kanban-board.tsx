@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   DndContext,
@@ -57,7 +58,11 @@ export function KanbanBoard({
   const [activeCard, setActiveCard] = useState<KanbanCard | null>(null);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+  // El término de búsqueda vive ahora en la URL (?q=) — escrito por el QuickSearch
+  // del header de la página. Eliminamos el input local y leemos de useSearchParams
+  // para reaccionar al cambio sin necesidad de prop drilling.
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") ?? "";
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -168,19 +173,11 @@ export function KanbanBoard({
         </div>
       )}
 
-      <div className="mb-4 flex items-center gap-3">
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar tarjeta por nombre, empresa o asesor..."
-          className="w-full max-w-sm rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          aria-label="Buscar en el tablero"
-        />
-        {q && (
-          <span className="text-xs text-gray-500 whitespace-nowrap">{visibleCount} coinciden</span>
-        )}
-      </div>
+      {/* El input de búsqueda vive en el header de la page (QuickSearch).
+          Acá solo mostramos el contador de matches cuando hay query activa. */}
+      {q && (
+        <p className="mb-2 text-xs text-gray-500">{visibleCount} coinciden con &quot;{q}&quot;</p>
+      )}
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {/*

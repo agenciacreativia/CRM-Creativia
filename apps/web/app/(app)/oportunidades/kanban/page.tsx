@@ -5,8 +5,9 @@ import { getSessionUser } from "@/lib/auth";
 import { KanbanBoard } from "./kanban-board";
 import { PipelineSwitcher } from "./pipeline-switcher";
 import { ViewToggle } from "@/components/oportunidades/view-toggle";
+import { QuickSearch } from "@/components/filters/quick-search";
 
-type SearchParams = Promise<{ pipeline?: string }>;
+type SearchParams = Promise<{ pipeline?: string; q?: string }>;
 
 export default async function KanbanPage({ searchParams }: { searchParams: SearchParams }) {
   const { pipeline } = await searchParams;
@@ -21,9 +22,10 @@ export default async function KanbanPage({ searchParams }: { searchParams: Searc
 
   return (
     <div className="space-y-4">
-      {/* Header en una sola línea (lote UX): lápiz a la izq (gestionar embudo)
-          + selector de embudo + vista. El "Gestionar embudo" verboso de antes
-          quedó como tooltip del icono para liberar espacio horizontal. */}
+      {/* Header en una sola fila: lápiz + embudo + vista a la izq, buscador a
+          la derecha (ml-auto). El buscador escribe `?q=` en la URL y el
+          KanbanBoard lee useSearchParams para filtrar — así puede vivir acá
+          arriba sin necesidad de pasar estado entre componentes. */}
       <header className="flex flex-wrap items-center gap-2">
         {manageHref && (
           <Link
@@ -39,6 +41,9 @@ export default async function KanbanPage({ searchParams }: { searchParams: Searc
           <PipelineSwitcher pipelines={pipelines} current={selectedPipelineId} />
         )}
         <ViewToggle active="kanban" />
+        <div className="ml-auto">
+          <QuickSearch placeholder="Buscar tarjeta…" />
+        </div>
       </header>
 
       {pipelines.length === 0 ? (

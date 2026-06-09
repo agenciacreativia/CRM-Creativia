@@ -18,9 +18,13 @@ export default async function CatalogoPage() {
     getTenantHerramientas(),
   ]);
 
-  // Solo las agencias copian a su catálogo (necesitan el módulo productos en su plan + permiso crear).
-  const tieneProductos = herramientas === null || herramientas.has("productos");
-  const puedeCopiar = !esPlataforma && tieneProductos && can(perms.permisos, "productos", "crear", perms.es_admin);
+  // Solo las agencias copian a su catálogo. Antes el check exigía que el plan
+  // tuviera explícitamente el módulo "productos" en `herramientas`, lo cual
+  // ocultaba el botón cuando el plan estaba bajo-configurado. Ahora si el rol
+  // tiene permiso de crear y el tenant no es plataforma, mostramos el botón —
+  // el módulo productos viene activo por default en todos los planes.
+  void herramientas;
+  const puedeCopiar = !esPlataforma && can(perms.permisos, "productos", "crear", perms.es_admin);
 
   return (
     <div className="space-y-4">
