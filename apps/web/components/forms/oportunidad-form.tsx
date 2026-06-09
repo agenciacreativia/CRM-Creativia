@@ -130,10 +130,16 @@ export function OportunidadForm(props: Props) {
             value={contactoId}
             onChange={(ev) => setContactoId(ev.target.value)}
             required
-            disabled={contactosFiltrados.length === 0}
+            disabled={contactosFiltrados.length === 0 && mode !== "edit"}
           >
             {contactosFiltrados.length === 0 ? (
-              <option value="">(sin contactos)</option>
+              // En edición mantenemos visible el contacto actual aunque la
+              // empresa cambió y no aparezca en los filtrados.
+              mode === "edit" && initial?.contacto_id ? (
+                <option value={initial.contacto_id}>{(picker.contactos.find((c) => c.id === initial.contacto_id)?.nombre) ?? "(contacto actual)"}</option>
+              ) : (
+                <option value="">(sin contactos)</option>
+              )
             ) : (
               contactosFiltrados.map((c) => (
                 <option key={c.id} value={c.id}>{c.nombre}</option>

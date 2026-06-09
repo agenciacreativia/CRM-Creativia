@@ -203,8 +203,14 @@ export async function enviarCampania(campaniaId: string): Promise<{ enviados: nu
     throw new Error("Sin destinatarios para ese segmento");
   }
 
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   let enviados = 0, errores = 0;
   for (const d of destinatarios) {
+    if (!emailRe.test(d.email)) {
+      // Email malformado — saltamos. Contamos como error para que el admin lo vea.
+      errores++;
+      continue;
+    }
     try {
       const track = await registrarCorreoEnviado({
         oportunidadId: null, contactoId: d.id, asunto: c.asunto as string, destinatario: d.email, campaniaId,

@@ -25,17 +25,18 @@ function diasAlProximoCumple(iso: string): { dias: number; cumple: number } {
 
 export type Fidelizacion = { cumpleanos: CumpleItem[]; vencimientos: VencimientoItem[] };
 
-export async function getFidelizacion(opts: { diasCumple?: number; diasDoc?: number } = {}): Promise<Fidelizacion> {
+export async function getFidelizacion(opts: { diasCumple?: number; diasDoc?: number; limit?: number } = {}): Promise<Fidelizacion> {
   const supabase = await createServerSupabase();
   const diasCumple = opts.diasCumple ?? 30;
   const diasDoc = opts.diasDoc ?? 90;
+  const limit = opts.limit ?? 2000;
 
   // Cumpleaños próximos.
   const { data: contactos } = await supabase
     .from("contacto")
     .select("id, nombre, email, fecha_nacimiento")
     .not("fecha_nacimiento", "is", null)
-    .limit(1000);
+    .limit(limit);
   const cumpleanos: CumpleItem[] = (contactos ?? [])
     .map((c) => {
       const { dias, cumple } = diasAlProximoCumple(c.fecha_nacimiento as string);

@@ -263,7 +263,7 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                   {puedeCopiar && (
                     <label className="absolute right-3 top-3 inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-md bg-white/95 shadow ring-1 ring-black/10 hover:bg-white">
-                      <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="h-3.5 w-3.5" onClick={(e) => e.stopPropagation()} />
+                      <input type="checkbox" aria-label={`Seleccionar ${p.nombre}`} checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="h-3.5 w-3.5" onClick={(e) => e.stopPropagation()} />
                     </label>
                   )}
                   <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">

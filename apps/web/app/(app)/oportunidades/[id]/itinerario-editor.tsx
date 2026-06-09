@@ -57,12 +57,14 @@ export function ItinerarioEditor({
       ) : (
         <ul className="space-y-2">
           {itinerario.map((d, i) => (
-            <li key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+            // key estable: combinación de día + título inicial para evitar
+            // que React renderee componentes stale al reordenar.
+            <li key={`it-${d.dia}-${d.titulo.slice(0, 20) || i}`} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
               <div className="flex items-start gap-2">
                 <div className="mt-1 flex flex-col items-center gap-0.5">
-                  <button type="button" onClick={() => move(i, -1)} className="text-gray-300 hover:text-gray-600" title="Subir">▲</button>
+                  <button type="button" onClick={() => move(i, -1)} aria-label={`Subir día ${d.dia}`} className="text-gray-300 hover:text-gray-600" title="Subir">▲</button>
                   <span className="rounded-full bg-brand-primary px-2 py-0.5 text-xs font-bold text-white">{d.dia}</span>
-                  <button type="button" onClick={() => move(i, 1)} className="text-gray-300 hover:text-gray-600" title="Bajar">▼</button>
+                  <button type="button" onClick={() => move(i, 1)} aria-label={`Bajar día ${d.dia}`} className="text-gray-300 hover:text-gray-600" title="Bajar">▼</button>
                 </div>
                 <div className="flex-1 space-y-1.5">
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">

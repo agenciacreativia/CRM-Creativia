@@ -20,10 +20,16 @@ export async function crearListaAction({
     if (!nombre.trim()) return { ok: false, error: "El nombre es obligatorio." };
     const spec = decodeFilterSpec(filtrosEncoded || undefined);
     const fields = await getFilterFields("contacto");
-    const rows = await listContactos({});
+    // Tope alto para no quemar RAM cuando hay 50k+ contactos. Si superamos el
+    // tope reportamos al usuario que la lista podría no estar completa.
+    const LIMIT = 10_000;
+    const rows = await listContactos({ limit: LIMIT });
     const matches = spec && specHasConditions(spec)
       ? rows.filter((r) => rowMatches(r as unknown as Record<string, unknown>, spec, fields))
       : rows;
+    if (rows.length === LIMIT) {
+      console.warn(`[campanias/listas/nueva] truncado en ${LIMIT} contactos — implementar conteo server-side`);
+    }
     const id = await createListaEnvio({
       nombre: nombre.trim(),
       descripcion: descripcion.trim() || null,

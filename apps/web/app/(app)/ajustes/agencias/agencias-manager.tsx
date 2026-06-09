@@ -122,6 +122,7 @@ export function AgenciasManager({ initial, planes }: { initial: Agencia[]; plane
                       type="text"
                       defaultValue={a.nit ?? ""}
                       placeholder="NIT"
+                      aria-label={`NIT de ${a.nombre_empresa}`}
                       disabled={savingId === a.id}
                       onBlur={(e) => { const v = e.target.value.trim(); if (v !== (a.nit ?? "")) changeAgencia(a.id, { nit: v || null }); }}
                       className="w-28 rounded border border-gray-300 px-2 py-1 text-sm"
@@ -142,8 +143,21 @@ export function AgenciasManager({ initial, planes }: { initial: Agencia[]; plane
                   <td className="px-4 py-2.5">
                     <Select
                       value={a.estado}
-                      onChange={(e) => changeAgencia(a.id, { estado: e.target.value as Agencia["estado"] })}
+                      onChange={(e) => {
+                        const nuevo = e.target.value as Agencia["estado"];
+                        // Confirmar acciones destructivas para evitar clicks accidentales en producción.
+                        if (nuevo === "suspendido" || nuevo === "cancelado") {
+                          const accion = nuevo === "suspendido" ? "suspender" : "cancelar";
+                          if (!confirm(`¿Seguro que querés ${accion} ${a.nombre_empresa}?`)) {
+                            // Forzar reset del select: si no, queda visualmente seleccionada la opción.
+                            (e.target as HTMLSelectElement).value = a.estado;
+                            return;
+                          }
+                        }
+                        changeAgencia(a.id, { estado: nuevo });
+                      }}
                       disabled={savingId === a.id}
+                      aria-label={`Cambiar estado de ${a.nombre_empresa}`}
                       className="w-36"
                     >
                       <option value="activo">Activo</option>
@@ -281,7 +295,15 @@ function NuevaAgencia({
 function CredencialesPanel({ creada, onClose }: { creada: Creada; onClose: () => void }) {
   const [copied, setCopied] = useState<string | null>(null);
   function copy(text: string, key: string) {
-    navigator.clipboard?.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 1500); });
+    if (!navigator.clipboard) {
+      // Fallback para contextos inseguros (http) o browsers viejos: prompt nativo.
+      window.prompt("Copiá manualmente (Ctrl+C):", text);
+      return;
+    }
+    navigator.clipboard.writeText(text).then(
+      () => { setCopied(key); setTimeout(() => setCopied(null), 1500); },
+      () => { window.prompt("No se pudo copiar al portapapeles. Copialo manualmente:", text); }
+    );
   }
   const Row = ({ label, value, k, href }: { label: string; value: string; k: string; href?: string }) => (
     <div className="flex items-center justify-between gap-2 py-1.5">

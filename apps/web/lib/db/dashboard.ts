@@ -117,9 +117,10 @@ export async function loadDashboard(): Promise<{
   const oppPromise = scope === "me" ? oppSelect.eq("asignado_id", user.id) : oppSelect;
 
   // Pull all pending activities (not just 15) — we need them for "vencidas" too.
+  // No traemos `completada` porque ya filtramos por ese campo en el .eq().
   const actsPromise = supabase
     .from("actividad")
-    .select("id, oportunidad_id, tipo, descripcion, fecha_programada, completada, oportunidad(nombre, asignado_id)")
+    .select("id, oportunidad_id, tipo, descripcion, fecha_programada, oportunidad(nombre, asignado_id)")
     .eq("completada", false)
     .order("fecha_programada", { ascending: true, nullsFirst: false });
 

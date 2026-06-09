@@ -205,12 +205,12 @@ export function ProductosManager({
                 <td className="px-4 py-2.5 text-right">
                   <div className="flex items-center justify-end gap-1">
                     {canEditar && row.origen === "propio" && (
-                      <button data-edit-id={row.id} onClick={() => setEditing(row)} className="text-gray-400 hover:text-brand-primary" title="Editar">
+                      <button type="button" data-edit-id={row.id} onClick={() => setEditing(row)} aria-label={`Editar producto ${row.nombre}`} className="text-gray-400 hover:text-brand-primary" title="Editar">
                         <Pencil className="h-4 w-4" />
                       </button>
                     )}
                     {canEliminar && row.origen === "propio" && (
-                      <button onClick={() => onDelete(row.id)} className="text-gray-400 hover:text-status-danger" title="Eliminar">
+                      <button type="button" onClick={() => onDelete(row.id)} aria-label={`Eliminar producto ${row.nombre}`} className="text-gray-400 hover:text-status-danger" title="Eliminar">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     )}
