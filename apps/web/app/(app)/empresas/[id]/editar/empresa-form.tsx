@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +22,20 @@ export function EmpresaForm({
   empresa: EmpresaDetail;
   usuarios: UsuarioOption[];
 }) {
+  const router = useRouter();
   const action = updateEmpresaAction.bind(null, empresa.id);
   const [state, formAction, isPending] = useActionState(action, INITIAL);
   const e = state.fieldErrors ?? {};
+
+  // Navegación post-save: el server devuelve ok:true y el cliente navega a la
+  // página de detalle. Antes la action hacía redirect() pero en algunos
+  // escenarios terminaba en /landing por el middleware.
+  useEffect(() => {
+    if (state.ok && state.id) {
+      router.push(`/empresas/${state.id}`);
+      router.refresh();
+    }
+  }, [state.ok, state.id, router]);
 
   return (
     <form action={formAction} className="space-y-5">

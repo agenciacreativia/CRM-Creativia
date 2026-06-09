@@ -10,6 +10,8 @@ export type CotizacionItem = {
 };
 
 export type ItinerarioDia = {
+  /** ID interno estable del item para usarlo como React key sin perder foco al editar. */
+  _uid?: string;
   dia: number;
   titulo: string;
   ciudad?: string | null;

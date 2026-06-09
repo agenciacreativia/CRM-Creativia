@@ -13,6 +13,16 @@ const COMIDAS: { key: Comida; label: string; icon: React.ComponentType<{ classNa
   { key: "cena", label: "Cena", icon: Moon },
 ];
 
+function newUid(): string {
+  return `it-${Math.random().toString(36).slice(2, 10)}-${Date.now()}`;
+}
+
+/** Garantiza que cada día tenga un _uid persistente — los ítems que ya tienen uno
+ *  se respetan; los recién creados (p.ej. desde la BD vieja) reciben uno nuevo. */
+function ensureUid(arr: ItinerarioDia[]): ItinerarioDia[] {
+  return arr.map((d) => (d._uid ? d : { ...d, _uid: newUid() }));
+}
+
 export function ItinerarioEditor({
   itinerario,
   onChange,
@@ -20,25 +30,35 @@ export function ItinerarioEditor({
   itinerario: ItinerarioDia[];
   onChange: (next: ItinerarioDia[]) => void;
 }) {
+  // Trabajamos siempre sobre la lista con _uid garantizado.
+  const items = itinerario.every((d) => d._uid) ? itinerario : ensureUid(itinerario);
   function addDay() {
-    const next = [...itinerario, { dia: itinerario.length + 1, titulo: "", ciudad: null, descripcion: null, incluye_comidas: [] as Comida[] }];
-    onChange(next);
+    const next: ItinerarioDia = {
+      _uid: newUid(),
+      dia: items.length + 1,
+      titulo: "",
+      ciudad: null,
+      descripcion: null,
+      incluye_comidas: [] as Comida[],
+    };
+    onChange([...items, next]);
   }
   function update(i: number, patch: Partial<ItinerarioDia>) {
-    onChange(itinerario.map((d, idx) => (idx === i ? { ...d, ...patch } : d)));
+    // Preservamos _uid del día editado (no se incluye en el patch).
+    onChange(items.map((d, idx) => (idx === i ? { ...d, ...patch } : d)));
   }
   function remove(i: number) {
-    onChange(itinerario.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, dia: idx + 1 })));
+    onChange(items.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, dia: idx + 1 })));
   }
   function move(i: number, delta: number) {
     const j = i + delta;
-    if (j < 0 || j >= itinerario.length) return;
-    const arr = [...itinerario];
+    if (j < 0 || j >= items.length) return;
+    const arr = [...items];
     [arr[i], arr[j]] = [arr[j], arr[i]];
     onChange(arr.map((d, idx) => ({ ...d, dia: idx + 1 })));
   }
   function toggleComida(i: number, k: Comida) {
-    const set = new Set(itinerario[i].incluye_comidas ?? []);
+    const set = new Set(items[i].incluye_comidas ?? []);
     if (set.has(k)) set.delete(k); else set.add(k);
     update(i, { incluye_comidas: [...set] as Comida[] });
   }
@@ -52,14 +72,13 @@ export function ItinerarioEditor({
         </Button>
       </div>
 
-      {itinerario.length === 0 ? (
+      {items.length === 0 ? (
         <p className="rounded border border-dashed border-gray-200 p-4 text-center text-xs text-gray-400">Sin itinerario aún.</p>
       ) : (
         <ul className="space-y-2">
-          {itinerario.map((d, i) => (
-            // key estable: combinación de día + título inicial para evitar
-            // que React renderee componentes stale al reordenar.
-            <li key={`it-${d.dia}-${d.titulo.slice(0, 20) || i}`} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          {items.map((d, i) => (
+            // key estable: _uid persistente por item para no perder foco al editar.
+            <li key={d._uid ?? `it-${i}`} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
               <div className="flex items-start gap-2">
                 <div className="mt-1 flex flex-col items-center gap-0.5">
                   <button type="button" onClick={() => move(i, -1)} aria-label={`Subir día ${d.dia}`} className="text-gray-300 hover:text-gray-600" title="Subir">▲</button>

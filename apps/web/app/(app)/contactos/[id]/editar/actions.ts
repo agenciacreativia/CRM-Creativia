@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { updateContacto, logCambio } from "@/lib/db/mutations";
 
@@ -36,7 +35,7 @@ const schema = z.object({
   ),
 });
 
-export type ContactoFormState = { ok: boolean; fieldErrors?: Record<string, string>; error?: string };
+export type ContactoFormState = { ok: boolean; id?: string; fieldErrors?: Record<string, string>; error?: string };
 
 export async function updateContactoAction(
   id: string,
@@ -62,5 +61,6 @@ export async function updateContactoAction(
 
   revalidatePath(`/contactos/${id}`);
   revalidatePath(`/contactos`);
-  redirect(`/contactos/${id}`);
+  // El cliente navega cuando ve ok:true (ver useEffect en contacto-form).
+  return { ok: true, id };
 }

@@ -10,9 +10,22 @@ export default async function ReservasPage() {
     return (
       <div className="max-w-2xl space-y-4">
         <PageHeader title="Reservas" />
-        <p className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500">
-          La integración con el inventario de Turistea no está configurada.
-        </p>
+        <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+          <p className="font-semibold">⚠️ Falta configurar la conexión con Turistea</p>
+          <p>
+            Este módulo lee las reservas desde el inventario del sitio web de Turistea. Para que funcione,
+            el servidor del CRM necesita dos variables de entorno con la URL y la API key del proyecto
+            Supabase del sitio:
+          </p>
+          <pre className="overflow-x-auto rounded bg-amber-100 p-2 text-xs">
+            CUPOS_SUPABASE_URL=https://&lt;proyecto&gt;.supabase.co{"\n"}
+            CUPOS_SUPABASE_KEY=&lt;anon o service_role key del sitio&gt;
+          </pre>
+          <p className="text-xs">
+            Agregalas a <code className="rounded bg-amber-100 px-1.5 py-0.5">apps/web/.env.production.local</code> en
+            Lightsail, hacé rebuild + restart, y este módulo se reconecta automáticamente.
+          </p>
+        </div>
       </div>
     );
   }

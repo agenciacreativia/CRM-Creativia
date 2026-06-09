@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { updateOportunidad, logCambio } from "@/lib/db/mutations";
 import { getOportunidad } from "@/lib/db/oportunidades";
@@ -39,7 +38,7 @@ const schema = z
     path: ["motivo_perdida_id"],
   });
 
-export type OportunidadFormState = { ok: boolean; fieldErrors?: Record<string, string>; error?: string };
+export type OportunidadFormState = { ok: boolean; id?: string; fieldErrors?: Record<string, string>; error?: string };
 
 export async function updateOportunidadAction(
   id: string,
@@ -67,5 +66,5 @@ export async function updateOportunidadAction(
   revalidatePath(`/oportunidades/${id}`);
   revalidatePath(`/oportunidades`);
   revalidatePath(`/oportunidades/kanban`);
-  redirect(`/oportunidades/${id}`);
+  return { ok: true, id };
 }

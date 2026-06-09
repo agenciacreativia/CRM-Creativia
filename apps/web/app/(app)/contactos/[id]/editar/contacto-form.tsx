@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +25,17 @@ export function ContactoForm({
   empresas: EmpresaOption[];
   usuarios: UsuarioOption[];
 }) {
+  const router = useRouter();
   const action = updateContactoAction.bind(null, contacto.id);
   const [state, formAction, isPending] = useActionState(action, INITIAL);
   const e = state.fieldErrors ?? {};
+
+  useEffect(() => {
+    if (state.ok && state.id) {
+      router.push(`/contactos/${state.id}`);
+      router.refresh();
+    }
+  }, [state.ok, state.id, router]);
 
   // Fallback: si el contacto está asignado a un usuario que no está en la lista
   // (p. ej. eliminado o sin permisos), mostramos una opción placeholder para

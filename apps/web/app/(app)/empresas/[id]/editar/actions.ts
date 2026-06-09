@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { updateEmpresa, logCambio } from "@/lib/db/mutations";
 
@@ -28,7 +27,7 @@ const schema = z.object({
   asignado_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
 });
 
-export type EmpresaFormState = { ok: boolean; fieldErrors?: Record<string, string>; error?: string };
+export type EmpresaFormState = { ok: boolean; id?: string; fieldErrors?: Record<string, string>; error?: string };
 
 export async function updateEmpresaAction(
   id: string,
@@ -54,5 +53,8 @@ export async function updateEmpresaAction(
 
   revalidatePath(`/empresas/${id}`);
   revalidatePath(`/empresas`);
-  redirect(`/empresas/${id}`);
+  // No usamos redirect() del server porque en algunos escenarios la navegación
+  // terminaba en /landing (problema intermitente del middleware sobre la
+  // respuesta del action). El cliente hace router.push cuando ve ok:true.
+  return { ok: true, id };
 }

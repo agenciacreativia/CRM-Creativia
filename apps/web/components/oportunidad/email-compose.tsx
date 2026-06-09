@@ -63,9 +63,21 @@ export function EmailCompose({
 
   if (!googleConnected) {
     return (
-      <div className="mb-4 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm">
-        Para enviar correos desde el CRM, conectá tu Gmail en{" "}
-        <Link href="/ajustes" className="font-medium text-brand-primary hover:underline">Ajustes</Link>.
+      <div className="mb-4 space-y-2 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
+        <p className="font-medium">
+          📧 Para enviar correos desde el CRM necesitás conectar tu cuenta de Gmail.
+        </p>
+        <p className="text-xs">
+          Los correos se envían usando tu propia cuenta de Google, los destinatarios los reciben
+          como si los hubieras mandado vos manualmente. El CRM solo agrega tracking de apertura
+          y clic.
+        </p>
+        <Link
+          href="/ajustes"
+          className="inline-flex items-center gap-1 rounded-md bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+        >
+          Conectar Gmail → Ajustes
+        </Link>
       </div>
     );
   }

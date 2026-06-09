@@ -100,20 +100,37 @@ export async function saveCotizacion(id: string | null, input: CotizacionInput):
   const user = await ensureSession();
   if (!user.tenantId) throw new Error("Tenant ausente");
   const supabase = await createServerSupabase();
+
+  // Si la migración 0036 (que agrega la columna itinerario) todavía no se corrió
+  // en este proyecto, retiramos el campo del payload y avisamos por log para
+  // que el dato no se pierda silenciosamente — el resto del save sigue
+  // funcionando con normalidad.
+  const isMissingItinerarioColumn = (msg: string | undefined): boolean =>
+    !!msg && /column.*itinerario.*does not exist/i.test(msg);
+
   if (id) {
-    const { error } = await supabase
-      .from("cotizacion")
-      .update({ ...input, actualizado_en: new Date().toISOString() })
-      .eq("id", id);
+    const payload = { ...input, actualizado_en: new Date().toISOString() };
+    let { error } = await supabase.from("cotizacion").update(payload).eq("id", id);
+    if (error && isMissingItinerarioColumn(error.message)) {
+      console.warn("[saveCotizacion] columna 'itinerario' no existe; correr migración 0036. Guardando sin itinerario.");
+      const { itinerario: _itin, ...sinItin } = payload;
+      void _itin;
+      ({ error } = await supabase.from("cotizacion").update(sinItin).eq("id", id));
+    }
     if (error) throw new Error(error.message);
     return id;
   }
-  const { data, error } = await supabase
-    .from("cotizacion")
-    .insert({ ...input, tenant_id: user.tenantId, creado_por: user.id })
-    .select("id")
-    .single();
+
+  const insert = { ...input, tenant_id: user.tenantId, creado_por: user.id };
+  let { data, error } = await supabase.from("cotizacion").insert(insert).select("id").single();
+  if (error && isMissingItinerarioColumn(error.message)) {
+    console.warn("[saveCotizacion] columna 'itinerario' no existe; correr migración 0036. Insertando sin itinerario.");
+    const { itinerario: _itin, ...sinItin } = insert;
+    void _itin;
+    ({ data, error } = await supabase.from("cotizacion").insert(sinItin).select("id").single());
+  }
   if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("No se pudo guardar la cotización");
   return data.id;
 }
 

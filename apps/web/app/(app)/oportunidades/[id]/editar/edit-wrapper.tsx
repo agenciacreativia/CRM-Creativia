@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { OportunidadForm, type OportunidadFormValues } from "@/components/forms/oportunidad-form";
 import type { PickerData } from "@/lib/db/picker-data";
 import { updateOportunidadAction, type OportunidadFormState } from "./actions";
@@ -16,8 +17,16 @@ export function EditWrapper({
   initial: Partial<OportunidadFormValues>;
   picker: PickerData;
 }) {
+  const router = useRouter();
   const action = updateOportunidadAction.bind(null, id);
   const [state, formAction, isPending] = useActionState(action, INITIAL);
+
+  useEffect(() => {
+    if (state.ok && state.id) {
+      router.push(`/oportunidades/${state.id}`);
+      router.refresh();
+    }
+  }, [state.ok, state.id, router]);
 
   return (
     <form action={formAction}>
