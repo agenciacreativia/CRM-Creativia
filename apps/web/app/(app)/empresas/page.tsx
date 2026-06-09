@@ -41,13 +41,17 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
   // para evaluarlos en memoria, pero seguimos siendo finitos: detectamos si tocamos el
   // tope para avisar al usuario que los resultados pueden estar incompletos.
   const fetchLimit = hasAdvanced || q ? 2000 : 200;
-  const [rowsRaw, filterFields, perms, usuarios] = await Promise.all([
+  const [rowsRaw, filterFields, perms] = await Promise.all([
     listEmpresas({ limit: fetchLimit }),
     getFilterFields("empresa"),
     getMyPermisos(),
-    listUsuarios({ activo: "activos" }),
   ]);
   const puedeEditarMasivo = can(perms.permisos, "empresas", "editar", perms.es_admin);
+  // Mismo patrón que /contactos: solo traemos usuarios si el bulk bar va a
+  // renderizarse, y con catch defensivo contra RLS.
+  const usuarios = puedeEditarMasivo
+    ? await listUsuarios({ activo: "activos" }).catch(() => [])
+    : [];
   const truncated = (hasAdvanced || q) && rowsRaw.length >= fetchLimit;
   const puedeCrear = can(perms.permisos, "empresas", "crear", perms.es_admin);
 

@@ -32,14 +32,19 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
   const hasAdvanced = specHasConditions(spec);
   const q = params.q?.trim() ?? "";
 
-  const [rowsRaw, filterFields, perms, usuarios] = await Promise.all([
+  const [rowsRaw, filterFields, perms] = await Promise.all([
     listContactos({ limit: hasAdvanced || q ? 2000 : 200 }),
     getFilterFields("contacto"),
     getMyPermisos(),
-    listUsuarios({ activo: "activos" }),
   ]);
   const puedeCrear = can(perms.permisos, "contactos", "crear", perms.es_admin);
   const puedeEditarMasivo = can(perms.permisos, "contactos", "editar", perms.es_admin);
+  // Solo traemos usuarios si el bulk bar va a renderizarse (necesita el picker
+  // de reasignación). Y lo hacemos defensivo: si RLS bloquea la tabla usuario
+  // para asesores, no queremos que reviente la página entera. Catch → [].
+  const usuarios = puedeEditarMasivo
+    ? await listUsuarios({ activo: "activos" }).catch(() => [])
+    : [];
 
   let filtered = hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
   if (q) filtered = filtered.filter((r) => quickMatch(r, q));
