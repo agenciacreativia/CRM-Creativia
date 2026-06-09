@@ -1,14 +1,18 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { listEmpresas } from "@/lib/db/empresas";
 import { FilterBuilder } from "@/components/filters/filter-builder";
+import { QuickSearch } from "@/components/filters/quick-search";
 import { ListOrder } from "@/components/list-order";
 import { getFilterFields } from "@/lib/filters/server";
 import { decodeFilterSpec, specHasConditions } from "@/lib/filters/types";
 import { rowMatches } from "@/lib/filters/evaluate";
 import { sortRows } from "@/lib/filters/sort";
 import { Badge } from "@/components/ui/badge";
+import { getMyPermisos } from "@/lib/db/roles";
+import { can } from "@/lib/permissions";
 
-type SearchParams = Promise<{ filtros?: string; orden?: string }>;
+type SearchParams = Promise<{ filtros?: string; orden?: string; q?: string }>;
 
 const ESTADO_BADGE: Record<string, "info" | "success" | "default"> = {
   prospecto: "info",
@@ -16,31 +20,56 @@ const ESTADO_BADGE: Record<string, "info" | "success" | "default"> = {
   inactivo: "default",
 };
 
+function quickMatch(r: { nombre: string; ciudad?: string | null; asignado_nombre?: string | null }, q: string) {
+  const n = q.toLowerCase();
+  return (
+    r.nombre.toLowerCase().includes(n) ||
+    (r.ciudad ?? "").toLowerCase().includes(n) ||
+    (r.asignado_nombre ?? "").toLowerCase().includes(n)
+  );
+}
+
 export default async function EmpresasPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const spec = decodeFilterSpec(params.filtros);
   const hasAdvanced = specHasConditions(spec);
+  const q = params.q?.trim() ?? "";
 
   // Limite de filas a traer del backend. Cuando hay filtros avanzados subimos el tope
   // para evaluarlos en memoria, pero seguimos siendo finitos: detectamos si tocamos el
   // tope para avisar al usuario que los resultados pueden estar incompletos.
-  const fetchLimit = hasAdvanced ? 2000 : 200;
-  const [rowsRaw, filterFields] = await Promise.all([
+  const fetchLimit = hasAdvanced || q ? 2000 : 200;
+  const [rowsRaw, filterFields, perms] = await Promise.all([
     listEmpresas({ limit: fetchLimit }),
     getFilterFields("empresa"),
+    getMyPermisos(),
   ]);
-  const truncated = hasAdvanced && rowsRaw.length >= fetchLimit;
+  const truncated = (hasAdvanced || q) && rowsRaw.length >= fetchLimit;
+  const puedeCrear = can(perms.permisos, "empresas", "crear", perms.es_admin);
 
-  const filtered =
-    hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
+  let filtered = hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
+  if (q) filtered = filtered.filter((r) => quickMatch(r, q));
   const rows = sortRows(filtered, params.orden, filterFields);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
-        <ListOrder fields={filterFields} />
-        <FilterBuilder fields={filterFields} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <QuickSearch placeholder="Buscar empresa…" />
+          <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <ListOrder fields={filterFields} />
+          <FilterBuilder fields={filterFields} />
+          {puedeCrear && (
+            <Link
+              href="/empresas/nueva"
+              className="inline-flex items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep"
+            >
+              <Plus className="h-3.5 w-3.5" /> Nueva empresa
+            </Link>
+          )}
+        </div>
       </div>
 
       {truncated && (
@@ -69,11 +98,9 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
             {rows.length === 0 && (
               <tr>
                 <td colSpan={6} className="text-center text-gray-500 py-8">
-                  No hay empresas todavía. Importá tu base desde{" "}
-                  <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">
-                    Datos → Importar
-                  </Link>
-                  .
+                  {q
+                    ? <>No hay empresas que coincidan con <strong>{q}</strong>.</>
+                    : <>No hay empresas todavía. Importá tu base desde <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">Datos → Importar</Link> o creá una nueva.</>}
                 </td>
               </tr>
             )}

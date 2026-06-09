@@ -39,9 +39,19 @@ export function ProductosManager({
   const [saving, setSaving] = useState(false);
   const [, startTransition] = useTransition();
   const [tab, setTab] = useState<"propios" | "turistea">("propios");
+  const [search, setSearch] = useState("");
   const propios = initial.filter((p) => p.origen === "propio");
   const turistea = initial.filter((p) => p.origen === "turistea");
-  const visible = tab === "propios" ? propios : turistea;
+  const base = tab === "propios" ? propios : turistea;
+  const visible = (() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter((row) =>
+      row.nombre.toLowerCase().includes(q) ||
+      (row.categoria ?? "").toLowerCase().includes(q) ||
+      (row.destino ?? "").toLowerCase().includes(q),
+    );
+  })();
 
   const showForm = creating || editing !== null;
   const p = editing;
@@ -160,6 +170,13 @@ export function ProductosManager({
             Catálogo Turistea <span className="ml-1 text-xs opacity-70">({turistea.length})</span>
           </button>
         </div>
+        <input
+          type="search"
+          value={search}
+          onChange={(ev) => setSearch(ev.target.value)}
+          placeholder="Buscar producto…"
+          className="w-56 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none"
+        />
         <p className="text-sm text-gray-500">{visible.length} {tab === "propios" ? "propios" : "del catálogo"}</p>
         {canCrear && tab === "propios" && (
           <Button type="button" size="sm" onClick={() => setCreating(true)} className="ml-auto inline-flex items-center gap-1.5">

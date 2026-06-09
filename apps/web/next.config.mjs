@@ -14,18 +14,8 @@ const nextConfig = {
     },
   },
 
-  // Default the /oportunidades route to the Kanban view. Doing this at the
-  // routing layer (instead of redirect() inside a page) issues a clean 307
-  // before any rendering happens — no flash of the loading skeleton.
-  async redirects() {
-    return [
-      {
-        source: "/oportunidades",
-        destination: "/oportunidades/kanban",
-        permanent: false,
-      },
-    ];
-  },
+  // /oportunidades ya NO tiene redirect global — la propia page lee la
+  // preferencia del usuario (localStorage) y manda a tabla o kanban.
 };
 
 export default nextConfig;

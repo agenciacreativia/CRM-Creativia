@@ -122,30 +122,43 @@ export function OportunidadForm(props: Props) {
           htmlFor="contacto_id"
           required
           error={e.contacto_id}
-          hint={contactosFiltrados.length === 0 ? "Esta empresa no tiene contactos. Creá uno primero." : undefined}
+          hint={contactosFiltrados.length === 0 ? "Esta empresa no tiene contactos. Creá uno con + nuevo." : undefined}
         >
-          <Select
-            id="contacto_id"
-            name="contacto_id"
-            value={contactoId}
-            onChange={(ev) => setContactoId(ev.target.value)}
-            required
-            disabled={contactosFiltrados.length === 0 && mode !== "edit"}
-          >
-            {contactosFiltrados.length === 0 ? (
-              // En edición mantenemos visible el contacto actual aunque la
-              // empresa cambió y no aparezca en los filtrados.
-              mode === "edit" && initial?.contacto_id ? (
-                <option value={initial.contacto_id}>{(picker.contactos.find((c) => c.id === initial.contacto_id)?.nombre) ?? "(contacto actual)"}</option>
+          <div className="flex items-center gap-2">
+            <Select
+              id="contacto_id"
+              name="contacto_id"
+              value={contactoId}
+              onChange={(ev) => setContactoId(ev.target.value)}
+              required
+              disabled={contactosFiltrados.length === 0 && mode !== "edit"}
+            >
+              {contactosFiltrados.length === 0 ? (
+                // En edición mantenemos visible el contacto actual aunque la
+                // empresa cambió y no aparezca en los filtrados.
+                mode === "edit" && initial?.contacto_id ? (
+                  <option value={initial.contacto_id}>{(picker.contactos.find((c) => c.id === initial.contacto_id)?.nombre) ?? "(contacto actual)"}</option>
+                ) : (
+                  <option value="">(sin contactos)</option>
+                )
               ) : (
-                <option value="">(sin contactos)</option>
-              )
-            ) : (
-              contactosFiltrados.map((c) => (
-                <option key={c.id} value={c.id}>{c.nombre}</option>
-              ))
+                contactosFiltrados.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))
+              )}
+            </Select>
+            {/* Crear contacto directo desde la oportunidad. Vuelve al punto donde
+                veníamos con `return_to` y deja la empresa actual pre-seleccionada. */}
+            {empresaId && (
+              <Link
+                href={`/contactos/nuevo?empresa_id=${empresaId}&return_to=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname + window.location.search : "/oportunidades")}`}
+                className="whitespace-nowrap rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                title="Crear un contacto nuevo para esta empresa"
+              >
+                + nuevo
+              </Link>
             )}
-          </Select>
+          </div>
         </Field>
 
         <Field label="Embudo" htmlFor="pipeline_id" required error={e.pipeline_id}>
