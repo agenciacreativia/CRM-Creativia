@@ -26,7 +26,11 @@ export function ForgotPasswordForm() {
     });
     setSubmitting(false);
     if (error) {
-      setError("No se pudo enviar el email. Verificá la dirección.");
+      // Mostramos el mensaje exacto de Supabase cuando es útil (rate-limit, formato inválido, etc.).
+      const msg = error.message?.toLowerCase() ?? "";
+      if (msg.includes("rate") || msg.includes("too many")) setError("Demasiados intentos. Esperá unos minutos y volvé a probar.");
+      else if (msg.includes("email") || msg.includes("invalid")) setError("La dirección de email no es válida o no está registrada.");
+      else setError("No se pudo enviar el email. Verificá la dirección y reintentá.");
       return;
     }
     setSent(true);

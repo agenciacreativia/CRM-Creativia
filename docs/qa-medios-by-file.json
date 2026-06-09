@@ -1,0 +1,1132 @@
+{
+  "app/(app)/ajustes/agencias/agencias-manager.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "Cuando se cambia plan/estado de agencia (changeAgencia en agencias-manager.tsx), si hay error, setSavingId se limpia pero el estado `error` se muestra. Sin embargo, el input NIT con `defaultValue` no se re-sincroniza, dejando el UI con valores stale si el usuario cambió múltiples campos.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 47-54",
+      "como_reproducir": "1. Cambiar NIT + Plan. 2. El NIT se guarda pero el plan falla. 3. El input NIT muestra el valor que el usuario tipó, no el valor original de la DB (que no cambió).",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "security",
+      "descripcion": "En agencias/actions.ts línea 44, se hace window.location.href sin sanitizar la URL generada. Si verComoAgenciaAction devuelve URL malformada (XSS), no hay validación.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 44",
+      "fix_sugerido": "Validar que res.url sea una URL válida con URL constructor antes de asignar a window.location.href.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "app/(app)/ajustes/planes/planes-manager.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En planes-manager.tsx línea 124, la función `onToggle(p)` usa `p.activo` para decidir si activar o desactivar. Pero `p` viene del array `initial` que no se actualiza hasta que `router.refresh()` completa. Si el usuario hace click en desactivar, luego inmediatamente en activar antes del refresh, el segundo click va a intentar desactivar de nuevo (porque p.activo aún es true).",
+      "archivo": "app/(app)/ajustes/planes/planes-manager.tsx, línea 55-59",
+      "como_reproducir": "1. Click 'Desactivar' plan. 2. Inmediatamente click 'Activar' antes que el refresh complete. 3. El segundo click envía !p.activo que es el estado antiguo, causando logic error.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En planes-manager.tsx línea 172, cuando se crea un nuevo plan, `orden` siempre es 0 porque `editing?.orden ?? 0` devuelve 0 cuando editing es null. Esto significa todos los planes nuevos se crean con orden=0, sin auto-incremento ni lógica para asignar orden siguiente.",
+      "archivo": "app/(app)/ajustes/planes/planes-manager.tsx, línea 172",
+      "como_reproducir": "Crear múltiples planes nuevos. Todos tendrán orden=0. Si se ordena por orden, van a estar juntos con orden no determinístico.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/oportunidad-productos.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En oportunidad-productos.tsx:233-234, al editar cantidad/precio, se usa Number(e.target.value) sin validación. Si el input es vacío o inválido, se pasa NaN al servidor, violando z.number().nonnegative() durante la validación.",
+      "archivo": "app/(app)/oportunidades/[id]/oportunidad-productos.tsx:233-234, 248-249",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En oportunidad-productos.tsx, la función useAsValue() (línea 116) NO valida que total sea > 0 ni que los precios sean válidos. Un usuario puede hacer clic en 'Usar como valor' con un total de 0 o NaN, creando una oportunidad con valor inválido.",
+      "archivo": "app/(app)/oportunidades/[id]/oportunidad-productos.tsx:115-119",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/detail-aside.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En detail-aside.tsx:145-147, el select para 'Asignado' usa onSave pero NO desactiva el botón submit ni previene múltiples clics. Un usuario rápido puede disparar saveOportunidadField() varias veces antes del refetch, causando race condition de actualización.",
+      "archivo": "app/(app)/oportunidades/[id]/detail-aside.tsx:116-157",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/(app)/oportunidades/kanban/kanban-board.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En kanban-board.tsx:113, cuando se revierte el optimistic update (error.ok === false), se hace setBoard(initialBoard), pero initialBoard está congelado en el useState inicial. Si el tablero se renderizó con un pipeline diferente después, la revert usa datos stale.",
+      "archivo": "app/(app)/oportunidades/kanban/kanban-board.tsx:48, 113-114",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En KanbanBoard (kanban-board.tsx:113), el revert después de un drag-and-drop fallido setea board a initialBoard, pero initialBoard nunca se mutó. El problema es que optimistic update es bueno, pero si falla, revert perfecto. Sin embargo, si hay otro estado que cambió (ej. filter query), el revert pierde cambios.",
+      "archivo": "app/(app)/oportunidades/kanban/kanban-board.tsx:91-114",
+      "como_reproducir": "Arrastra una tarjeta en el kanban mientras el servidor está lento. Si la acción falla, el board revierte. Pero si entre el drag start y end cambiaste el filtro, verás conflictos.",
+      "fix_sugerido": "Capturar el estado exacto antes del optimistic update y restaurarlo, no initialBoard (que es stale).",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En KanbanBoard, si la etapa targetada en drag-and-drop NO pertenece al mismo pipeline, la búsqueda 'for stage of col.etapas' puede fallar. getKanbanBoard() devuelve solo 1 pipeline pero la UI renderiza todas las etapas en un loop. Si dropeas fuera de ese pipeline, newStageId es inválido.",
+      "archivo": "app/(app)/oportunidades/kanban/kanban-board.tsx:69-115",
+      "como_reproducir": "Configura 2 pipelines. Intenta arrastrar una tarjeta de pipeline A a pipeline B (si ambos se renderizan juntos). moveOportunidadAction fallará.",
+      "fix_sugerido": "Validar que newStageId existe en alguna etapa del board antes de hacer moveOportunidadAction.",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/(app)/oportunidades/tabla/filters.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En table filters.tsx:138-143, los inputs de valor_min y valor_max aceptan min=0 pero NO validan que min <= max en el frontend. Si envían valor_min=100 y valor_max=50, la query de DB silenciosamente retorna 0 resultados sin aviso.",
+      "archivo": "app/(app)/oportunidades/tabla/filters.tsx:137-143",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En tabla de oportunidades, no hay un filtro de 'Estado' visible en la UI para filtrar por 'activo', 'ganado', 'perdido', 'eliminado'. Los usuarios deben escribir una URL con ?estado=x. Contrasta con otros filtros que tienen UI.",
+      "archivo": "app/(app)/oportunidades/tabla/filters.tsx:1-156",
+      "como_reproducir": "Abre /oportunidades/tabla. Busca un select para filtrar por 'estado'. No existe en los filtros avanzados.",
+      "fix_sugerido": "Agregar un select con opciones [activo, ganado, perdido, eliminado, todos] en OportunidadFilters y pasar params.estado a listOportunidades().",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/(app)/admin/pipelines/[id]/pipeline-editor.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En pipeline-editor.tsx:62-75, onAddEtapa calcula fd.set('orden', String(etapas.length)) asumiendo órdenes lineales, pero si se borran etapas intermedias (orden 0,1,3), etapas.length=2 crea una orden duplicada (2 cuando ya existe orden 3). No hay deduplicación.",
+      "archivo": "app/(app)/admin/pipelines/[id]/pipeline-editor.tsx:67",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/(app)/oportunidades/tabla/bulk-actions.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En oportunidades table, bulk delete action no valida que el número de IDs sea razonable. Un usuario malicioso puede enviar 10000 IDs, causando una query DELETE IN (...) gigante sin paginación o límite.",
+      "archivo": "app/(app)/oportunidades/tabla/bulk-actions.ts:56-67",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/auth/handoff/page.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En handoff/page.tsx (línea 27), se valida que access_token y refresh_token estén presentes, pero nunca se valida que el 'next' parámetro sea una ruta válida. Un atacante podría setear next=http://evil.com y redirigir al usuario fuera del app.",
+      "archivo": "app/auth/handoff/page.tsx:22,48",
+      "como_reproducir": "Pasar next=http://evil.com en el hash del handoff URL después del login desde dominio central.",
+      "fix_sugerido": "Validar que 'next' es una ruta relativa (starts with '/') o belongs a un whitelist de rutas permitidas.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "security",
+      "descripcion": "En handoff/page.tsx (línea 42), se guarda imp + agencia en localStorage sin sanitizar. Si agencia contiene javascript/HTML, podría causar XSS cuando se muestra en impersonation-banner.tsx.",
+      "archivo": "app/auth/handoff/page.tsx:41-42",
+      "como_reproducir": "Pasar agencia='<img src=x onerror=\"alert(1)\">'. Cuando se renderiza en line 40 de impersonation-banner.tsx, ejecuta el script.",
+      "fix_sugerido": "Sanitizar entrada o usar innerText en lugar de innerHTML. Mejor aún: usar props type-safe en lugar de localStorage para datos críticos.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    }
+  ],
+  "app/(auth)/login/login-form.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En login-form.tsx (línea 71), la URL del handoff se construye manualmente sin escaping adecuado del subdomain. Si subdomain contiene caracteres especiales o si env.BASE_DOMAIN es inválido, la URL resultante puede ser malformada.",
+      "archivo": "app/(auth)/login/login-form.tsx:71",
+      "como_reproducir": "No es fácil de explotar en producción, pero si BASE_DOMAIN tiene puerto o protocolo inseguro, el handoff URL sería inválido.",
+      "fix_sugerido": "Usar URL API para construir la URL de forma segura: new URL(`/auth/handoff#${hash}`, `https://${subdomain}.${env.BASE_DOMAIN}`).href",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "loginForm en tenant subdomain (línea 52-56): Si currentSubdomain() retorna true, router.push + router.refresh() ocurren pero NO esperan. Si refresh() falla, user navega a 'next' con stale JWT. Mejor: await refresh primero.",
+      "archivo": "app/(auth)/login/login-form.tsx:52-56",
+      "fix_sugerido": "await router.refresh() antes de router.push(). O usar startTransition().",
+      "modulo": "Autenticación + Cuenta"
+    }
+  ],
+  "app/(auth)/forgot-password/forgot-form.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En forgot-form.tsx (línea 29), el error es genérico ('No se pudo enviar el email'). Supabase podría retornar errores específicos (user not found, rate limited, etc.) que podrían ser más útiles al usuario.",
+      "archivo": "app/(auth)/forgot-password/forgot-form.tsx:28-30",
+      "como_reproducir": "Intentar reset con email que no existe. El error genérico no ayuda.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "ForgotPasswordForm (forgot-form.tsx:24): redirectTo es hardcoded a window.location.origin. Si usuario está en subdomain pero es publico, origin es 'tenant.domain.com'. Supabase email link va a ese subdomain pero si tenant no existe más, 404. No hay fallback.",
+      "archivo": "app/(auth)/forgot-password/forgot-form.tsx:23",
+      "fix_sugerido": "Enviar reset link a bare domain (/login?reset=token) o preservar tenant context en link.",
+      "modulo": "Autenticación + Cuenta"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "All auth forms: error messages son genéricos (e.g., 'No se pudo enviar el email') pero usuario no sabe si es typo en email o backend error. ForgotPasswordForm no distingue entre 'usuario no encontrado' vs 'servicio SMTP down'.",
+      "archivo": "app/(auth)/forgot-password/forgot-form.tsx:29",
+      "como_reproducir": "Ingresa email incorrecto en forgot-password. Mismo mensaje que si backend está down.",
+      "modulo": "Autenticación + Cuenta"
+    }
+  ],
+  "app/(auth)/reset-password/reset-form.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "a11y",
+      "descripcion": "En reset-form.tsx, falta aria-label en el botón de actualizar contraseña. El Input también falta aria-label (solo tiene Label visual).",
+      "archivo": "app/(auth)/reset-password/reset-form.tsx:133",
+      "como_reproducir": "Screen reader: el botón no tiene label accesible.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    }
+  ],
+  "lib/db/mutations.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En updateOportunidad (mutations.ts:345-402), si cambias etapa_id y estado simultáneamente (ej. a 'ganado'), se ejecutan ambos webhooks/reglas. Pero si la regla de 'etapa_cambiada' crea una actividad que espera cierto estado, puede haber race condition.",
+      "archivo": "lib/db/mutations.ts:373-401",
+      "como_reproducir": "Edita una oportunidad: cambia etapa Y estado a ganado simultáneamente. Observa si se disparan ambas reglas en orden correcto.",
+      "fix_sugerido": "Documentar o explícitamente manejar que las reglas se ejecutan en paralelo; asegurar que cada regla es idempotente.",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En updateSede(), la query neq('id', id) hace .neq() después de .update() pero neq() es un filtro SELECT, no una restricción post-update. La sintaxis correcta es .neq('id', id) ANTES de .update().",
+      "archivo": "lib/db/mutations.ts:815-820",
+      "como_reproducir": "Marcar una sede no principal como 'principal' cuando hay otra marcada → ambas quedan marcadas como principal.",
+      "fix_sugerido": "Cambiar línea 819 de .neq('id', id) a .not('id', 'eq', id) o reestructurar para actualizar correctamente.",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)"
+    },
+    {
+      "tipo": "logica_rota",
+      "severidad": "medio",
+      "descripcion": "updateUsuario() no valida que el usuario a actualizar pertenezca al mismo tenant que el admin que realiza la acción",
+      "archivo": "lib/db/mutations.ts:749-775",
+      "fix_sugerido": "Verificar que el usuario a actualizar sea del mismo tenant que el usuario actual antes de permitir cambios",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)"
+    }
+  ],
+  "lib/db/oportunidades.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "perf",
+      "descripcion": "En getKanbanBoard() (oportunidades.ts:147-223), se hacen 3 queries paralelas (.from(pipeline), .from(etapa_pipeline), .from(oportunidad)) pero sin error handling. Si alguna falla, la data es null y se retorna [] sin log. Esto causa silent failure cuando el pipeline desaparece.",
+      "archivo": "lib/db/oportunidades.ts:149-168",
+      "como_reproducir": "Elimina un pipeline mientras estás viendo el kanban. Refresca. El kanban ahora muestra vacío sin error visible al usuario.",
+      "fix_sugerido": "Agregar error handling después de cada .select() y mostrar un mensaje amigable si falla.",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "lib/db/relaciones.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En lib/db/relaciones.ts línea 35-41 (listOportunidadesDeContacto) no verifica .error de la query. Si falla, devuelve [] en lugar de lanzar excepción, ocultando fallos de conectividad o RLS.",
+      "archivo": "lib/db/relaciones.ts:35-41",
+      "fix_sugerido": "Destructurar error: const { data, error } = await supabase...; if (error) throw error;",
+      "modulo": "Contactos"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En lib/db/relaciones.ts línea 46-52 (listOportunidadesDeEmpresa) igual que arriba: no verifica .error, silencia fallos.",
+      "archivo": "lib/db/relaciones.ts:46-52",
+      "fix_sugerido": "Agregar verificación de error",
+      "modulo": "Contactos"
+    }
+  ],
+  "app/api/public/contactos/route.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "security",
+      "descripcion": "En app/api/public/contactos/route.ts línea 50, se hace .ilike('nombre', 'API') pero no se valida que emp sea del tipo esperado antes de acceder a emp.id en línea 51. El casting implícito puede causar acceso a undefined.",
+      "archivo": "app/api/public/contactos/route.ts:50-51",
+      "fix_sugerido": "Agregar validación: if (!emp?.id) throw new Error(...)",
+      "modulo": "Contactos"
+    }
+  ],
+  "app/(app)/contactos/[id]/editar/contacto-form.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En app/(app)/contactos/[id]/editar/contacto-form.tsx, el campo asignado_id usa defaultValue sin validar que el usuario en picker.usuarios existe en la lista. Si el contacto está asignado a un usuario eliminado, Select quedará sin opción marcada.",
+      "archivo": "app/(app)/contactos/[id]/editar/contacto-form.tsx:90",
+      "como_reproducir": "Eliminar un usuario que tenga contactos asignados. Al editar ese contacto, el select de 'Asignado a' no mostrará la opción del usuario eliminado.",
+      "fix_sugerido": "Verificar en page.tsx que contacto.asignado_id existe en usuarios, o mostrar fallback",
+      "modulo": "Contactos"
+    }
+  ],
+  "app/(app)/campanias/campanias-manager.tsx": [
+    {
+      "tipo": "a11y",
+      "severidad": "medio",
+      "descripcion": "Botón 'Eliminar campaña' (icono trash) sin aria-label. Usuarios de screen readers ven solo el icono.",
+      "archivo": "app/(app)/campanias/campanias-manager.tsx:77",
+      "como_reproducir": "Activar screen reader. El botón no tiene etiqueta accesible.",
+      "fix_sugerido": "Agregar aria-label='Eliminar campaña' al button.",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "a11y",
+      "descripcion": "Botón de eliminar campaña sin aria-label ni title. Usuarios con lectores de pantalla no sabrán qué hace el ícono Trash.",
+      "archivo": "app/(app)/campanias/campanias-manager.tsx:77",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "onEliminar no resetea error/okMsg anteriores. Si el usuario tenía un error visible y luego elimina, se sigue viendo el antiguo error después del refresh.",
+      "archivo": "app/(app)/campanias/campanias-manager.tsx:30-34",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "a11y",
+      "descripcion": "Botón de envío de campaña (línea 73) no tiene aria-label. El ícono Send + texto 'Enviar' son suficientes, pero mejoraría si hubiera aria-label explícito.",
+      "archivo": "app/(app)/campanias/campanias-manager.tsx:73",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    }
+  ],
+  "components/filters/filter-builder.tsx": [
+    {
+      "tipo": "a11y",
+      "severidad": "medio",
+      "descripcion": "Falta aria-label en cierre de modal (FilterBuilder, línea 100-102). Botón X sin etiqueta.",
+      "archivo": "components/filters/filter-builder.tsx:97-104",
+      "fix_sugerido": "Ya tiene aria-label='Cerrar' en línea 101. Bien.",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    }
+  ],
+  "components/ui/html-editor.tsx": [
+    {
+      "tipo": "security",
+      "severidad": "medio",
+      "descripcion": "Potencial XSS en HtmlEditor: dangerouslySetInnerHTML carga `value` sin sanitización previa. Aunque está en contentEditable, si el HTML proviene de DB comprometida, XSS es posible.",
+      "archivo": "components/ui/html-editor.tsx:83",
+      "como_reproducir": "Guardar HTML malicioso en BD (e.g., via API o inyección SQL). Al recargar, ejecuta JS en el contexto del editor.",
+      "fix_sugerido": "Sanitizar con DOMPurify antes de setInnerHTML. O usar librería como rehype-sanitize.",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "HtmlEditor usa document.execCommand (deprecated). Aunque funciona ahora, puede fallar en browsers futuros. Debería reemplazarse con ContentEditable API moderna o library robusta.",
+      "archivo": "components/ui/html-editor.tsx:29",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    }
+  ],
+  "lib/db/campanias.ts": [
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "Double type cast (as unknown as) en resolverDestinatarios es anti-pattern TypeScript. Esconde errores de tipo.",
+      "archivo": "lib/db/campanias.ts:130",
+      "fix_sugerido": "Definir tipo explícito: type ContactoRow = {id: string; email: string; empresa: ...}; const rows = (data as ContactoRow[]).map(...);",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "deuda",
+      "descripcion": "Casting excesivo a 'unknown' antes de typear. En línea 130 de campanias.ts, se castea 'data' a 'unknown' como Record<string, unknown> lo que es un anti-pattern.",
+      "archivo": "lib/db/campanias.ts:130",
+      "fix_sugerido": "Definir un tipo RawContactoRow y usarlo directamente: (data as RawContactoRow[]).map(...)",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "getCampaniaMetrics() accede a r.abierto_en y r.click_en sin validar que existan en el tipo. Si la query retorna columnas diferentes, causará undefined.",
+      "archivo": "lib/db/campanias.ts:20-28",
+      "como_reproducir": "Alterar query en línea 20 para no seleccionar abierto_en o click_en; el cálculo de abiertos/clicksU fallará silenciosamente",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "resolverDestinatarios() filtra por r.email pero previamente mapeó email a '' si es null. Esto permite que contactos con email null pasen el filtro, siendo enviados a '' después.",
+      "archivo": "lib/db/campanias.ts:132-135",
+      "fix_sugerido": "No hacer casting a '' en línea 132; mantener null y filtrar antes del return",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    }
+  ],
+  "lib/db/listas-envio.ts": [
+    {
+      "tipo": "perf",
+      "severidad": "medio",
+      "descripcion": "listListasEnvio() carga TODAS las listas sin paginación. Si hay 10k listas, se descarga todo.",
+      "archivo": "lib/db/listas-envio.ts:10-19",
+      "fix_sugerido": "Agregar LIMIT en query y soporte paginación en UI.",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    }
+  ],
+  "app/(app)/productos/actions.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "El revalidatePath en saveProductoAction solo invalida '/productos' pero no invalida las rutas específicas del producto (/productos/[id], /productos/[id]/editar). Cuando se edita un producto desde la página de detalle, los cambios no se reflejan en esa página hasta la siguiente navegación manual.",
+      "archivo": "app/(app)/productos/actions.ts:36,40",
+      "como_reproducir": "Editar un producto desde /productos/[id]/editar. Cambiar un campo. Guardar. Volver a /productos/[id]. El cambio no se verá hasta hacer F5.",
+      "fix_sugerido": "Cambiar revalidatePath a revalidatePath('/productos', 'layout') o agregar revalidatePath('/productos/[id]') específicamente",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En productos/actions.ts, la validación con z.preprocess(emptyToNull, z.string().nullable()) puede permitir strings vacios que luego se convierten a null, causando inconsistencia entre el estado del form y la DB.",
+      "archivo": "app/(app)/productos/actions.ts:18-26",
+      "modulo": "Productos + Catálogo Turistea"
+    }
+  ],
+  "app/(app)/productos/[id]/editar/editor-shell.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "El editor de producto en /productos/[id]/editar usa un hack frágil: hace click programático a un botón invisible con querySelector. Si el botón no existe o hay timing issues, el editor no abre. Además no es accesible.",
+      "archivo": "app/(app)/productos/[id]/editar/editor-shell.tsx:16-17",
+      "como_reproducir": "Acceder directamente a /productos/[id]/editar de un producto. A veces el formulario no abre si el DOM no ha renderizado completamente.",
+      "fix_sugerido": "Pasar el producto como prop al editor en lugar de buscar el botón. O usar un callback que la ProductosManager exponga para abrir el editor",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)"
+    }
+  ],
+  "app/(app)/productos/[id]/media-upload.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "security",
+      "descripcion": "No hay validación de tamaño de archivo para uploads de imagen y adjuntos. Un usuario podría subir archivos de múltiples GB, causando DoS en storage o ralentizando uploads.",
+      "archivo": "app/(app)/productos/[id]/media-upload.tsx:23-45, app/(app)/productos/[id]/actions.ts:16-75",
+      "como_reproducir": "Subir un archivo de imagen > 100MB. No hay mensaje de error ni rechazo.",
+      "fix_sugerido": "Validar file.size en media-upload.tsx antes de llamar a setImagenAction. Por ejemplo: if (file.size > 10*1024*1024) { setError('Máximo 10MB'); return; }",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En media-upload.tsx, cuando se sube un adjunto, no hay validación de tamaño máximo de archivo. Usuarios pueden intentar subir archivos muy grandes causando timeout.",
+      "archivo": "app/(app)/productos/[id]/media-upload.tsx:38-59",
+      "modulo": "Productos + Catálogo Turistea"
+    }
+  ],
+  "app/(app)/productos/productos-manager.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "Cuando se elimina un producto, la UI en ProductosManager no refleja el cambio hasta que se hace router.refresh(). Durante el startTransition, el producto sigue siendo visible, lo que puede confundir al usuario que lo acaba de eliminar.",
+      "archivo": "app/(app)/productos/productos-manager.tsx:65-72",
+      "como_reproducir": "Eliminar un producto. Notar que sigue siendo visible en la tabla hasta que la página se recarga.",
+      "fix_sugerido": "Optimistically remove the item from state antes de llamar a deleteProductoAction, o usar setSelected para desseleccionar inmediatamente",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En productos-manager.tsx línea 128, el checkbox activo usa `defaultChecked` pero es un form descontrolado. Si el usuario edita y cambia activo, luego cancela, el estado del checkbox no resetea correctamente en siguiente edición.",
+      "archivo": "app/(app)/productos/productos-manager.tsx:128",
+      "modulo": "Productos + Catálogo Turistea"
+    }
+  ],
+  "lib/actions/inline-edit.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "El campo 'estado_empresa' de Empresa en saveEmpresaField no valida que sea uno de los valores permitidos ['prospecto', 'cliente', 'inactivo']. Un usuario podría editar inline y enviar un valor inválido como 'activo' o 'xyz'.",
+      "archivo": "lib/actions/inline-edit.ts:85",
+      "fix_sugerido": "Cambiar de `{ coerce: (v) => v, label: 'Estado' }` a una validación que verifique que el valor sea uno de los enum values válidos.",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)"
+    }
+  ],
+  "components/ui/inline-edit.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "El componente InlineEditField no sincroniza el estado local cuando las props cambian. Si un componente padre se re-renderiza con nuevos datos de Empresa (después de revalidatePath), el InlineEditField mantiene valores stale del render anterior.",
+      "archivo": "components/ui/inline-edit.tsx:26-40",
+      "fix_sugerido": "Agregar un useEffect que actualice current y committed.current cuando el prop 'value' cambia: useEffect(() => { setCurrent(value); committed.current = value; }, [value]);",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)"
+    }
+  ],
+  "app/(app)/empresas/[id]/empresa-aside.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En EmpresaAside, cuando se edita un campo personalizado, se usa el estado local campos_custom para obtener el valor anterior (línea 46). Pero este estado no se sincroniza si el padre se re-renderiza con nuevos datos del servidor.",
+      "archivo": "app/(app)/empresas/[id]/empresa-aside.tsx:39-49",
+      "fix_sugerido": "Agregar useEffect que sincronice campos_custom cuando e.campos_custom cambia: useEffect(() => { setCampos(e.campos_custom ?? {}); }, [e.campos_custom]);",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)"
+    }
+  ],
+  "app/(app)/ajustes/facturacion/page.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En facturacion/page.tsx línea 83, si `r.periodo_fin` es null pero también `r.trial_termina_en` es null, se renderiza 'trial: —' confundiendo al usuario. No hay validación si la suscripción está en estado 'activa' pero sin fechas.",
+      "archivo": "app/(app)/ajustes/facturacion/page.tsx, línea 82-84",
+      "como_reproducir": "Crear una agencia sin plan, sin trial. Ir a facturación y ver cómo se muestra 'trial: —' aunque el estado sea 'activa'.",
+      "fix_sugerido": "Mejorar lógica: si estado='activa' y periodo_fin=null, mostrar 'Indefinido' o 'Activa sin vencimiento'.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "app/(app)/ajustes/agencias/actions.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En agencias/actions.ts línea 39, `u?.email` se castea a `string` sin verificar. Si la query devuelve nulo o usuario inactivo, se asigna tenant.admin_email como fallback pero sin logging de por qué cambió.",
+      "archivo": "app/(app)/ajustes/agencias/actions.ts, línea 39",
+      "fix_sugerido": "Agregar tipo explicit `const email: string = (u?.email as string) ?? tenant.admin_email` o mejor, usar el admin_email directamente si el usuario activo no existe.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En crearSchema (actions.ts línea 71), subdominio usa `.trim().toLowerCase()` pero la regex en agencias.ts línea 80 (SUBDOMINIO_RE) requiere 2-32 chars. Min length 2 permite 'a' después de trim.",
+      "archivo": "app/(app)/ajustes/agencias/actions.ts, línea 71",
+      "como_reproducir": "Ingresar subdominio 'a1' o 'ab'. Min=2 en schema Zod permite it pero regex SUBDOMINIO_RE espera al menos 3 caracteres si hay guiones.",
+      "fix_sugerido": "Hacer min=3 en crearSchema o actualizar regex para permitir 2 caracteres válidos.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "lib/db/agencias.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En agencias.ts línea 56, usuarios_count se calcula con `t.usuario?.[0]?.count ?? 0`. Pero Supabase devuelve `usuario(count)` como aggregate, no array. Acceso `[0]` es innecesario y puede fallar si estructura cambia.",
+      "archivo": "lib/db/agencias.ts, línea 56",
+      "fix_sugerido": "Verificar estructura real: usar `t.usuario?.count ?? 0` o `(t.usuario as unknown as {count: number})?.count ?? 0`.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "lib/filters/evaluate.ts": [
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "En lib/filters/evaluate.ts, la regex /[^0-9.\\-]/g para convertir strings a números es incorrecto. El signo menos al final mantiene todos los dígitos, puntos y signos menos, pero si hay múltiples guiones como '1.5-20', se convierte en '1.520' en lugar de error o valor correcto.",
+      "archivo": "lib/filters/evaluate.ts, línea 26",
+      "fix_sugerido": "Usar parseFloat(String(v)) o una regex más específica como /^-?\\d+(\\.\\d+)?$/",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "lib/db/atribucion.ts": [
+    {
+      "tipo": "logica_rota",
+      "severidad": "medio",
+      "descripcion": "atribucion.ts retorna [] cuando hay error en Supabase (línea 13) sin logging ni visibilidad del error. Los usuarios verán un reporte vacío sin saber si falló la carga o si realmente no hay datos.",
+      "archivo": "lib/db/atribucion.ts, línea 13",
+      "fix_sugerido": "Agregar console.error(error) o logging estructurado antes de retornar []",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "lib/db/campanias-perf.ts": [
+    {
+      "tipo": "logica_rota",
+      "severidad": "medio",
+      "descripcion": "campanias-perf.ts retorna [] cuando hay error (línea 46) sin logging. El usuario no puede distinguir entre datos vacíos legítimos y errores de base de datos.",
+      "archivo": "lib/db/campanias-perf.ts, línea 46",
+      "fix_sugerido": "Agregar console.error(error) antes de retornar []",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/reportes/page.tsx": [
+    {
+      "tipo": "ux",
+      "severidad": "medio",
+      "descripcion": "Cuando listAtribucionPorEstrategia() o getCampaniasPerf() retornan [] por error, no hay indicador visual de que falló la carga. El usuario ve tablas vacías sin poder distinguir entre 'sin datos' y 'error de carga'.",
+      "archivo": "app/(app)/reportes/page.tsx, líneas 143-173",
+      "como_reproducir": "Simular un error de red en Supabase y observar que la sección 'Atribución por estrategia' desaparece silenciosamente sin mensaje de error.",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "Cuando campanias.length === 0 en /reportes, la tabla de 'Desempeño de campañas' muestra una fila fake [['—', '—', ...]] en lugar de un mensaje 'Sin datos' como en otras tablas. Inconsistencia visual.",
+      "archivo": "app/(app)/reportes/page.tsx, línea 168",
+      "fix_sugerido": "Envolver la Section en un condicional como el resto: {campanias.length > 0 && <Section ...>}",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/agenda/google-tasks.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "a11y",
+      "descripcion": "Botón de completar tarea en google-tasks.tsx tiene title='Completar' pero le falta aria-label para lectores de pantalla.",
+      "archivo": "app/(app)/agenda/google-tasks.tsx:72",
+      "fix_sugerido": "Agregar aria-label='Marcar tarea como completada' al button.",
+      "modulo": "Agenda + Notificaciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En app/(app)/agenda/google-tasks.tsx línea 72, el button para completar tarea NO tiene type='button', por lo que es tipo 'submit' por defecto. Si el botón está dentro de cualquier form padre (no aquí, pero en layouts anidados), submitirá un formulario accidentalmente.",
+      "archivo": "app/(app)/agenda/google-tasks.tsx:72",
+      "como_reproducir": "Estructura futura: si se wrappea GoogleTasks en un <form>, clickear en cualquier tarea para completarla submiteará la form parental.",
+      "fix_sugerido": "Cambiar <button onClick={() => complete(t.id)} ... a <button type='button' onClick={() => complete(t.id)} ...",
+      "modulo": "Agenda + Notificaciones"
+    }
+  ],
+  "components/oportunidad/actividades-section.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "a11y",
+      "descripcion": "Botón de eliminar actividad en actividades-section.tsx no tiene aria-label ni title, lo que dificulta para usuarios de asistencia accesoria.",
+      "archivo": "components/oportunidad/actividades-section.tsx:191-196",
+      "fix_sugerido": "Agregar title='Eliminar' y/o aria-label='Eliminar actividad' al button.",
+      "modulo": "Agenda + Notificaciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "El form de crear actividades en actividades-section.tsx (lines 123-149) falta validación visual del campo fecha_programada. Se acepta cualquier string sin validación de formato ISO, lo que podría guardar fechas inválidas.",
+      "archivo": "components/oportunidad/actividades-section.tsx:143",
+      "fix_sugerido": "Usar z.string().datetime() en lugar de z.string().nullable() para fecha_programada en el schema de validación.",
+      "modulo": "Agenda + Notificaciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En components/oportunidad/actividades-section.tsx línea 123, el form no tiene method='POST'. Aunque usa onSubmit e FormData, la forma es técnicamente un 'GET' form nativo (sin method), por lo que el navegador podría incluir datos sensibles en la URL antes del JS intercepte.",
+      "archivo": "components/oportunidad/actividades-section.tsx:123",
+      "como_reproducir": "Con JS deshabilitado o con red lenta, enviar el formulario. Los valores del formulario (descripción, fecha, tipo) aparecerán en la URL query string.",
+      "fix_sugerido": "Agregar method='POST' al <form>. Aunque es handled por una action 'use server', una declaración explícita de método reduce ambigüedad.",
+      "modulo": "Agenda + Notificaciones"
+    }
+  ],
+  "components/oportunidad/actividades-actions.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "security",
+      "descripcion": "Los errores de Supabase se exponen directamente al usuario mediante e.message. Mensajes como 'row_is_duplicated' o 'permission denied' revelan detalles internos de la BD.",
+      "archivo": "components/oportunidad/actividades-actions.ts:88,98,108",
+      "fix_sugerido": "Mappear errores conocidos a mensajes amigables: if (e.message.includes('unique')) return 'Ya existe'; if (e.message.includes('permission')) return 'Sin permiso'.",
+      "modulo": "Agenda + Notificaciones"
+    }
+  ],
+  "lib/db/catalogo-mayorista.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En catalogo-mayorista.ts línea 149, `copiarMultiplesAMisProductos` retorna 0 si items.length=0 pero no hay validación previa en la UI. Si se selecciona sin filtros (lista vacía por error), se copia 0 items sin feedback claro.",
+      "archivo": "lib/db/catalogo-mayorista.ts:149",
+      "modulo": "Productos + Catálogo Turistea"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En catalogo-mayorista.ts línea 120, la fórmula de cálculo de precioVenta usa `Math.round(...* 100) / 100` que puede causar errores de redondeo flotante. Debería usar Decimal o librería de precisión.",
+      "archivo": "lib/db/catalogo-mayorista.ts:120",
+      "modulo": "Productos + Catálogo Turistea"
+    }
+  ],
+  "app/(app)/productos/[id]/actions.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En [id]/actions.ts línea 27, `getPublicUrl()` retorna `{ data: ... }` pero es sync y no puede fallar. Sin embargo, si CUPOS_SUPABASE_URL no está configurado, imgUrl() retorna null. Se debería validar que url sea válida antes de guardar en DB.",
+      "archivo": "app/(app)/productos/[id]/actions.ts:27-28",
+      "modulo": "Productos + Catálogo Turistea"
+    }
+  ],
+  "lib/db/reservas.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En reservas.ts línea 233, se accede a data.id sin verificar que data no sea null, aunque hay check de error. Si .single() retorna null con error null, esto crashearía.",
+      "archivo": "lib/db/reservas.ts:233",
+      "como_reproducir": "Caso edge: si Supabase retorna result sin error pero sin datos, el acceso a data.id fallaría.",
+      "fix_sugerido": "Agregar validación: `if (!data) throw new Error('Fallo al crear reserva');`",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    },
+    {
+      "tipo": "sql_invalido",
+      "severidad": "medio",
+      "descripcion": "En mapReservasPorSolicitud() línea 70, la relación 'oportunidad' asume que el retorno es un array o un objeto. El código maneja ambos casos, pero el tipo casting es muy permisivo: (Array.isArray(r.oportunidad) ? r.oportunidad[0] : r.oportunidad) as { nombre: string } | null sin validación de estructura.",
+      "archivo": "lib/db/reservas.ts, línea 78-79",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    },
+    {
+      "tipo": "logica_rota",
+      "severidad": "medio",
+      "descripcion": "mapReservasPorSolicitud() maneja type casting permisivo para la relación 'oportunidad', asumiendo estructura sin validación: (Array.isArray(r.oportunidad) ? r.oportunidad[0] : r.oportunidad) as { nombre: string } | null",
+      "archivo": "lib/db/reservas.ts, línea 78-79",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/cotizacion-builder.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En cotizacion-builder.tsx línea 248, se usa índice como key en el map de items: `key={i}`. Si los items se reordenan o eliminan, React perderá el estado y puede causar re-renders incorrectos.",
+      "archivo": "app/(app)/oportunidades/[id]/cotizacion-builder.tsx:248",
+      "como_reproducir": "Crear varios items, eliminar uno del medio, luego agregar uno nuevo. Los valores de input pueden quedar desincronizados o React perderá foco en inputs.",
+      "fix_sugerido": "Usar un ID único para cada item, no el índice. Ej: `key={it.producto_id || `temp-${i}`}`",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/reserva-panel.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En reserva-panel.tsx línea 148, el cálculo de monto asume que precio_dbl y precio_nino nunca son 0. Si precio_dbl es 0, la condición `salida?.precio_dbl != null` sería true pero el resultado sería 0, lo que es correcto. Sin embargo, si bebes en pax no tienen precio configurado (precio_bebe), no se incluye en el cálculo.",
+      "archivo": "app/(app)/oportunidades/[id]/reserva-panel.tsx:148",
+      "como_reproducir": "Hacer una reserva con bebés, el monto estimado no incluye el costo de los bebés.",
+      "fix_sugerido": "Agregar soporte para precio de bebés: `+ (salida?.precio_bebe ?? 0) * pax.bebes`",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    },
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "ReservaForm en reserva-panel.tsx calcula monto usando solo precio_dbl, ignora tipos de habitación. monto = salida.precio_dbl * pax.adultos + (salida.precio_nino ?? 0) * pax.ninos pero no incluye precio_sgl ni precio_tpl.",
+      "archivo": "app/(app)/oportunidades/[id]/reserva-panel.tsx, línea 148",
+      "como_reproducir": "Crear reserva con habitaciones sencillas/triples; el monto estimado mostrará precio doble en lugar del precio de la habitación elegida.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    },
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "ReservaForm calcula monto usando solo precio_dbl, ignorando tipos de habitación. No considera precio_sgl ni precio_tpl en la estimación.",
+      "archivo": "app/(app)/oportunidades/[id]/reserva-panel.tsx, línea 148",
+      "como_reproducir": "Crear reserva con habitaciones sencillas/triples; el monto estimado mostrará precio doble en lugar del precio correcto.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/pasajeros-section.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En pasajeros-section.tsx línea 47, cuando se crea un pasajero, los campos fecha_nacimiento y doc_vencimiento se convierten a null si vacíos (via || null). Pero la validación en pasajeros-actions.ts (línea 19-20) es `.nullable().optional().default(null)`, que podría permitir strings vacíos si el usuario no borra el campo.",
+      "archivo": "app/(app)/oportunidades/[id]/pasajeros-section.tsx:47",
+      "como_reproducir": "Crear un pasajero, dejar los campos de fecha vacíos pero sin dejar null, y enviar. Podría validar ok pero con strings vacíos.",
+      "fix_sugerido": "En el schema de zod, usar z.string().date() en lugar de z.string().nullable() para validar fechas reales.",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    },
+    {
+      "tipo": "ux",
+      "severidad": "medio",
+      "descripcion": "Botones en pasajeros-section sin aria-label. En línea 127 'Ver doc' y línea 142 botón de upload, línea 145 botón de delete. Son solo iconos sin text accesible.",
+      "archivo": "app/(app)/oportunidades/[id]/pasajeros-section.tsx, línea 127, 142, 145",
+      "fix_sugerido": "Agregar aria-label a cada button o usar atributo title más explícito.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    },
+    {
+      "tipo": "a11y",
+      "severidad": "medio",
+      "descripcion": "Botones en pasajeros-section sin aria-label. Líneas 127 (Ver doc), 142 (upload), 145 (delete) son solo iconos sin texto accesible.",
+      "archivo": "app/(app)/oportunidades/[id]/pasajeros-section.tsx, línea 127, 142, 145",
+      "fix_sugerido": "Agregar aria-label explícito a cada button.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "app/(app)/ajustes/integraciones/integraciones-manager.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En integraciones-manager.tsx línea 150, el estado 'eventos' es 'string[]' pero debería ser 'EventoWebhook[]' para type safety. Permite pushear eventos inválidos sin error en tiempo de compilación.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:150",
+      "como_reproducir": "El código compila sin error pero no valida en tiempo de ejecución si se intenta setEventos() con valor inválido.",
+      "fix_sugerido": "Cambiar: const [eventos, setEventos] = useState<EventoWebhook[]>([])",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En integraciones-manager.tsx línea 62-68, función 'crear' no tiene try-catch. Si crearApiKeyAction() lanza excepción, setCreating nunca se pone en false, dejando el UI en estado 'Creando...' forever.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:62-68",
+      "como_reproducir": "Si hay error de red o excepción no capturada en action, el botón queda disabled perpetuamente.",
+      "fix_sugerido": "Envolver en try-finally: try { ... } finally { setCreating(false) }",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En integraciones-manager.tsx línea 155, función 'crear' (webhooks) no tiene try-catch. Si crearWebhookAction() lanza excepción, setCreating nunca se pone en false.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:155-161",
+      "como_reproducir": "Error no capturado → botón stays disabled.",
+      "fix_sugerido": "Envolver en try-finally.",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En integraciones-manager.tsx línea 224, función 'crear' (reportes) no tiene try-catch. Si crearReporteProgramadoAction() lanza excepción, setBusy nunca se pone en false.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:224-229",
+      "como_reproducir": "Error no capturado → botón stays disabled.",
+      "fix_sugerido": "Envolver en try-finally.",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En integraciones-manager.tsx:150, el estado 'eventos' es 'string[]' pero debería ser 'EventoWebhook[]'. Permite pushear valores inválidos sin error de compilación.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:150",
+      "como_reproducir": "El estado acepta cualquier string, no solo los eventos válidos de EVENTOS_WEBHOOK.",
+      "fix_sugerido": "Cambiar 'setEventos: useState<string[]>([])' a 'useState<EventoWebhook[]>([])' para type safety.",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En integraciones-manager.tsx, no hay validación de email en los destinatarios de reportes programados. El campo acepta cualquier string y solo hace split(',;\\s+'). Emails inválidos se guardarán y causarán errores en el envío.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:237",
+      "como_reproducir": "Ingresar 'ana@, jefe@invalido' como destinatarios. Se aceptará pero fallará en envío.",
+      "fix_sugerido": "Agregar validación de email con regex en actions.ts rpSchema, o en el componente.",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En integraciones-manager.tsx:156, la validación de form es confusa: verifica nombre.trim() pero el estado nombre puede estar desincronizado si el usuario borra rápidamente y hace click. No hay debounce.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:155-156",
+      "como_reproducir": "Escribir nombre, borrar, click crear rápidamente. Posible race condition.",
+      "fix_sugerido": "Disable el botón mientras haycreating = true. O usar debounce en setNombre.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "lib/db/webhooks.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En webhooks.ts línea 75-81, el fetch es fire-and-forget sin timeout. Si la URL destino nunca responde, el request cuelga indefinidamente en memoria. No hay timeout configurado.",
+      "archivo": "lib/db/webhooks.ts:75-81",
+      "como_reproducir": "Crear webhook a URL que no responde (ej. timeout forever). El proceso Node.js mantendrá el request abierto.",
+      "fix_sugerido": "Agregar timeout: fetch(..., { timeout: 5000 })",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En webhooks.ts línea 76, el .then() async lee r.status pero no consume el body de respuesta. Esto puede causar memory leak si la respuesta es grande.",
+      "archivo": "lib/db/webhooks.ts:76-77",
+      "como_reproducir": "Webhook recibe respuesta 1MB. El body no se consume, ocupando memoria.",
+      "fix_sugerido": "Agregar r.text() o r.json() para consumir y descartar el body.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "app/(app)/contactos/[id]/contacto-aside.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En contacto-aside.tsx línea 39, useState(c.campos_custom) inicializa el estado local pero nunca sincroniza si el prop c.campos_custom cambia. Si el padre actualiza los datos (ej. por una actualización en tiempo real), los campos personalizados en el aside quedarán obsoletos.",
+      "archivo": "app/(app)/contactos/[id]/contacto-aside.tsx:39",
+      "fix_sugerido": "Usar useEffect para sincronizar el estado cuando c.campos_custom cambia. Ej: `useEffect(() => { setCampos(c.campos_custom ?? {}); }, [c.campos_custom]);`",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    }
+  ],
+  "app/(app)/contactos/[id]/editar/actions.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En updateContactoAction (actions.ts línea 54-55), se llama revalidatePath('/contactos/{id}') y revalidatePath('/contactos'), pero el redirect en línea 56 va a /contactos/{id}. Si el usuario hace refresh después de editar, verá datos nuevos. Sin embargo, la cache se revalida para ambas rutas, lo cual es correcto pero podría haber una race condition si el redirect es muy rápido.",
+      "archivo": "app/(app)/contactos/[id]/editar/actions.ts:54-56",
+      "fix_sugerido": "El código actual es correcto. Sin embargo, considerar si hay race condition entre revalidatePath y redirect. Probablemente no hay problema práctico.",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    }
+  ],
+  "components/sedes/sedes-section.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En sedes-section.tsx, el checkbox es_principal no tiene un label visible. Solo tiene la clase 'rounded' pero el text 'Marcar como sede principal' está fuera del <label>, lo que rompe la accesibilidad.",
+      "archivo": "components/sedes/sedes-section.tsx:208-210",
+      "como_reproducir": "Intentar hacer clic en el texto 'Marcar como sede principal' → no selecciona el checkbox. Solo hace clic directo en el input.",
+      "fix_sugerido": "El texto está dentro de <label> pero no tiene htmlFor. Agregar htmlFor='es_principal' al label.",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)"
+    }
+  ],
+  "app/(app)/empresas/[id]/editar/actions.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "Después de guardar una empresa, se hace redirect() a /empresas/[id], pero esto ocurre DESPUÉS de revalidatePath(). Si el usuario tiene cache activo, puede ver stale data brevemente.",
+      "archivo": "app/(app)/empresas/[id]/editar/actions.ts:55-57",
+      "como_reproducir": "Editar empresa, hacer submit → el redirect puede ocurrir antes de que Next.js recache, causando flash de datos viejos.",
+      "fix_sugerido": "Invertir orden: primero redirect(), luego Next.js recachea automáticamente. O usar revalidateTag() en lugar de revalidatePath().",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)"
+    }
+  ],
+  "app/(app)/empresas/page.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "El estado 'inactivo' en ESTADO_BADGE en empresas/page.tsx mapea a 'default' (gris), pero en empresa-aside.tsx mapea a 'inactivo'. Estilos inconsistentes para el mismo estado.",
+      "archivo": "app/(app)/empresas/page.tsx:13-17",
+      "como_reproducir": "Ver empresa inactiva en listado vs en detail → colores diferentes.",
+      "fix_sugerido": "Estandarizar ESTADO_BADGE en ambos archivos o crear una constante compartida.",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)"
+    }
+  ],
+  "app/(app)/reservas/reservas-view.tsx": [
+    {
+      "tipo": "a11y",
+      "severidad": "medio",
+      "descripcion": "Botones sin atributos accesibles. En reservas-view.tsx línea 80 hay un button sin aria-label ni type adecuado para una acción de refresh.",
+      "archivo": "app/(app)/reservas/reservas-view.tsx, línea 80-82",
+      "como_reproducir": "Usar screen reader para verificar que el botón 'actualizar' no tiene label accesible.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    },
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "reservas-view.tsx línea 122 muestra doc_vencimiento pero ese campo no está siendo seleccionado ni mapeado. En la tabla de pasajeros se muestra fecha_nacimiento, no doc_vencimiento.",
+      "archivo": "app/(app)/reservas/reservas-view.tsx, línea 122 (implícito - revisar mapReservasPorSolicitud())",
+      "como_reproducir": "Ver lista de pasajeros en una reserva; el campo doc_vencimiento no aparecerá o mostrará datos incorrectos.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    },
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "ReservasView no mapea correctamente doc_vencimiento de pasajeros. El campo existe en la BD pero no se usa en la visualización de reservas.",
+      "archivo": "app/(app)/reservas/reservas-view.tsx, línea 99-129 (implícito)",
+      "como_reproducir": "Ver lista de reservas; no muestra información de vencimiento de documentos de pasajeros.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/reserva-actions.ts": [
+    {
+      "tipo": "validacion_rota",
+      "severidad": "medio",
+      "descripcion": "fecha_pago en pagoSchema solo valida z.string().min(4), que es demasiado permisivo. Acepta cualquier string de 4+ caracteres, no valida formato de fecha (YYYY-MM-DD).",
+      "archivo": "app/(app)/oportunidades/[id]/reserva-actions.ts, línea 14",
+      "fix_sugerido": "Cambiar a z.string().date() o z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/) para validar ISO date.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "lib/db/habitaciones.ts": [
+    {
+      "tipo": "logica_rota",
+      "severidad": "medio",
+      "descripcion": "crearHabitacion() no verifica que la oportunidad exista o pertenezca al tenant actual. Solo valida tenant_id al insertar, pero no on DELETE CASCADE + RLS no previene creación en oportunidad ajena.",
+      "archivo": "lib/db/habitaciones.ts, línea 19-37",
+      "como_reproducir": "Como usuario A, intentar crearHabitacion para oportunidad_id de usuario B. RLS debería bloquear, pero no hay validación en la función.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "components/language-switcher.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "a11y",
+      "descripcion": "LanguageSwitcher (language-switcher.tsx:26): Button tiene aria-label pero onclick es button (sin label text). Si CSS no carga, button mostrará vacío. Similar issue en todas las forms: Input y Label conectados por htmlFor pero no hay aria-describedby para hints de validación.",
+      "archivo": "components/language-switcher.tsx:26-29",
+      "fix_sugerido": "Agregar text dentro button: <button>ES/EN</button>. O agregar aria-label visible.",
+      "modulo": "Autenticación + Cuenta"
+    }
+  ],
+  "app/invitacion/accept-form.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "deuda",
+      "descripcion": "AcceptForm y ResetPasswordForm: hardcoded español ('Las contraseñas no coinciden', 'Mínimo 8 caracteres'). Pero LoginForm usa i18n (t('login.error_invalid_credentials')). Inconsistente.",
+      "archivo": "app/invitacion/accept-form.tsx:22,29 y app/(auth)/reset-password/reset-form.tsx:41,45",
+      "modulo": "Autenticación + Cuenta"
+    }
+  ],
+  "lib/db/invitaciones.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "acceptInvitacion() en invitaciones.ts (línea 205-209): createUser() NO HACE ROLLBACK si posterior insert a usuario table falla. User se crea en auth.users pero no linkea a public.usuario, entonces next login va a fallar con 'tenant_id missing' en JWT hook.",
+      "archivo": "lib/db/invitaciones.ts:205-227",
+      "como_reproducir": "1) Simular INSERT falla en public.usuario (via constraint violation). 2) User creado en auth.users pero no en public.usuario. 3) Next login: JWT claims vacíos, middleware rechaza como tenant_mismatch.",
+      "modulo": "Autenticación + Cuenta"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "inviteUrl() (invitaciones.ts:32): Usa env.BASE_DOMAIN.includes('localhost') para decidir schema. Pero si BASE_DOMAIN es 'crm-staging.example.com', va a HTTPS pero si es 'crm.local', HTTP. Puede haber mixed-content error si email client re-encodes URL.",
+      "archivo": "lib/db/invitaciones.ts:32",
+      "fix_sugerido": "Usar env.ROOT_URL si existe, o parametrizar schema explícitamente.",
+      "modulo": "Autenticación + Cuenta"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En createInvitacion() (lib/db/invitaciones.ts:71-131), check de email duplicado (línea 80-86) solo busca en usuario, no en invitacion pendiente. Dos invites al mismo email pueden crearse simultáneamente.",
+      "archivo": "lib/db/invitaciones.ts:80-86",
+      "fix_sugerido": "Agregar check en tabla invitacion también, o usar unique constraint en DB.",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ],
+  "lib/db/secuencias.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En lib/db/secuencias.ts línea 68 y lib/secuencias-types.ts, no hay validación de que p.actividad_tipo esté en la lista permitida durante inscribirEnSecuencia(). Si una secuencia guardada tiene una actividad_tipo inválida en el JSONB de 'pasos', se insertará una actividad con tipo inválido.",
+      "archivo": "lib/db/secuencias.ts:75-87",
+      "como_reproducir": "Corromper manualmente el JSONB de pasos en una secuencia (via DB directo) con actividad_tipo='invalid'. Inscribir oportunidad. La actividad se crea con tipo inválido, violaría el constraint CHECK de la tabla.",
+      "fix_sugerido": "Validar cada p.actividad_tipo en pasos.map() antes de insertar. Ej: if (!['llamada','email','reunion','otra','whatsapp'].includes(p.actividad_tipo)) throw new Error(...)",
+      "modulo": "Agenda + Notificaciones"
+    }
+  ],
+  "lib/db/dashboard.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "La velocidad de cierre (velocidad_dias) se calcula usando el MAX(cambiado_en) del historial_etapa, pero esto puede incluir cambios intermedios. Debería ser desde creado_en hasta la última etapa (ganada/perdida), no un cambio arbitrario.",
+      "archivo": "lib/db/dashboard.ts, líneas 362-382",
+      "fix_sugerido": "Usar solo cambios hacia etapas finales o calcular desde creado_en hasta fecha_actualizado cuando estado=ganado.",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/buscar/page.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "perf",
+      "descripcion": "BuscarAvanzadaPage carga TODOS los contactos/empresas/oportunidades cuando hasAdvanced=true (.limit() default 200), pero luego filtra en memoria con rowMatches(). Para tenants con miles de registros, esto puede causar timeout o lentitud.",
+      "archivo": "app/(app)/buscar/page.tsx, líneas 32-36",
+      "fix_sugerido": "Implementar filtrado del lado del servidor en listContactos/listEmpresas/listOportunidades, o subir el límite con advertencia.",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/reportes/filters-bar.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "En filters-bar.tsx línea 44, si el usuario selecciona un value vacío, se elimina el param pero no se limpia el estado local del select (React-controlled). El select mantendrá el value anterior hasta que se vuelva a cambiar.",
+      "archivo": "app/(app)/reportes/filters-bar.tsx, línea 44",
+      "fix_sugerido": "Usar onChange={(e) => set(key, e.target.value || '')} para sincronizar correctamente.",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/api/v1/[modulo]/route.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "POST /api/v1/[modulo] no valida que contacto_id y empresa_id sean UUIDs válidos o que existan para el tenant. Si se envía un ID de otro tenant, el INSERT falla silenciosamente pero el mensaje de error es genérico.",
+      "archivo": "app/api/v1/[modulo]/route.ts:99-101",
+      "como_reproducir": "Crear oportunidad con contacto_id de otro tenant. El INSERT fallará pero sin mensaje específico.",
+      "fix_sugerido": "Validar que contacto_id y empresa_id pertenecen al tenant antes de INSERT.",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "POST /api/v1/oportunidades no valida que pipeline_id y etapa_id existan o sean válidos. La tabla oportunidad requiere estos campos (NOT NULL), pero el endpoint no los valida.",
+      "archivo": "app/api/v1/[modulo]/route.ts:24",
+      "como_reproducir": "Crear oportunidad sin pipeline_id o etapa_id. Falla con error de DB genérico, no validación clara.",
+      "fix_sugerido": "Agregar validación explícita de que pipeline_id y etapa_id se proporcionen y existan.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "lib/db/api-keys.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "perf",
+      "descripcion": "authenticateApiKey() en api-keys.ts realiza 3 queries a Supabase (una SELECT, luego UPDATE fire-and-forget) en cada request API. Para APIs de alto volumen, esto ralentiza.",
+      "archivo": "lib/db/api-keys.ts:84-116",
+      "como_reproducir": "Hacer 100+ requests simultáneos a la API v1. Cada uno hace auth + update del contador.",
+      "fix_sugerido": "Cachear el resultado de auth durante el request, o usar un job async para actualizar el contador.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "lib/db/comisiones.ts": [
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "setComisionConfig() no valida que el usuario a actualizar pertenezca al tenant del admin",
+      "archivo": "lib/db/comisiones.ts:71-84",
+      "fix_sugerido": "Validar tenant_id del usuario contra el tenant del caller antes de permitir update",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)"
+    }
+  ],
+  "lib/db/nps.ts": [
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "responderNps() usa createAdminSupabase() sin validar que el token sea válido antes de actualizar (aunque existe validación de estado y fecha)",
+      "archivo": "lib/db/nps.ts:101-111",
+      "fix_sugerido": "La validación de estado='pendiente' es correcta; sin embargo no rechaza después de fecha esperada si respondido_en existe",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)"
+    }
+  ],
+  "lib/db/roles.ts": [
+    {
+      "tipo": "bug",
+      "severidad": "medio",
+      "descripcion": "setUsuarioRol() no valida que el usuario a asignar pertenezca al mismo tenant que el caller",
+      "archivo": "lib/db/roles.ts:176-203",
+      "fix_sugerido": "Agregar validación: SELECT tenant_id FROM usuario WHERE id=usuarioId y comparar con caller.tenantId",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)"
+    },
+    {
+      "tipo": "logica_rota",
+      "severidad": "medio",
+      "descripcion": "getMyPermisos() intersecta permisos de rol con plan, pero si no hay plan, retorna permisos completos sin validar si es_admin real",
+      "archivo": "lib/db/roles.ts:76-114",
+      "fix_sugerido": "Asegurar que sinTecho=false por defecto para tenants con plan_id=null",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)"
+    }
+  ],
+  "app/(app)/admin/usuarios/[id]/edit-usuario-form.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "bug",
+      "descripcion": "EditUsuarioForm (edit-usuario-form.tsx:44) bindea activo como string pero updateSchema.preprocess() (actions.ts:18) convierte 'true'/'false'/'on' a booleano. Si form envía otro valor, preprocess lo deja como string y z.boolean() falla silenciosamente.",
+      "archivo": "app/(app)/admin/usuarios/[id]/edit-usuario-form.tsx:44 y actions.ts:18-19",
+      "fix_sugerido": "Usar z.preprocess con validación más estricta o HTML boolean input nativo.",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ],
+  "app/(app)/admin/usuarios/new-usuario-form.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En new-usuario-form.tsx línea 59, password type='text' en lugar de type='password' hace visible la contraseña inicial en pantalla, exponiendo el valor a mirones.",
+      "archivo": "app/(app)/admin/usuarios/new-usuario-form.tsx:59",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ],
+  "app/(app)/comisiones/comisiones-manager.tsx": [
+    {
+      "severidad": "medio",
+      "tipo": "ux",
+      "descripcion": "En comisiones-manager.tsx línea 106, Select value={rol} donde rol es '' si sin rol, pero el Select no tiene clase 'w-full' y el layout puede desalinearse con inputs de número.",
+      "archivo": "app/(app)/comisiones/comisiones-manager.tsx:106",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ],
+  "app/nps/[token]/actions.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "deuda",
+      "descripcion": "En responderNpsAction (app/nps/[token]/actions.ts) no hay validación de rate-limit. Misma URL puede responder múltiples veces si el token se repite.",
+      "archivo": "app/nps/[token]/actions.ts:5-11",
+      "fix_sugerido": "Verificar en DB que token estada 'pendiente' antes de permitir actualizar.",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ],
+  "lib/db/territorios.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "perf",
+      "descripcion": "En listTerritorios() línea 51-54, se itera ganadas sin índice de asignado_id. Para grandes datasets, ventasPorAsesor.get() es O(n*m) en lugar de O(n+m).",
+      "archivo": "lib/db/territorios.ts:50-62",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ],
+  "lib/db/planes.ts": [
+    {
+      "severidad": "medio",
+      "tipo": "logica_rota",
+      "descripcion": "En getListaEsperaResumen() (lib/db/planes.ts:196-203), loop sobre tablas hardcodeadas sin cheque de RLS. Si RLS tabla falla, count devuelve null y se suma como 0, ocultando el error.",
+      "archivo": "lib/db/planes.ts:195-204",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ]
+}

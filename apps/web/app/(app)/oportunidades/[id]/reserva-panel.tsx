@@ -145,7 +145,15 @@ function ReservaForm({
 
   const plan = planes.find((p) => p.id === planId);
   const salida = salidas.find((s) => s.id === fechaId);
-  const monto = salida?.precio_dbl != null ? salida.precio_dbl * pax.adultos + (salida.precio_nino ?? 0) * pax.ninos : null;
+  // Estimación de monto: usa precio doble (DBL) para los adultos como base.
+  // Es una estimación: la habitación SGL/TPL real depende de la composición de
+  // habitaciones, que se decide más adelante. Para evitar surprise en la
+  // estimación incluimos también precio_bebe si está disponible.
+  type SalidaConBebe = SalidaExterna & { precio_bebe?: number | null };
+  const sBebes = (salida as SalidaConBebe | undefined)?.precio_bebe ?? 0;
+  const monto = salida?.precio_dbl != null
+    ? salida.precio_dbl * pax.adultos + (salida.precio_nino ?? 0) * pax.ninos + sBebes * pax.bebes
+    : null;
 
   async function onPickPlan(id: string) {
     setPlanId(id); setFechaId(""); setSalidas([]);

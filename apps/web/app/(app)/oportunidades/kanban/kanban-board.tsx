@@ -88,6 +88,19 @@ export function KanbanBoard({
     }
     if (!card || !currentStageId || currentStageId === newStageId) return;
 
+    // Validar que la etapa destino exista realmente en el board cargado.
+    // Sin esto, una etapa de otro pipeline (drag stage cruzado) llegaría al server
+    // y fallaría con error de FK.
+    const targetExists = board.some((col) => col.etapas.some((s) => s.id === newStageId));
+    if (!targetExists) {
+      setError("Esa etapa no pertenece al embudo actual");
+      return;
+    }
+
+    // Snapshot del board ANTES del optimistic update para revertir con precisión
+    // si el server rechaza (initialBoard era stale después de varios moves).
+    const snapshot = board;
+
     // Optimistic update
     setBoard((prev) =>
       prev.map((col) => ({
@@ -109,8 +122,7 @@ export function KanbanBoard({
       const res = await moveOportunidadAction({ oportunidad_id: cardId, etapa_id: newStageId });
       if (!res.ok) {
         setError(res.error);
-        // Revert
-        setBoard(initialBoard);
+        setBoard(snapshot);
       }
     });
   }

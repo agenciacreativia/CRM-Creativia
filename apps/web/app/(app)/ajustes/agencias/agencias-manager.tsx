@@ -41,8 +41,16 @@ export function AgenciasManager({ initial, planes }: { initial: Agencia[]; plane
     setVerBusy(id);
     const res = await verComoAgenciaAction(id);
     setVerBusy(null);
-    if (!res.ok || !res.url) setError(res.error ?? "Error");
-    else window.location.href = res.url;
+    if (!res.ok || !res.url) { setError(res.error ?? "Error"); return; }
+    // Defensa anti redirect malicioso: validamos que la URL devuelta tenga
+    // protocol http(s) y host del dominio raíz esperado.
+    try {
+      const u = new URL(res.url);
+      if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("scheme inválido");
+      window.location.href = u.toString();
+    } catch {
+      setError("La URL de handoff devuelta no es válida.");
+    }
   }
 
   async function changeAgencia(id: string, patch: { plan_id?: string; estado?: Agencia["estado"]; nit?: string | null }) {

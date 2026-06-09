@@ -226,6 +226,9 @@ export async function crearReservaDesdeOportunidad(input: NuevaReserva): Promise
     // The website solicitud was created but the local mirror failed — surface it.
     throw new Error(`Reserva creada en el sitio (${solicitudId}) pero falló el registro local: ${error.message}`);
   }
+  if (!data?.id) {
+    throw new Error(`Reserva creada en el sitio (${solicitudId}) pero no se obtuvo ID del registro local`);
+  }
 
   if (input.oportunidadId) {
     await logCambio("oportunidad", input.oportunidadId, `Creó una reserva: ${input.planNombre} (${adultos + ninos + bebes} pax)`);

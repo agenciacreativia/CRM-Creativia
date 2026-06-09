@@ -120,7 +120,7 @@ export function ActividadesSection({
       )}
 
       {showAdd && (
-        <form onSubmit={onAdd} className="bg-gray-50 border border-gray-200 rounded p-4 space-y-3 mb-4">
+        <form method="POST" action="#" onSubmit={onAdd} className="bg-gray-50 border border-gray-200 rounded p-4 space-y-3 mb-4">
           {soloTipo ? (
             <>
               <input type="hidden" name="tipo" value={soloTipo} />
@@ -189,7 +189,10 @@ export function ActividadesSection({
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => onDelete(a.id)}
+                aria-label="Eliminar actividad"
+                title="Eliminar actividad"
                 className="text-xs text-gray-400 hover:text-status-danger"
               >
                 Eliminar

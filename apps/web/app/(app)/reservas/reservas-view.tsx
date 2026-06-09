@@ -77,7 +77,7 @@ export function ReservasView({
 
       <p className="text-sm text-gray-500">
         {solicitudes.length} reserva{solicitudes.length === 1 ? "" : "s"} · en vivo desde Turistea
-        <button onClick={() => router.refresh()} className="ml-2 inline-flex items-center gap-1 text-xs text-brand-primary hover:underline">
+        <button type="button" onClick={() => router.refresh()} aria-label="Actualizar reservas" title="Actualizar" className="ml-2 inline-flex items-center gap-1 text-xs text-brand-primary hover:underline">
           <RefreshCw className="h-3 w-3" /> actualizar
         </button>
       </p>

@@ -132,6 +132,7 @@ export async function createCampania(input: CampaniaInput): Promise<string> {
     .select("id")
     .single();
   if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("No se pudo crear la campaña");
   return data.id;
 }
 
@@ -143,17 +144,34 @@ export async function deleteCampania(id: string): Promise<void> {
 }
 
 /** Resolve which contacts match a segment. */
+type RawContactoRow = {
+  id: string;
+  email: string | null;
+  empresa_id: string | null;
+  empresa: { estado_empresa: string } | { estado_empresa: string }[] | null;
+};
+
 async function resolverDestinatarios(tenantId: string, segmento: Campania["segmento"]): Promise<{ id: string; email: string }[]> {
   const admin = createAdminSupabase();
   let query = admin.from("contacto").select("id, email, empresa_id, empresa:empresa_id(estado_empresa)").eq("tenant_id", tenantId);
   if (segmento.con_email !== false) query = query.not("email", "is", null).neq("email", "");
-  const { data } = await query;
-  let rows = ((data ?? []) as unknown as Record<string, unknown>[]).map((r) => {
+  const { data, error } = await query;
+  if (error) {
+    console.error("[campanias] resolverDestinatarios:", error.message);
+    return [];
+  }
+  let rows = ((data ?? []) as RawContactoRow[]).map((r) => {
     const e = Array.isArray(r.empresa) ? r.empresa[0] : r.empresa;
-    return { id: r.id as string, email: (r.email as string) ?? "", estado: (e as { estado_empresa: string } | null)?.estado_empresa ?? null };
+    return {
+      id: r.id,
+      email: r.email,    // mantenemos null hasta el filtro final
+      estado: e?.estado_empresa ?? null,
+    };
   });
   if (segmento.estado_empresa) rows = rows.filter((r) => r.estado === segmento.estado_empresa);
-  return rows.filter((r) => r.email).map((r) => ({ id: r.id, email: r.email }));
+  return rows
+    .filter((r): r is typeof r & { email: string } => !!r.email && r.email.length > 0)
+    .map((r) => ({ id: r.id, email: r.email }));
 }
 
 export async function enviarCampania(campaniaId: string): Promise<{ enviados: number; errores: number }> {

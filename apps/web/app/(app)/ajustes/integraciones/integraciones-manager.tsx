@@ -62,10 +62,15 @@ function ApiKeysCard({ apiKeys, onError, onChange }: { apiKeys: ApiKey[]; onErro
   async function crear() {
     if (!nombre.trim()) return;
     setCreating(true);
-    const res = await crearApiKeyAction(nombre);
-    setCreating(false);
-    if (!res.ok || !res.key) onError(res.error ?? "Error");
-    else { setRevealed(res.key); setNombre(""); onChange(); }
+    try {
+      const res = await crearApiKeyAction(nombre);
+      if (!res.ok || !res.key) onError(res.error ?? "Error");
+      else { setRevealed(res.key); setNombre(""); onChange(); }
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setCreating(false);
+    }
   }
   async function revocar(id: string) {
     if (!confirm("¿Revocar esta API key?")) return;
@@ -147,18 +152,23 @@ function WebhooksCard({ webhooks, onError, onChange }: { webhooks: Wh[]; onError
   const [nombre, setNombre] = useState("");
   const [url, setUrl] = useState("");
   const [secret, setSecret] = useState("");
-  const [eventos, setEventos] = useState<string[]>([]);
+  const [eventos, setEventos] = useState<EventoWebhook[]>([]);
 
-  function toggleEv(ev: string) {
+  function toggleEv(ev: EventoWebhook) {
     setEventos((arr) => (arr.includes(ev) ? arr.filter((x) => x !== ev) : [...arr, ev]));
   }
   async function crear() {
     if (!nombre.trim() || !url.trim() || eventos.length === 0) return onError("Completá nombre, URL y al menos un evento.");
     setCreating(true);
-    const res = await crearWebhookAction({ nombre, url, eventos: eventos as EventoWebhook[], secret });
-    setCreating(false);
-    if (!res.ok) onError(res.error ?? "Error");
-    else { setNombre(""); setUrl(""); setSecret(""); setEventos([]); onChange(); }
+    try {
+      const res = await crearWebhookAction({ nombre, url, eventos, secret });
+      if (!res.ok) onError(res.error ?? "Error");
+      else { setNombre(""); setUrl(""); setSecret(""); setEventos([]); onChange(); }
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setCreating(false);
+    }
   }
 
   return (
@@ -223,10 +233,21 @@ function ReportesProgramadosCard({ reportes, onError, onChange }: { reportes: Re
 
   async function crear() {
     if (!nombre.trim() || !dest.trim()) return onError("Completá nombre y destinatarios.");
+    // Validar emails antes de mandar al server (split por coma/punto-y-coma/espacio).
+    const emails = dest.split(/[,;\s]+/).map((s) => s.trim()).filter(Boolean);
+    const invalidos = emails.filter((e) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+    if (invalidos.length) return onError(`Emails inválidos: ${invalidos.join(", ")}`);
+    if (emails.length === 0) return onError("Pegá al menos un email destinatario.");
     setBusy(true);
-    const res = await crearReporteProgramadoAction({ nombre, destinatarios: dest, frecuencia: freq, activo: true });
-    setBusy(false);
-    if (!res.ok) onError(res.error ?? "Error"); else { setNombre(""); setDest(""); onChange(); }
+    try {
+      const res = await crearReporteProgramadoAction({ nombre, destinatarios: dest, frecuencia: freq, activo: true });
+      if (!res.ok) onError(res.error ?? "Error");
+      else { setNombre(""); setDest(""); onChange(); }
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

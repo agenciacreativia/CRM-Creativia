@@ -1,0 +1,1001 @@
+{
+  "app/(app)/ajustes/agencias/agencias-manager.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En agencias-manager.tsx línea 273, navigator.clipboard.writeText() puede fallar (sin permisos, en contexto inseguro, etc.) pero el error se ignora silenciosamente con `.then()` sin `.catch()`. El usuario cree que copió pero no pasó.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 273",
+      "fix_sugerido": "Agregar `.catch()` para mostrar error o fallback a prompt() si clipboard no disponible.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "logica_rota",
+      "descripcion": "En agencias-manager.tsx línea 228, cuando se tipea el nombre de agencia, automáticamente se genera el slug para subdominio. Pero la función slug() no valida el resultado de ser vacío (si el nombre es '---' se vuelve vacío). El schema luego rechaza min(2) pero el error va directo al usuario sin feedback que fue por el slug vacío.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 196-198, 228",
+      "como_reproducir": "Tipear '---' como nombre. El subdominio se vuelve vacío. Al intentar crear, error 'Subdominio requerido'.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "Input de NIT en tabla (agencias-manager.tsx línea 110) no tiene aria-label. Title solo ayuda a mouse, no a screen readers.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 110",
+      "fix_sugerido": "Agregar `aria-label='NIT de {nombre_empresa}'` al input.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "logica_rota",
+      "descripcion": "En agencias-manager.tsx línea 227, el onChange del nombre ejecuta slug() inline dentro del setState. Si el componente re-renderiza antes de que se complete el slug, el state puede desincronizarse. No hay debounce.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 227-228",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "Cuando se crea una agencia exitosamente (CredencialesPanel), el botón para cerrar el panel (onClose) no está claro. El usuario podría intentar refresh manual pensando que falló.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 298",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En agencias-manager.tsx línea 110-118, input de NIT no tiene aria-label. El placeholder 'NIT' no es suficiente para lectores de pantalla.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 110-118",
+      "fix_sugerido": "Agregar aria-label='NIT de la agencia en Turistea' al input.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En agencias-manager.tsx línea 17-26, la función `fmtDate()` y `trialInfo()` no manejan dates inválidas (string vacío o 'null'). Si BD devuelve null inesperado, muestra '—' sin errores visibles.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 17-26",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En agencias-manager.tsx, no hay confirmación antes de cambiar estado a 'suspendido' o 'cancelado'. Un click accidental puede suspender una agencia en producción.",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 134",
+      "como_reproducir": "Dropdown estado, seleccionar 'Suspendido'. Cambio inmediato sin confirmar.",
+      "fix_sugerido": "Agregar confirmación: `if (!confirm(...)) return;` en changeAgencia() cuando estado cambia a suspendido/cancelado.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "app/(app)/ajustes/facturacion/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En facturacion/page.tsx línea 83, si tanto `periodo_fin` como `trial_termina_en` son nulos, se renderiza `trial: —`. Pero la semántica es confusa: ¿está en trial o ya terminó? El estado real debería validar si es `activa` + `periodo_fin` null (pago único) o `trial` con fecha null (no válido).",
+      "archivo": "app/(app)/ajustes/facturacion/page.tsx, línea 82-84",
+      "como_reproducir": "Una agencia con estado_suscripcion='activa', periodo_fin=null, trial_termina_en=null aparecerá como 'trial: —' confundiendo al admin.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "En facturacion/page.tsx, la función `fmtDate()` se llama en cada row del map pero no se memoiza. Con 100+ agencias, esto causa re-renders innecesarios.",
+      "archivo": "app/(app)/ajustes/facturacion/page.tsx, línea 26-28, 83",
+      "fix_sugerido": "Mover fmtDate() fuera del componente o usar useMemo si la conversión es costosa.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En facturacion/page.tsx línea 48, el texto menciona 'STRIPE_SECRET_KEY y STRIPE_WEBHOOK_SECRET' pero devs podrían no saber si son obligatorios ambos. El mensaje es vago.",
+      "archivo": "app/(app)/ajustes/facturacion/page.tsx, línea 50-54",
+      "fix_sugerido": "Ser más explícito: 'Ambas vars de entorno son obligatorias para activar cobro automático.'",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "app/(app)/ajustes/agencias/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "En agencias/page.tsx línea 10, se hacen dos queries en paralelo (listAgencias y listPlanes) con Promise.all(), pero listAgencias hace una query que join con plan(nombre) y usuario(count), causando potencialmente N+1 si Supabase no optimiza los joins.",
+      "archivo": "app/(app)/ajustes/agencias/page.tsx, línea 10",
+      "fix_sugerido": "Verificar que las queries usan select con joins explícitos y que los índices estén presentes.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "lib/db/agencias.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En lib/db/agencias.ts, no hay logging cuando se falla el rollback de crear agencia. Si el rollback silenciosamente no elimina el tenant fantasma, queda un registro huérfano sin admin usuario.",
+      "archivo": "lib/db/agencias.ts, línea 155-159",
+      "fix_sugerido": "Agregar logging o error tracking cuando el rollback falla.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En agencias.ts línea 39-44, el type assertion inline para mapear `usuario?.[0]?.count` asume siempre que la respuesta es un array si existe. Supabase puede cambiar behavior en versiones futuras.",
+      "archivo": "lib/db/agencias.ts, línea 40-44",
+      "fix_sugerido": "Definir un type interface separado para la respuesta de listAgencias() y reutilizarlo.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "app/(app)/ajustes/planes/planes-manager.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "En PlanForm, cuando se edita un plan, no hay indicador de loading en el botón guardas. El usuario puede pensar que no pasó nada y hacer click múltiples veces.",
+      "archivo": "app/(app)/ajustes/planes/planes-manager.tsx, línea 297",
+      "fix_sugerido": "El botón ya tiene `disabled={saving}` pero falta visual feedback. Considerar agregar spinner o cambiar texto.",
+      "modulo": "Agencias (super-admin) + facturación"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En planes-manager.tsx línea 282, input type='number' para limites permite valores negativos (min='0' falta en algunos inputs). Usuario puede ingresar -100 usuarios como límite.",
+      "archivo": "app/(app)/ajustes/planes/planes-manager.tsx, línea 279-285",
+      "como_reproducir": "Crear plan, en Límites ingresar '-5' en campo Usuarios. El form lo acepta.",
+      "fix_sugerido": "Agregar min='0' a Input type='number' en sección de Límites.",
+      "modulo": "Agencias (super-admin) + facturación"
+    }
+  ],
+  "lib/actions/inline-edit.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En inline-edit.ts:66, 'moneda' usa coerce: (v) => v sin trimming ni validación. Debería al menos trimear y validar contra enum de monedas permitidas.",
+      "archivo": "lib/actions/inline-edit.ts:66",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En prevValue (inline-edit.ts línea 34), se hace un cast doble `as unknown as Record<string, unknown>`. Si el campo no existe en data, retorna undefined en lugar de null. Aunque esto funciona, es un anti-patrón.",
+      "archivo": "lib/actions/inline-edit.ts:34",
+      "fix_sugerido": "Usar un cast simple o una función helper. Ej: `const field = (data as Record<string, unknown>)?.[field];`",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "saveEmpresaField en inline-edit.ts no valida el email antes de guardarlo. EMPRESA_FIELDS['email'] solo hace str() que trimea, sin validar formato.",
+      "archivo": "lib/actions/inline-edit.ts:80 + saveEmpresaField:121-134",
+      "como_reproducir": "Guardar email inválido mediante inline edit → se guarda directamente en DB sin validar.",
+      "fix_sugerido": "Agregar validación de email en saveEmpresaField o usar un coerce más estricto que rechace emails malformados.",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)"
+    }
+  ],
+  "app/(app)/oportunidades/tabla/oportunidades-table.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En oportunidades-table.tsx, el checkbox de 'seleccionar todo' (línea 118) tiene aria-label correcto, pero los select de bulk actions (Asignar, Estado, Etiqueta) no tienen aria-label, afectando lectores de pantalla.",
+      "archivo": "app/(app)/oportunidades/tabla/oportunidades-table.tsx:70, 79, 91",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/(app)/admin/pipelines/actions.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En admin/pipelines/actions.ts:67, etapaSchema valida días_maximo_alerta con z.number().int().positive().nullable(), pero no especifica un máximo (p.ej. max(365)). Un usuario puede crear una alerta de 999999 días, causando overflow visual en el kanban.",
+      "archivo": "app/(app)/admin/pipelines/actions.ts:30",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "lib/db/mutations.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En mutations.ts:465, resolverAsesor es llamado para validar/resolver el asignado durante createOportunidad, pero NO se llama durante updateOportunidad. Esto permite que un usuarioActualice asignado_id a un valor inválido sin pasar por la lógica de validación.",
+      "archivo": "lib/db/mutations.ts:457-477, 345-403",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/(app)/oportunidades/nueva/create-wrapper.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En create-wrapper.tsx:20, se define moneda: 'USD' por defecto, pero si el tenant usa ARS como moneda principal, el usuario debe cambiar el select manualmente. Debería leerse del tenant config.",
+      "archivo": "app/(app)/oportunidades/nueva/create-wrapper.tsx:20",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "app/(auth)/login/login-form.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En login-form.tsx (línea 136), hay un texto hardcodeado en español ('¿Olvidaste tu contraseña?') que debería venir de las translations (t('...')). El resto del form usa i18next correctamente.",
+      "archivo": "app/(auth)/login/login-form.tsx:136",
+      "como_reproducir": "Cambiar idioma a English - el link sigue en español.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    }
+  ],
+  "app/(auth)/forgot-password/forgot-form.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En forgot-form.tsx (líneas 29, 69), hay textos hardcodeados en español ('Enviando...', 'Enviar link de recuperación') que no están en el i18n.",
+      "archivo": "app/(auth)/forgot-password/forgot-form.tsx:69,71,73",
+      "como_reproducir": "Cambiar idioma a English - textos siguen en español.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    }
+  ],
+  "app/(auth)/reset-password/reset-form.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En reset-form.tsx (líneas 41, 45, 64, 72, 76, 97, 134), todos los textos están hardcodeados en español. Deberían usar t() para internacionalización.",
+      "archivo": "app/(auth)/reset-password/reset-form.tsx:41,45,64,72,76,97,134",
+      "como_reproducir": "Cambiar idioma a English - toda la página sigue en español.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    }
+  ],
+  "app/auth/handoff/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En handoff/page.tsx, el textos 'Ingresando a tu espacio...' está hardcodeado sin i18n. Debería usar useTranslation().",
+      "archivo": "app/auth/handoff/page.tsx:67",
+      "como_reproducir": "Cambiar idioma - sigue en español.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    }
+  ],
+  "app/auth/error/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En auth/error/page.tsx, aunque hay traducciones para algunos mensajes, el fallback para 'unknown' reason solo retorna Spanish. No hay fallback bilingüe consistente.",
+      "archivo": "app/auth/error/page.tsx:19",
+      "como_reproducir": "Pasar un reason desconocido.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    }
+  ],
+  "lib/auth.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "En getSessionUser (lib/auth.ts line 32-35), se llama Promise.all([getUser(), getSession()]) pero ambas funciones hacen requests a Supabase. Aunque están cacheadas internamente por Supabase, se ejecutan en paralelo innecesariamente - getSession() es suficiente para obtener el usuario autenticado.",
+      "archivo": "lib/auth.ts:32-35",
+      "como_reproducir": "Monitorear requests a Supabase - verás dos requests cuando una sería suficiente.",
+      "fix_sugerido": "Solo usar getSession() que retorna tanto session como implícitamente valida el usuario.",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)"
+    }
+  ],
+  "app/(app)/oportunidades/kanban/kanban-board.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En kanban-board.tsx (Column header), el link de editar etapa (pencil icon, línea 213) no tiene aria-label descriptivo. Solo dice 'aria-label: Editar etapa' genérico.",
+      "archivo": "app/(app)/oportunidades/kanban/kanban-board.tsx:213-220",
+      "como_reproducir": "Abre DevTools. Inspecciona el icono de lápiz en la columna del kanban. El aria-label no especifica CUÁL etapa.",
+      "fix_sugerido": "Cambiar a aria-label={`Editar etapa ${stage.nombre}`}",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "components/forms/oportunidad-form.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En OportunidadForm, cuando contactosFiltrados.length === 0 o etapasFiltradas.length === 0, el botón de submit es disabled pero el mensaje de error aparece debajo. La UX es confusa: ¿está guardando o no?",
+      "archivo": "components/forms/oportunidad-form.tsx:277-293",
+      "como_reproducir": "Selecciona una empresa sin contactos. El botón 'Crear oportunidad' queda disabled pero no hay feedback claro.",
+      "fix_sugerido": "Mover el mensaje de error más arriba o cambiar el botón a 'disabled con tooltip' que explique por qué.",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En OportunidadForm, si hay contactosFiltrados.length === 0 pero contacto_id ya es válido (edit mode), el select se deshabilita, lo que puede romper la edición si no había guardado antes.",
+      "archivo": "components/forms/oportunidad-form.tsx:127-143",
+      "como_reproducir": "Crea oportunidad con empresa A y contacto A. Luego elimina contacto A y edita la oportunidad. El contacto desaparece del dropdown.",
+      "fix_sugerido": "En edit mode, mantener la opción actual visible aunque esté 'fuera' de los filtrados actuales.",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En OportunidadForm, cuando estado==='perdido', el campo motivo_perdida_id es required. Pero el frontend no impide enviar sin motivo; solo hay validación en server. Si JS falla, usuario puede guardar sin motivo.",
+      "archivo": "components/forms/oportunidad-form.tsx:243-263",
+      "como_reproducir": "Abre DevTools console. Deshabilita JS. Selecciona estado='Perdida' sin llenar motivo. Intenta guardar.",
+      "fix_sugerido": "Agregar validación client-side o asegurar que requiem es hard-enforced en el tipo schema de Zod (ya lo está, pero mejorar mensajes).",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "lib/db/oportunidades.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En oportunidades.ts, los tipos RawOpp (línea 172-181) son redefinidos inline en getKanbanBoard(). El mismo patrón se repite en listOportunidades() (línea 288). Esto viola DRY.",
+      "archivo": "lib/db/oportunidades.ts:172-181, 288",
+      "como_reproducir": "Busca 'type RawOpp' o patrones similares en el archivo. Ves duplicación de tipos.",
+      "fix_sugerido": "Extraer los tipos a nivel de módulo o usar un esquema Zod reutilizable.",
+      "modulo": "Oportunidades + Kanban + Pipelines"
+    }
+  ],
+  "lib/db/contactos.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En lib/db/contactos.ts línea 45-82 (listContactos), se cargan todos los contactos con limit 200 o 2000. Sin paginación, queries grandes pueden ser lentas. Mejor usar offset/limit o cursor-based pagination.",
+      "archivo": "lib/db/contactos.ts:52",
+      "fix_sugerido": "Agregar soporte a offset y limit dinámicos en listContactos",
+      "modulo": "Contactos"
+    }
+  ],
+  "app/(app)/contactos/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En app/(app)/contactos/page.tsx línea 71, el span 'no asignado' no tiene aria-label. Screen readers no comunican claramente el estado.",
+      "archivo": "app/(app)/contactos/page.tsx:71",
+      "fix_sugerido": "Agregar aria-label='Sin asignar' al span",
+      "modulo": "Contactos"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "En page.tsx línea 18, cuando hay filtros avanzados, se cargan hasta 2000 contactos. Esto podría causar problemas de performance si hay muchos contactos. La tabla render los 2000 sin paginación visible.",
+      "archivo": "app/(app)/contactos/page.tsx:18",
+      "fix_sugerido": "Implementar paginación o virtualización para listas grandes. O reducir el límite a 500-1000.",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    }
+  ],
+  "app/(app)/contactos/[id]/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "En app/(app)/contactos/[id]/page.tsx línea 34-42, se cargan 7 queries en paralelo cada vez que se abre un contacto. Sin caching, usuarios frecuentes ven latencia. Considerar SWR o cache de campos que no cambian (campos, normas de RFM).",
+      "archivo": "app/(app)/contactos/[id]/page.tsx:34-42",
+      "fix_sugerido": "Cachear listCampos y RFM_DEFAULT en un store o usar revalidatePath selectiva",
+      "modulo": "Contactos"
+    }
+  ],
+  "lib/db/listas-envio.ts": [
+    {
+      "tipo": "deuda",
+      "severidad": "bajo",
+      "descripcion": "deleteListaEnvio() está definida pero nunca es usada. Código muerto.",
+      "archivo": "lib/db/listas-envio.ts:41-45",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    }
+  ],
+  "lib/db/campanias.ts": [
+    {
+      "tipo": "bug",
+      "severidad": "bajo",
+      "descripcion": "tasa_bounce siempre retorna null en métricas aunque exista columna `bounces`. El cálculo no está implementado (debería dividir bounces/enviados).",
+      "archivo": "lib/db/campanias.ts:34, 64",
+      "fix_sugerido": "Cambiar: tasa_bounce: v.enviados ? Math.round((v.bounces / v.enviados) * 1000) / 10 : null; (si bounces se llena en registrarCorreoEnviado)",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "getAllCampaniaMetrics() carga todas las filas de correo_enviado sin paginación. Con miles de correos, esto es ineficiente.",
+      "archivo": "lib/db/campanias.ts:39-69",
+      "fix_sugerido": "Agregar índice y/o paginación; considerar materializar métricas en tabla separada",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "Validación del email al envío es mínima (solo checka que exista string, no formato RFC). sendGmail() fallaría con emails malformados como 'test@' pero sin feedback útil.",
+      "archivo": "lib/db/campanias.ts:158",
+      "fix_sugerido": "Validar email con regex o librería antes de pasarlo a sendGmail",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    }
+  ],
+  "app/(app)/campanias/listas/nueva/actions.ts": [
+    {
+      "tipo": "logica_rota",
+      "severidad": "bajo",
+      "descripcion": "En crearListaAction, se cuentan contactos filtrando in-memory sin tenant isolation. Si dos tenants llaman simultáneamente, los filtros podrían cross-contaminar si hay estado global.",
+      "archivo": "app/(app)/campanias/listas/nueva/actions.ts:23-26",
+      "fix_sugerido": "Asegurar que listContactos() respeta tenant_id en la query de BD (verificar que RLS está habilitada).",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "createListaAction llama a listContactos({}) SIN límite, luego filtra en memoria. Con 10k+ contactos, consume mucha RAM.",
+      "archivo": "app/(app)/campanias/listas/nueva/actions.ts:23",
+      "fix_sugerido": "Considerar server-side filtering o paginación",
+      "modulo": "Campañas + Listas envío + Plantillas"
+    }
+  ],
+  "app/(app)/productos/productos-manager.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "Los botones de editar y eliminar productos no tienen aria-label. Los iconos Pencil y Trash2 no tienen alt text. Solo tienen title attribute que no es accesible para screen readers.",
+      "archivo": "app/(app)/productos/productos-manager.tsx:208,213",
+      "como_reproducir": "Usar un screen reader (NVDA, JAWS) para navegar la tabla. Los botones se leen como 'button' sin contexto.",
+      "fix_sugerido": "Agregar aria-label={`Editar producto ${row.nombre}`} y aria-label={`Eliminar producto ${row.id}`}",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En productos-manager.tsx, el form de crear/editar no tiene aria-labels en muchos inputs. Los textareas no tienen label explícito en algunos casos (aunque usan Field wrapper).",
+      "archivo": "app/(app)/productos/productos-manager.tsx:83-125",
+      "modulo": "Productos + Catálogo Turistea"
+    }
+  ],
+  "app/(app)/catalogo/catalogo-browse.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "Los checkboxes en el catálogo (línea 258) no tienen labels asociadas. El input está dentro de un <label> pero sin htmlFor/id pairing explícito.",
+      "archivo": "app/(app)/catalogo/catalogo-browse.tsx:256-259",
+      "como_reproducir": "Con screen reader, el checkbox no tiene label descripción.",
+      "fix_sugerido": "Agregar aria-label={`Seleccionar ${p.nombre}`} o usar label con htmlFor",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En catalogo-browse.tsx, después de copiar items exitosamente, el mensaje se cierra después de router.refresh() pero no hay indicador visual persistente. Usuario no sabe si la copia fue completa.",
+      "archivo": "app/(app)/catalogo/catalogo-browse.tsx:133-137",
+      "modulo": "Productos + Catálogo Turistea"
+    }
+  ],
+  "lib/db/productos.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "La función listOportunidadesPorProducto usa un type assertion frágil (as unknown as Row[]) para acceder a nested relationships. Esto oculta posibles errores de estructura de datos.",
+      "archivo": "lib/db/productos.ts:72",
+      "como_reproducir": "Si la respuesta de Supabase cambiar estructura, no habrá tipo error.",
+      "fix_sugerido": "Usar Zod schema o better-typed queries en lugar de type assertions",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En productos.ts, la función `listOportunidadesPorProducto` usa tipado complicado con `Row[]` y casting `as unknown as Row[]`. Debería usar tipos más simples o usar union types explícitos.",
+      "archivo": "lib/db/productos.ts:71-72",
+      "modulo": "Productos + Catálogo Turistea"
+    }
+  ],
+  "app/(app)/productos/actions.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "El mensaje de error en saveProductoAction solo muestra el primer error (issues[0]). Si hay múltiples campos inválidos, el usuario solo ve el primero.",
+      "archivo": "app/(app)/productos/actions.ts:32",
+      "como_reproducir": "Enviar formulario con múltiples campos inválidos. Solo verá error del primer campo.",
+      "fix_sugerido": "Retornar todos los errores o mostrar los 3 primeros: error: parsed.error.issues.slice(0,3).map(i => i.message).join(', ')",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)"
+    }
+  ],
+  "components/sedes/sedes-section.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En sedes-section.tsx, cuando se intenta editar el campo 'es_principal' (checkbox), si no se marca, la FormData no incluirá la clave. El preprocess lo maneja correctamente, pero el patrón es frágil.",
+      "archivo": "components/sedes/sedes-section.tsx:209",
+      "como_reproducir": "1. Abrir edición de una sede marcada como principal. 2. Desmarcar 'Marcar como sede principal'. 3. Guardar. El valor se actualiza correctamente, pero el patrón es frágil para otros checkboxes.",
+      "fix_sugerido": "Usar un patrón más robusto: agregar un hidden input para cada checkbox: <input type='hidden' name='es_principal' value='false' /> seguido del checkbox value='true'.",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "Los botones 'Editar' y 'Eliminar' en sedes-section.tsx no tienen aria-labels descriptivos. 'Editar' podría decir 'Editar sede [nombre]'.",
+      "archivo": "components/sedes/sedes-section.tsx:135-136",
+      "como_reproducir": "Usar screen reader → botones no describen qué sede editan.",
+      "fix_sugerido": "Agregar aria-label={`Editar sede ${sede.nombre}`} y similar para eliminar.",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)"
+    }
+  ],
+  "app/(app)/empresas/[id]/editar/actions.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "Validación de email con z.preprocess(emptyToNull, z.string().email().nullable()) es un patrón poco intuitivo. El orden correcto sería validar que sea email ANTES de aplicar preprocess.",
+      "archivo": "app/(app)/empresas/[id]/editar/actions.ts:16 y otros",
+      "fix_sugerido": "Usar un patrón más claro: z.string().email().or(z.literal('').transform(() => null)).nullable() o validar con z.union([z.string().email(), z.literal('').transform(() => null)]).",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)"
+    }
+  ],
+  "app/(app)/empresas/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En empresas/page.tsx, cuando se aplican filtros avanzados, se cargan hasta 2000 registros. Si hay más de 2000 empresas, algunos registros no se mostrarán ni se filtrarán, causando resultados incompletos sin aviso al usuario.",
+      "archivo": "app/(app)/empresas/page.tsx:25",
+      "como_reproducir": "Si el tenant tiene >2000 empresas y se aplica un filtro avanzado, algunos resultados no aparecerán porque se cargan máximo 2000.",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)"
+    }
+  ],
+  "components/filters/filter-builder.tsx": [
+    {
+      "tipo": "deuda",
+      "severidad": "bajo",
+      "descripcion": "En FilterBuilder (components/filters/filter-builder.tsx línea 54), se ignora la regla react-hooks/exhaustive-deps. El efecto sincroniza con searchParams solo cuando 'open' cambia, pero no cuando searchParams cambia. Esto puede dejar estado stale si los parámetros cambian mientras el diálogo está abierto.",
+      "archivo": "components/filters/filter-builder.tsx, línea 54-55",
+      "fix_sugerido": "Agregar searchParams y paramName a las dependencias o crear un efecto separado",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/reportes/filters-bar.tsx": [
+    {
+      "tipo": "a11y",
+      "severidad": "bajo",
+      "descripcion": "Los labels en ReportesFiltersBar no están asociados con sus inputs/selects mediante htmlFor/id. Esto viola WCAG y afecta la accesibilidad para usuarios de lectores de pantalla.",
+      "archivo": "app/(app)/reportes/filters-bar.tsx, líneas 41-89",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/reportes/export-button.tsx": [
+    {
+      "tipo": "a11y",
+      "severidad": "bajo",
+      "descripcion": "Falta aria-label en varios botones clave: el botón de exportar CSV en reportes no tiene aria-label que describa su función.",
+      "archivo": "app/(app)/reportes/export-button.tsx, línea 26",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "bug",
+      "descripcion": "En export-button.tsx línea 16, se agrega BOM (﻿) al CSV, lo que causa problemas en algunos editores no-Microsoft. El BOM es innecesario en UTF-8 moderno.",
+      "archivo": "app/(app)/reportes/export-button.tsx, línea 16",
+      "fix_sugerido": "Remover ﻿: new Blob([csv], { type: 'text/csv;charset=utf-8' })",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/dashboard/page.tsx": [
+    {
+      "tipo": "a11y",
+      "severidad": "bajo",
+      "descripcion": "En dashboard/page.tsx, el section #actividades-pendientes carece de aria-live o role=region para indicar contenido dinámico que podría cambiar.",
+      "archivo": "app/(app)/dashboard/page.tsx, línea 211",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/buscar/page.tsx": [
+    {
+      "tipo": "ux",
+      "severidad": "bajo",
+      "descripcion": "En buscar/page.tsx, cuando matches.length > 200, se muestra un aviso 'Mostrando los primeros 200', pero el usuario no tiene forma de refinar los filtros dentro del resultado (ej: paginación). Debe volver a la página anterior y ajustar filtros.",
+      "archivo": "app/(app)/buscar/page.tsx, línea 85",
+      "como_reproducir": "Crear filtros que devuelvan más de 200 resultados y observar que no hay paginación.",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "logica_rota",
+      "descripcion": "Casting 'as Array<...>' en buscar/page.tsx líneas 33-35 oculta que los tipos retornados de listContactos/Empresas/Oportunidades podrían no incluir todos los campos necesarios para el filtrado. Debería ser contactoListItem & Record<string, unknown>.",
+      "archivo": "app/(app)/buscar/page.tsx, líneas 33-35",
+      "fix_sugerido": "Remover el casting genérico o asegurar que los tipos son correctos.",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "lib/db/dashboard.ts": [
+    {
+      "tipo": "deuda",
+      "severidad": "bajo",
+      "descripcion": "Los tipos en dashboard.ts tienen un patrón repetido de 'T | T[] | null' para manejar respuestas de Supabase con joins. Esto podría simplificarse con una función de normalización o tipo genérico reutilizable.",
+      "archivo": "lib/db/dashboard.ts, líneas 188-193",
+      "fix_sugerido": "Crear una función normalizeRelation<T>() o tipo Relation<T> reutilizable",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "bug",
+      "descripcion": "El campo 'completada' en el .select() de actividades (línea 122) no se usa en el mapeo posterior. Se trae innecesariamente porque la query.eq('completada', false) ya filtra.",
+      "archivo": "lib/db/dashboard.ts, línea 122",
+      "fix_sugerido": "Remover 'completada' del select: \"id, oportunidad_id, tipo, descripcion, fecha_programada, oportunidad(nombre, asignado_id)\"",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "El cálculo de moneda_pipeline por frecuencia (línea 385-386) usa reduce + sort que es O(n log n). Para muchas monedas es eficiente pero podría memorizarse si se ejecuta múltiples veces.",
+      "archivo": "lib/db/dashboard.ts, líneas 384-386",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "lib/db/google.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "En deleteCuentaGoogle, falta agregar el usuario en el filtro. Aunque actualmente falla, si se fixea podría mejorar performance agregando un check anticipado.",
+      "archivo": "lib/db/google.ts:78-82",
+      "fix_sugerido": "Antes del delete, hacer const user = await getSessionUser(); y validar que exista.",
+      "modulo": "Agenda + Notificaciones"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En lib/db/google.ts línea 80, deleteCuentaGoogle() usa .neq('usuario_id', '') que es un hack para borrar TODAS las filas del usuario. Debería usar .eq('usuario_id', user.id) pero la función no recibe user.",
+      "archivo": "lib/db/google.ts:78-82",
+      "como_reproducir": "Llamar a deleteCuentaGoogle() dos veces. La primera borra la fila del usuario, la segunda no hace nada. Si en futuro se agregan más filas por usuario, este método no escalará.",
+      "fix_sugerido": "Pasar usuario_id como parámetro o agregar getSessionUser() dentro. Cambiar a .eq('usuario_id', user.id)",
+      "modulo": "Agenda + Notificaciones"
+    }
+  ],
+  "app/(app)/agenda/google-tasks.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En GoogleTasks component, después de router.refresh(), la lista 'initial' props no se actualiza automáticamente. El usuario ve la tarea aún en la lista hasta que recarga manualmente (aunque router.refresh debería hacerlo, a nivel UI hay lag).",
+      "archivo": "app/(app)/agenda/google-tasks.tsx:16-86",
+      "fix_sugerido": "Considerar un estado local optimista que remove la tarea de la lista inmediatamente, o usar SWR/useEffect para re-fetch.",
+      "modulo": "Agenda + Notificaciones"
+    }
+  ],
+  "app/(app)/ajustes/secuencias/secuencias-manager.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "El componente SecuenciaForm en secuencias-manager.tsx no valida que los días en los pasos sean números no-negativos en el frontend. Un usuario podría ingresar '-5' dias y causaría una fecha programada en el pasado.",
+      "archivo": "app/(app)/ajustes/secuencias/secuencias-manager.tsx:121",
+      "fix_sugerido": "Agregar min='0' y step='1' al Input de días para forzar valores válidos.",
+      "modulo": "Agenda + Notificaciones"
+    }
+  ],
+  "lib/db/fidelizacion.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En fidelizacion.ts línea 15, la función diasAlProximoCumple usa `new Date(iso + \"T00:00:00\")` que es vulnerable a timezone issues. Si el servidor y navegador están en timezones diferentes, puede desplazar un día.",
+      "archivo": "lib/db/fidelizacion.ts:15",
+      "como_reproducir": "Usuario en timezone UTC-3 podría ver cumpleaños un día antes/después dependiendo del horario.",
+      "fix_sugerido": "Usar UTC: `new Date(iso + \"T00:00:00Z\")` o trabajar con dates sin hora.",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "En fidelizacion.ts línea 36, se usa .limit(1000) al listar contactos para cumpleaños. Si hay muchos registros, esto carga demasiados datos innecesarios. Debería filtrar por rango de fechas en la DB.",
+      "archivo": "lib/db/fidelizacion.ts:36",
+      "como_reproducir": "BD con 10k+ contactos sin fecha_nacimiento carga innecesariamente.",
+      "fix_sugerido": "Filtrar en la query: `.gte('fecha_nacimiento', hoy.toISOString().slice(0, 10)).lte('fecha_nacimiento', futuro.toISOString().slice(0, 10))`",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    },
+    {
+      "tipo": "perf",
+      "severidad": "bajo",
+      "descripcion": "getFidelizacion() siempre carga .limit(1000) contactos sin pagination, incluso si hay 10mil. En tenants grandes, esto puede causar slowdown.",
+      "archivo": "lib/db/fidelizacion.ts, línea 36",
+      "fix_sugerido": "Agregar parámetro limit configurable o paginar resultados.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    },
+    {
+      "tipo": "perf",
+      "severidad": "bajo",
+      "descripcion": "getFidelizacion() siempre carga .limit(1000) contactos sin pagination, incluso en tenants con 10k+ contactos. Puede causar slowdown en grandes volúmenes.",
+      "archivo": "lib/db/fidelizacion.ts, línea 36",
+      "fix_sugerido": "Agregar parámetro limit configurable o implementar pagination.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/pasajeros-section.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En pasajeros-section.tsx línea 102, las labels de input de fecha no tienen el atributo htmlFor asociado. Los labels están anidados al lugar del input.",
+      "archivo": "app/(app)/oportunidades/[id]/pasajeros-section.tsx:102-103",
+      "como_reproducir": "Screen reader lee labels sin poder asociarlos a inputs correctamente.",
+      "fix_sugerido": "Estructurar como: `<label htmlFor=\"fechanac\">Nacimiento</label><Input id=\"fechanac\" type=\"date\" />`",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/itinerario-editor.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En habitaciones-section.tsx línea 63-65, los botones de mover día (▲ ▼) usan caracteres unicode sin aria-label. Screen readers no entienden qué hacen.",
+      "archivo": "app/(app)/oportunidades/[id]/itinerario-editor.tsx:63-65",
+      "como_reproducir": "Usar screen reader en los botones de ordenar días, no dice qué hacen.",
+      "fix_sugerido": "Agregar aria-label: `<button aria-label=\"Subir día\">▲</button>`",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    },
+    {
+      "tipo": "deuda",
+      "severidad": "bajo",
+      "descripcion": "ItinerarioEditor uses 'keys' como índice en lista (key={i}), no key={d.id}. Si se reordena el itinerario, React puede renderizar componentes stale.",
+      "archivo": "app/(app)/oportunidades/[id]/itinerario-editor.tsx, línea 59",
+      "fix_sugerido": "Asignar ID único a cada día del itinerario en lugar de usar índice.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    },
+    {
+      "tipo": "deuda",
+      "severidad": "bajo",
+      "descripcion": "ItinerarioEditor usa índices como keys (key={i}) en lugar de IDs únicos. Si se reordena el itinerario, React puede renderizar componentes stale.",
+      "archivo": "app/(app)/oportunidades/[id]/itinerario-editor.tsx, línea 59",
+      "fix_sugerido": "Asignar ID único a cada día del itinerario.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "app/(app)/reservas/reservas-view.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "security",
+      "descripcion": "En reservas-view.tsx línea 80, el botón de refresh usa router.refresh() directamente sin prevención de double-click. Un usuario impaciente podría hacer click múltiples veces causando requests innecesarias.",
+      "archivo": "app/(app)/reservas/reservas-view.tsx:80",
+      "como_reproducir": "Hacer click rápidamente varias veces en el botón de actualizar.",
+      "fix_sugerido": "Agregar estado de loading para deshabilitar el botón mientras se refresca.",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    }
+  ],
+  "lib/db/reservas.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En reservas.ts línea 61 y similares en otros archivos, se retorna [] cuando hay error. Esto hace que sea difícil detectar si el error fue permission denied o tabla no existe. Silencia errores legítimos.",
+      "archivo": "lib/db/reservas.ts:61",
+      "como_reproducir": "Si una tabla no existe (por migración incompleta), retorna [] sin avisar al user.",
+      "fix_sugerido": "Considerar si ciertos errores deberían ser throws en lugar de empty returns, o loguear errores.",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)"
+    }
+  ],
+  "app/(app)/ajustes/integraciones/integraciones-manager.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En integraciones-manager.tsx línea 93, el botón 'Copiar' no tiene aria-label ni accesibilidad clara para screen readers.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:93-95",
+      "como_reproducir": "Usar screen reader. El botón no describe su función.",
+      "fix_sugerido": "Agregar: aria-label='Copiar API key al portapapeles'",
+      "modulo": "API pública v1 + integraciones"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En integraciones-manager.tsx línea 194-203, el checkbox para activar webhook tiene label 'activar' pero está fuera del label element proper. Screen readers pueden no asociarlo.",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:194-203",
+      "como_reproducir": "Usar screen reader. El checkbox 'activar' no tiene label asociado correctamente.",
+      "fix_sugerido": "Envolver el input en <label> o usar htmlFor.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "app/api/v1/[modulo]/route.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "El comentario en [modulo]/route.ts línea 44 dice 'Rate limit consume cuenta sólo para escrituras; lectura sólo informativo' pero el código SÍ incrementa usados en GET. El comentario es engañoso.",
+      "archivo": "app/api/v1/[modulo]/route.ts:44",
+      "fix_sugerido": "Actualizar comentario a: 'Lectura devuelve uso pero no incrementa contador' o cambiar lógica.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "app/(app)/ajustes/integraciones/actions.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "Las acciones en actions.ts manejan errores como strings genéricos. Los tipos de error y mensajes no son estructurados. Dificulta debugging.",
+      "archivo": "app/(app)/ajustes/integraciones/actions.ts:14,18,34,42,67",
+      "fix_sugerido": "Considerar enum de error codes o tipos más específicos.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "app/(app)/contactos/[id]/contacto-aside.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En contacto-aside.tsx línea 46, cuando se edita un campo personalizado de tipo checkbox, la descripción del cambio muestra 'Sí' o 'No', pero el valor actual guardado en campos_custom[campo.clave] podría ser boolean (true/false) o string ('true'/'false'). No hay garantía de que el tipo sea consistente.",
+      "archivo": "app/(app)/contactos/[id]/contacto-aside.tsx:46",
+      "fix_sugerido": "Normalizar el tipo de datos para campos checkbox. Ej: asegurar que siempre son boolean en la DB o siempre string en el código.",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    }
+  ],
+  "app/(app)/contactos/[id]/editar/contacto-form.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En contacto-form.tsx línea 41, el Input de nombre no tiene aria-label ni aria-describedby. El htmlFor del Field está vinculado, pero esto puede mejorar la accesibilidad en lectores de pantalla.",
+      "archivo": "app/(app)/contactos/[id]/editar/contacto-form.tsx:41",
+      "fix_sugerido": "Verificar que todos los inputs tengan labels semánticos. El actual usa Field que probablemente genera labels correctamente, pero revisar el componente Field.",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    }
+  ],
+  "components/ui/inline-edit.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En inline-edit.tsx línea 80 del componente, cuando se revertido un cambio fallido, no hay feedback visual de que el cambio fue revertido. El user vera que el valor vuelve a lo anterior sin explicación.",
+      "archivo": "components/ui/inline-edit.tsx:53",
+      "como_reproducir": "1. Editar un campo inline. 2. Simular un error en el servidor (ej. RLS deny). 3. El valor se revierta silenciosamente sin aviso al usuario.",
+      "fix_sugerido": "Mostrar un toast o animación cuando se revertido un cambio debido a error.",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    }
+  ],
+  "lib/db/relaciones.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En relaciones.ts línea 101, se usa `usuario:asignado_id(nombre)` pero en contactos.ts línea 50 se usa `asignado:usuario!contacto_asignado_id_fkey(nombre)`. Las dos formas funcionan pero no son consistentes. Esto puede confundir a futuros desarrolladores.",
+      "archivo": "lib/db/relaciones.ts:101 vs lib/db/contactos.ts:50",
+      "fix_sugerido": "Usar la misma sintaxis en ambos lugares. Preferiblemente la forma con el alias explícito para claridad.",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    }
+  ],
+  "lib/db/rfm.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "security",
+      "descripcion": "En rfm.ts línea 23, se hace un cast `as number` sin validación. Si o.valor es un string o cualquier otro tipo, esto podría causar comportamiento inesperado. Aunque la DB tiene constraints, el casting es inseguro.",
+      "archivo": "lib/db/rfm.ts:23",
+      "fix_sugerido": "Validar que o.valor sea un número válido antes de usarlo. Ej: `Number.isFinite(o.valor) ? o.valor : 0`",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    },
+    {
+      "severidad": "bajo",
+      "tipo": "logica_rota",
+      "descripcion": "En nivelPorMonto (rfm.ts línea 9-12), no hay validación de que plata < oro. Si los thresholds están invertidos en la configuración, la lógica dará resultados incorrectos (ej. todo sería 'oro' o todo sería 'bronce'). Esto es un problema de data pero podría validarse.",
+      "archivo": "lib/db/rfm.ts:9-12",
+      "fix_sugerido": "Considerar agregar una validación en getTenantConfig para asegurar que oro >= plata. O agregar un comentario documentando esta expectativa.",
+      "modulo": "Contactos (Next.js + Supabase + RLS)"
+    }
+  ],
+  "app/(app)/empresas/[id]/editar/empresa-form.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "El campo 'Sitio web' en empresa-form.tsx tiene placeholder='https://...' pero no valida que sea una URL válida. Acepta cualquier string.",
+      "archivo": "app/(app)/empresas/[id]/editar/empresa-form.tsx:62",
+      "como_reproducir": "Guardar sitio_web='notaurl' → se guarda sin error.",
+      "fix_sugerido": "Agregar validación z.string().url() en el schema o al menos un pattern para URLs.",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/pasajeros-actions.ts": [
+    {
+      "tipo": "ux",
+      "severidad": "bajo",
+      "descripcion": "Email en schema de pasajero no valida formato. z.string().trim().max(160).nullable() acepta strings inválidos como 'notanemail'.",
+      "archivo": "app/(app)/oportunidades/[id]/pasajeros-actions.ts, línea 22",
+      "fix_sugerido": "Usar z.string().email() o z.string().email().optional() para validar formato de email.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/reserva-panel.tsx": [
+    {
+      "tipo": "ux",
+      "severidad": "bajo",
+      "descripcion": "PagoForm en reserva-panel.tsx línea 233 usa new Date().toISOString().slice(0,10) para fecha hoy. Si el formulario se abre y espera, la fecha no se actualiza; debería ser dinámico o al menos informar al usuario que es una 'fecha de hoy al cargar'.",
+      "archivo": "app/(app)/oportunidades/[id]/reserva-panel.tsx, línea 233",
+      "como_reproducir": "Abrir formulario de pago después de las 23:59 UTC, mantener abierto hasta la medianoche. La fecha será del día anterior en el navegador.",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "app/(app)/oportunidades/[id]/habitaciones-section.tsx": [
+    {
+      "tipo": "a11y",
+      "severidad": "bajo",
+      "descripcion": "En HabitacionesSection línea 71, Select onChange sin onBlur, y el Select field sin label visible (solo className grid). Falta estructura accesible con labels asociados.",
+      "archivo": "app/(app)/oportunidades/[id]/habitaciones-section.tsx, línea 71-72",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)"
+    }
+  ],
+  "components/auth/sign-out-button.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "SignOutButton (components/auth/sign-out-button.tsx:14) no valida si signOut() falló. Si Supabase session está corrupta, signOut() puede rechazar. Usuario ve 'Cerrar sesión' button pero nada ocurre.",
+      "archivo": "components/auth/sign-out-button.tsx:12-16",
+      "modulo": "Autenticación + Cuenta"
+    }
+  ],
+  "app/invitacion/accept-form.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "AcceptForm (invitacion/accept-form.tsx): Password confirmation hace string match (===) pero InputHTMLAttributes no tiene onPaste bloqueado. Usuario puede paste password equivocado sin verlo visualmente, confirma, intenta submit, error 'no coincide'.",
+      "archivo": "app/invitacion/accept-form.tsx:13-58",
+      "modulo": "Autenticación + Cuenta"
+    }
+  ],
+  "lib/tenant.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "perf",
+      "descripcion": "middleware.ts (línea 45): findTenantBySubdomain() tiene cache TTL 60s. En cluster con múltiples workers, si tenant se suspende, change puede no reflejarse en algunos workers por 60s. Verbose pero low severity.",
+      "archivo": "lib/tenant.ts:69",
+      "fix_sugerido": "Considerar shared cache (Redis) o shorter TTL (5s) si scaling es problema.",
+      "modulo": "Autenticación + Cuenta"
+    }
+  ],
+  "app/(app)/agenda/agenda-view.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En app/(app)/agenda/agenda-view.tsx línea 99, falta aria-label en el botón 'Mes anterior' (←). El símbolo no es descriptivo para lectores de pantalla.",
+      "archivo": "app/(app)/agenda/agenda-view.tsx:99-102",
+      "como_reproducir": "Usar lector de pantalla (NVDA, JAWS). El botón solo dirá 'botón' sin descripción.",
+      "fix_sugerido": "Ya tiene aria-label='Mes anterior' en línea 99. Verificar que otros botones de navegación también lo tengan.",
+      "modulo": "Agenda + Notificaciones"
+    }
+  ],
+  "app/(app)/reportes/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "Varios valores null/undefined en datos de reportes se representan como \"—\" en texto pero no hay tooltips/hints que expliquen por qué están vacíos (ej: win_rate=null en algunas oportunidades).",
+      "archivo": "app/(app)/reportes/page.tsx, línea 49; app/(app)/dashboard/page.tsx, línea 65",
+      "como_reproducir": "Ver un KPI con valor \"—\" sin explicación contextual de por qué.",
+      "modulo": "Reportes + Dashboard + Búsqueda"
+    }
+  ],
+  "app/(app)/ajustes/integraciones/docs/page.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "En la documentación (docs/page.tsx:71-74), se menciona 'lista de espera' pero el usuario ve campos de 'estado' con 'en_espera' column. La terminología es inconsistente.",
+      "archivo": "app/(app)/ajustes/integraciones/docs/page.tsx:71-74",
+      "como_reproducir": "Leer la docs vs revisar el schema. Confusión sobre dónde se almacenan los 'held' records.",
+      "fix_sugerido": "Aclarar en docs que en_espera es una columna en cada tabla, no una tabla separada.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "lib/db/webhooks.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "webhooks.ts dispatchWebhook() hace fetch sin timeout. Si la URL del webhook es lenta, puede bloquear la ejecución del request principal.",
+      "archivo": "lib/db/webhooks.ts:75",
+      "como_reproducir": "Crear webhook con URL que tarda 30s en responder. El POST de datos se ralentiza.",
+      "fix_sugerido": "Agregar AbortSignal con timeout a fetch().",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "lib/db/api-keys.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "En api-keys.ts:33, listApiKeys() mapea mes_actual !== ahoraMes para resetear usados_mes. Si un mes tiene mes_actual null, la lógica puede fallar.",
+      "archivo": "lib/db/api-keys.ts:32-37",
+      "como_reproducir": "Una API key legacy con mes_actual=null. El usados_mes no se resetea.",
+      "fix_sugerido": "Agregar migration para llenar mes_actual con el mes actual en api_keys existentes.",
+      "modulo": "API pública v1 + integraciones"
+    }
+  ],
+  "app/(app)/admin/usuarios/new-usuario-form.tsx": [
+    {
+      "tipo": "a11y",
+      "severidad": "bajo",
+      "descripcion": "EditUsuarioForm y NewUsuarioForm falta aria-label en campos de contraseña",
+      "archivo": "app/(app)/admin/usuarios/new-usuario-form.tsx:59, app/(app)/admin/usuarios/[id]/edit-usuario-form.tsx:57",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)"
+    }
+  ],
+  "lib/db/nps.ts": [
+    {
+      "tipo": "deuda",
+      "severidad": "bajo",
+      "descripcion": "Cast a 'unknown as Record<string, unknown>[]' en listNps() — typings poco estrictos",
+      "archivo": "lib/db/nps.ts:53",
+      "fix_sugerido": "Usar tipado explícito desde Supabase en lugar de cast a unknown",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)"
+    }
+  ],
+  "app/nps/[token]/nps-form.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "a11y",
+      "descripcion": "En nps-form.tsx línea 38-50, botones de puntaje no tienen aria-label. Usuarios con lector de pantallas no saben qué número representa cada botón.",
+      "archivo": "app/nps/[token]/nps-form.tsx:38-50",
+      "fix_sugerido": "Agregar aria-label={`Puntaje ${i} de 10`} a cada botón.",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ],
+  "app/(app)/comisiones/comisiones-manager.tsx": [
+    {
+      "severidad": "bajo",
+      "tipo": "ux",
+      "descripcion": "ComisionesManager suma totalVentas usando .reduce() pero no valida moneda consistente. Si hay asesores con monedas mixtas, suma es incorrecta sin warning.",
+      "archivo": "app/(app)/comisiones/comisiones-manager.tsx:23-25",
+      "fix_sugerido": "Filtrar por moneda única o convertir antes de sumar.",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ],
+  "lib/db/roles.ts": [
+    {
+      "severidad": "bajo",
+      "tipo": "deuda",
+      "descripcion": "updateRol() (lib/db/roles.ts:142-157) no filtra por tenant_id al actualizar. RLS debería protegerlo, pero lógica app-side es confusa sin verificación explícita.",
+      "archivo": "lib/db/roles.ts:142-157",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios"
+    }
+  ]
+}

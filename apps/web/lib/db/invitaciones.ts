@@ -29,7 +29,18 @@ async function ensureAdmin() {
 
 /** Build the public accept URL for a token, on the tenant's subdomain. */
 function inviteUrl(subdominio: string, token: string): string {
-  const scheme = env.BASE_DOMAIN.includes("localhost") ? "http" : "https";
+  // Si ROOT_URL está definido (siempre con scheme), tomamos ese scheme.
+  // Caso contrario, "http" si BASE_DOMAIN huele a localhost / IP local.
+  let scheme = "https";
+  try {
+    if (env.ROOT_URL) {
+      scheme = new URL(env.ROOT_URL).protocol.replace(":", "") || "https";
+    } else if (/localhost|127\.0\.0\.1|0\.0\.0\.0|\.local$/.test(env.BASE_DOMAIN)) {
+      scheme = "http";
+    }
+  } catch {
+    scheme = env.BASE_DOMAIN.includes("localhost") ? "http" : "https";
+  }
   return `${scheme}://${subdominio}.${env.BASE_DOMAIN}/invitacion?token=${token}`;
 }
 
@@ -84,6 +95,16 @@ export async function createInvitacion(input: {
     .eq("email", input.email)
     .maybeSingle();
   if (existing) throw new Error("Ya existe una cuenta con ese correo");
+
+  // Tampoco permitimos invitaciones activas duplicadas — chequeamos pendientes.
+  const { data: invitePend } = await admin
+    .from("invitacion")
+    .select("id")
+    .eq("tenant_id", caller.tenantId)
+    .eq("email", input.email)
+    .eq("estado", "pendiente")
+    .maybeSingle();
+  if (invitePend) throw new Error("Ya hay una invitación pendiente para ese correo. Cancelala antes de generar otra.");
 
   const token = crypto.randomBytes(24).toString("hex");
   const { data, error } = await admin
