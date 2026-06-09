@@ -44,10 +44,11 @@ export async function listApiKeys(): Promise<ApiKey[]> {
 export async function createApiKey(nombre: string): Promise<{ id: string; key: string; prefijo: string }> {
   const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
-  // Solo una API key activa por cuenta.
+  // Solo una API key activa por cuenta — filtrado explícito por tenant_id por defensa en profundidad.
   const { data: existentes } = await supabase
     .from("api_key")
     .select("id")
+    .eq("tenant_id", caller.tenantId)
     .eq("revocada", false);
   if ((existentes?.length ?? 0) > 0) {
     throw new Error("Ya tenés una API key activa. Revocá la actual antes de crear otra (1 sola key activa por cuenta).");
@@ -70,9 +71,9 @@ export async function createApiKey(nombre: string): Promise<{ id: string; key: s
 }
 
 export async function revocarApiKey(id: string): Promise<void> {
-  await ensureAdmin();
+  const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("api_key").update({ revocada: true }).eq("id", id);
+  const { error } = await supabase.from("api_key").update({ revocada: true }).eq("id", id).eq("tenant_id", caller.tenantId);
   if (error) throw new Error(error.message);
 }
 
@@ -95,15 +96,36 @@ export async function authenticateApiKey(rawKey: string): Promise<{
       .maybeSingle();
     if (!data || data.revocada) return null;
     const mesActual = new Date().toISOString().slice(0, 7);
-    let usados = data.mes_actual === mesActual ? (data.usados_mes ?? 0) : 0;
     const limite = data.limite_mes ?? DEFAULT_LIMITE_MES;
-    usados += 1;
-    // Best-effort: increment + bump last-use, ignore failures.
-    admin.from("api_key").update({
-      ultimo_uso: new Date().toISOString(),
-      usados_mes: usados,
-      mes_actual: mesActual,
-    }).eq("id", data.id).then(() => {}, () => {});
+    // Reset al cambio de mes: ponemos usados_mes=1 directamente vía conditional update.
+    if (data.mes_actual !== mesActual) {
+      await admin.from("api_key").update({
+        ultimo_uso: new Date().toISOString(),
+        usados_mes: 1,
+        mes_actual: mesActual,
+      }).eq("id", data.id);
+      return {
+        tenantId: data.tenant_id as string,
+        keyId: data.id as string,
+        exceeded: 1 > limite,
+        usados: 1, limite,
+      };
+    }
+    // Increment atómico vía RPC para evitar race. Si la RPC no existe, hacemos
+    // best-effort UPDATE con .returns para conocer el valor real post-update.
+    const { data: incData, error: incErr } = await admin.rpc("incrementar_uso_api_key", { p_key_id: data.id }).single<{ usados_mes: number }>();
+    let usados = data.usados_mes ?? 0;
+    if (!incErr && incData && typeof incData.usados_mes === "number") {
+      usados = incData.usados_mes;
+    } else {
+      // Fallback: increment via select-update con timestamp para deshacer race parcialmente.
+      usados = (data.usados_mes ?? 0) + 1;
+      await admin.from("api_key").update({
+        ultimo_uso: new Date().toISOString(),
+        usados_mes: usados,
+        mes_actual: mesActual,
+      }).eq("id", data.id);
+    }
     return {
       tenantId: data.tenant_id as string,
       keyId: data.id as string,

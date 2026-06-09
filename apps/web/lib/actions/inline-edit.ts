@@ -18,6 +18,18 @@ const num = (v: string) => {
   return Number.isFinite(n) ? n : null;
 };
 const str = (v: string) => (v.trim() === "" ? null : v.trim());
+const required = (label: string) => (v: string) => {
+  const t = v.trim();
+  if (!t) throw new Error(`${label} es requerido`);
+  return t;
+};
+const email = (v: string) => {
+  const t = v.trim();
+  if (!t) return null;
+  // Validación simple — coincide con z.string().email() del resto del codebase.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) throw new Error("Email inválido");
+  return t;
+};
 
 type FieldDef = { coerce: (v: string) => unknown; label: string };
 
@@ -30,14 +42,24 @@ function fmtVal(v: unknown): string {
 
 async function prevValue(table: string, id: string, field: string): Promise<unknown> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase.from(table).select(field).eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from(table).select(field).eq("id", id).maybeSingle();
+  if (error) {
+    // Best-effort: si la query falla devolvemos null y se loguea como "(vacío) → X"
+    // en vez de tirar — para no romper el flujo de save que ya pasó la validación.
+    console.error(`[inline-edit] prevValue(${table}, ${field}):`, error.message);
+    return null;
+  }
   return data ? (data as unknown as Record<string, unknown>)[field] : null;
 }
 
 async function usuarioNombre(id: unknown): Promise<string> {
   if (!id || typeof id !== "string") return "Sin asignar";
   const supabase = await createServerSupabase();
-  const { data } = await supabase.from("usuario").select("nombre").eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("usuario").select("nombre").eq("id", id).maybeSingle();
+  if (error) {
+    console.error("[inline-edit] usuarioNombre:", error.message);
+    return "Sin asignar";
+  }
   return (data as { nombre?: string } | null)?.nombre ?? "Sin asignar";
 }
 
@@ -51,7 +73,7 @@ async function buildDesc(field: string, label: string, prev: unknown, next: unkn
 /* ---------------- field maps ---------------- */
 
 const OPP_FIELDS: Record<string, FieldDef> = {
-  nombre: { coerce: (v) => v.trim(), label: "Nombre" },
+  nombre: { coerce: required("Nombre"), label: "Nombre" },
   valor: { coerce: num, label: "Valor" },
   probabilidad_cierre: {
     coerce: (v) => {
@@ -68,16 +90,16 @@ const OPP_FIELDS: Record<string, FieldDef> = {
 };
 
 const CONTACTO_FIELDS: Record<string, FieldDef> = {
-  nombre: { coerce: (v) => v.trim(), label: "Nombre" },
+  nombre: { coerce: required("Nombre"), label: "Nombre" },
   cargo: { coerce: str, label: "Cargo" },
-  email: { coerce: (v) => v.trim(), label: "Email" },
+  email: { coerce: email, label: "Email" },
   telefono: { coerce: str, label: "Teléfono" },
   telefono_whatsapp: { coerce: str, label: "WhatsApp" },
 };
 
 const EMPRESA_FIELDS: Record<string, FieldDef> = {
-  nombre: { coerce: (v) => v.trim(), label: "Nombre" },
-  email: { coerce: str, label: "Email" },
+  nombre: { coerce: required("Nombre"), label: "Nombre" },
+  email: { coerce: email, label: "Email" },
   telefono: { coerce: str, label: "Teléfono" },
   ciudad: { coerce: str, label: "Ciudad" },
   pais: { coerce: str, label: "País" },
@@ -112,6 +134,7 @@ export async function saveContactoField(id: string, field: string, value: string
     await patchContacto(id, { [field]: next });
     await logCambio("contacto", id, await buildDesc(field, def.label, prev, next));
     revalidatePath(`/contactos/${id}`);
+    revalidatePath("/contactos");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error" };
@@ -127,6 +150,7 @@ export async function saveEmpresaField(id: string, field: string, value: string)
     await patchEmpresa(id, { [field]: next });
     await logCambio("empresa", id, await buildDesc(field, def.label, prev, next));
     revalidatePath(`/empresas/${id}`);
+    revalidatePath("/empresas");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error" };

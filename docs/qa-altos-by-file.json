@@ -1,0 +1,916 @@
+{
+  "app/(app)/ajustes/agencias/agencias-manager.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Agencias (super-admin) + facturación",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 112",
+      "descripcion": "Input NIT en tabla de agencias usa `defaultValue` en un contexto que mapea sobre datos dinámicos. Cuando `router.refresh()` actualiza los datos, el input mantiene el valor antiguo porque React no controla su estado. El usuario ve valores stale si cambia el NIT y luego otra acción dispara refresh.",
+      "como_reproducir": "1. Editar NIT de agencia (onBlur gatilla changeAgencia). 2. Router.refresh() vuelve con datos nuevos. 3. El input mantiene el valor antiguo que el usuario tipó, no sincroniza con las nuevas props.",
+      "fix_sugerido": "Cambiar de `defaultValue` a `key={a.id}` en el tr, o usar input controlado con `value` y estado local, o agregar useEffect para resetear cuando initial cambia."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Agencias (super-admin) + facturación",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 28-78",
+      "descripcion": "En agencias-manager.tsx, el estado `initial` nunca se actualiza después de crear/modificar agencias. El componente usa props inicial que no cambian cuando router.refresh() se ejecuta, causando que la UI muestre datos stale.",
+      "como_reproducir": "Crear una nueva agencia, verla aparecer en el panel. Luego editar plan/estado de otra agencia desde otra pestaña. Volver: los cambios no aparecen hasta F5.",
+      "fix_sugerido": "Usar useTransition() o re-fetch data en lugar de solo router.refresh(), o pasar estado local que se actualice inmediatamente."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Agencias (super-admin) + facturación",
+      "archivo": "app/(app)/ajustes/agencias/agencias-manager.tsx, línea 35",
+      "descripcion": "En agencias-manager.tsx línea 35, `litePlan` se busca con .toLowerCase() pero planes pasados desde page.tsx no están normalizados. Si el plan se llama 'LITE' o 'Lite Starter', la busca fallará y se asignará planes[0] sin garantías.",
+      "fix_sugerido": "Normalizar nombres en page.tsx o buscar por ID en lugar de nombre."
+    }
+  ],
+  "app/(app)/ajustes/agencias/actions.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Agencias (super-admin) + facturación",
+      "archivo": "app/(app)/ajustes/agencias/actions.ts, línea 39",
+      "descripcion": "En agencias/actions.ts línea 39, el casteo `(u?.email as string | undefined) ?? (tenant.admin_email as string)` puede forzar un string vacío o no válido si tanto u?.email como tenant.admin_email son falsy/nulls. No hay validación de que el email sea realmente una cadena válida.",
+      "como_reproducir": "Si la query de usuario devuelve null y tenant.admin_email también es null, el casteo `as string` fuerza un undefined a string, causando que generateLink() reciba null o undefined.",
+      "fix_sugerido": "Cambiar a `const email = u?.email ?? tenant?.admin_email; if (!email) throw new Error('No email found');`"
+    }
+  ],
+  "lib/actions/inline-edit.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Oportunidades + Kanban + Pipelines",
+      "archivo": "lib/actions/inline-edit.ts:67, app/(app)/oportunidades/nueva/actions.ts:19-39, app/(app)/oportunidades/[id]/editar/actions.ts:20-40",
+      "descripcion": "El campo 'estrategia' está en OPP_FIELDS (inline-edit.ts:67) y se puede editar vía detail-aside.tsx, pero NO está incluido en el schema de validación de create/edit (nueva/actions.ts y [id]/editar/actions.ts). Cuando se intenta crear u editar una oportunidad vía formulario, el campo se descarta silenciosamente sin error.",
+      "como_reproducir": "1. Ir a crear una oportunidad, editar estrategia en detail-aside, guardar; 2. Refrescar la página; 3. El valor de estrategia se perdió porque no pasó la validación Zod."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Contactos",
+      "archivo": "lib/actions/inline-edit.ts:114",
+      "descripcion": "En lib/actions/inline-edit.ts línea 114, saveContactoField() solo revalida /contactos/{id} pero no revalida /contactos (la lista). Cambios inline de campos como nombre no se reflejan en la tabla de listado hasta refresh manual.",
+      "como_reproducir": "Hacer inline edit del nombre en contacto-aside, volver a lista de contactos. El nombre viejo se sigue viendo en la tabla.",
+      "fix_sugerido": "Agregar revalidatePath('/contactos') después de revalidatePath(`/contactos/${id}`)"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Contactos",
+      "archivo": "lib/actions/inline-edit.ts:33,40",
+      "descripcion": "En lib/actions/inline-edit.ts línea 33 y 40, las funciones prevValue() y usuarioNombre() no verifican el objeto error de Supabase. Si la query falla, devuelven valores por defecto pero pierden la excepción, ocultando fallos RLS o de conectividad.",
+      "fix_sugerido": "Agregar destructuring de error en ambas funciones y throw si error existe"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Contactos",
+      "archivo": "lib/actions/inline-edit.ts:73",
+      "descripcion": "En lib/actions/inline-edit.ts línea 73, el campo email en CONTACTO_FIELDS solo hace trim() sin validación de formato. Inline edit permite guardar valores como 'notanemail' sin error de validación.",
+      "como_reproducir": "En aside, hacer inline edit de email a 'xyz'. Se guardará sin validación. Form.tsx sí valida .email() pero inline no.",
+      "fix_sugerido": "Agregar validación: email: { coerce: (v) => { const trimmed = v.trim(); if (!trimmed.includes('@')) throw new Error('Email inválido'); return trimmed; }, label: 'Email' }"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)",
+      "archivo": "lib/actions/inline-edit.ts:79",
+      "descripcion": "El campo 'nombre' de Empresa en saveEmpresaField no valida que sea no-vacío. Un usuario puede editar inline el nombre y dejarlo vacío, guardando una empresa con nombre vacío, violando la integridad de datos.",
+      "fix_sugerido": "Cambiar el coerce para 'nombre' en EMPRESA_FIELDS de `(v) => v.trim()` a `(v) => { const trimmed = v.trim(); if (!trimmed) throw new Error('Nombre requerido'); return trimmed; }` O validar en patchEmpresa antes de actualizar."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)",
+      "archivo": "lib/actions/inline-edit.ts:71",
+      "descripcion": "El campo 'nombre' de Contacto en saveContactoField no valida que sea no-vacío. Un usuario puede editar inline y dejar el nombre vacío, creando un contacto sin nombre.",
+      "fix_sugerido": "Agregar validación de non-vacío para 'nombre' en CONTACTO_FIELDS, similar a la de 'nombre' en Empresa."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Empresas (CRUD, sedes, contactos, edición inline, campos custom)",
+      "archivo": "lib/actions/inline-edit.ts:73",
+      "descripcion": "El campo 'email' de Contacto en saveContactoField no valida que sea un email válido. Permite guardar valores inválidos como 'test' o 'abc'. Esto es inconsistente con la creación de contactos que requiere z.string().email().",
+      "fix_sugerido": "Cambiar de `{ coerce: (v) => v.trim(), label: 'Email' }` a una validación que incluya verificación de formato de email."
+    }
+  ],
+  "app/(app)/oportunidades/[id]/oportunidad-productos-actions.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Oportunidades + Kanban + Pipelines",
+      "archivo": "app/(app)/oportunidades/[id]/oportunidad-productos-actions.ts:21",
+      "descripcion": "En oportunidad-productos-actions.ts:21, 'moneda' se valida con z.string().trim().max(8) sin enum restrictivo, permitiendo valores arbitrarios (e.g., 'INVALID', 'BTC'). Esto viola el contrato esperado con las enums de moneda en otros actions (nueva/actions.ts:28).",
+      "fix_sugerido": "Cambiar a z.enum([\"USD\", \"ARS\", \"EUR\", \"MXN\", \"COP\", \"CLP\", \"PEN\", \"BRL\"]) como en nueva/actions.ts"
+    }
+  ],
+  "lib/db/mutations.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Oportunidades + Kanban + Pipelines",
+      "archivo": "lib/db/mutations.ts:345-403",
+      "descripcion": "En updateOportunidad (mutations.ts:345-403), cuando se cambia estado a 'perdido', NO se valida que motivo_perdida_id no sea null. El schema refine() en actions.ts evita que se envíe estado='perdido' sin motivo en el cliente, pero updateOportunidad acepta cualquier patch sin esa validación.",
+      "como_reproducir": "Via API o código que llame updateOportunidad directamente con estado='perdido' pero motivo_perdida_id=null, se crea un inconsistencia."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Agenda + Notificaciones",
+      "archivo": "lib/db/mutations.ts:626-640",
+      "descripcion": "toggleActividad hace un SELECT DESPUÉS de la actualización (línea 637). Si la actividad fue eliminada en otro request entre la UPDATE y el SELECT, act será null y no se loguea el cambio, además hay una carrera de condición potencial.",
+      "fix_sugerido": "Hacer el SELECT ANTES de la actualización para guardar los datos, o usar RETURNING en Supabase para obtenerlos en la misma operación."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)",
+      "archivo": "lib/db/mutations.ts:790, 806, 827",
+      "descripcion": "Las mutations createSede, updateSede, deleteSede usan ensureWriter() que solo verifica rol='admin', pero NO verifica si el usuario tiene permisos específicos para el módulo 'empresas'. ensurePermission() no se usa.",
+      "como_reproducir": "Un admin sin permisos explícitos para 'empresas:crear' puede crear sedes. Las RLS en DB lo permitirían pero la app-layer validation no lo rechaza.",
+      "fix_sugerido": "Cambiar ensureWriter() a await ensurePermission('empresas', 'editar') en createSede, updateSede, deleteSede."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)",
+      "archivo": "lib/db/mutations.ts:230-238",
+      "descripcion": "updatePlantilla() en mutations.ts no valida tenant_id — cualquier admin puede editar plantillas de otro tenant",
+      "fix_sugerido": "Verificar que la plantilla_correo.tenant_id = user.tenantId antes de permitir update"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)",
+      "archivo": "lib/db/mutations.ts:240-245",
+      "descripcion": "deletePlantilla() no valida tenant_id — permite eliminar plantillas de otros tenants",
+      "fix_sugerido": "Agregar validación de tenant_id antes de delete"
+    }
+  ],
+  "middleware.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)",
+      "archivo": "middleware.ts:45-89",
+      "descripcion": "El middleware (line 84) verifica que userTenantId === tenant.id, pero nunca valida que el tenant exista o esté activo después de extraerlo. Si findTenantBySubdomain() retorna null (línea 46), la ejecución continúa con tenant como null, causando crash en las líneas posteriores.",
+      "como_reproducir": "Hacer una solicitud a un subdominio cuyo tenant esté marcado como 'suspendido' o 'cancelado'. El middleware nunca rechecked este estado en el request actual.",
+      "fix_sugerido": "Después de línea 45, añadir: if (!tenant) return NextResponse.redirect(`${env.ROOT_URL}/landing?reason=invalid_tenant`); También, agregar una check explícita que el tenant.estado === 'activo' antes de permitir acceso a rutas protegidas."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Autenticación + Cuenta",
+      "archivo": "middleware.ts:78-89",
+      "descripcion": "Condición insegura en middleware (middleware.ts:84): si el JWT custom_access_token_hook falla en Supabase (ej: función SQL SECURITY DEFINER revocada), userTenantId será undefined. El check '!userTenantId || userTenantId !== tenant.id' redirige a error, pero error messages no mencionan que claims faltan.",
+      "fix_sugerido": "Agregar logging y clarificar: si claims.tenant_id falta, es un error de configuración, no auth flow. Considerar cache_control headers para evitar errores silenciosos en CDN."
+    }
+  ],
+  "app/(auth)/login/login-form.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)",
+      "archivo": "app/(auth)/login/login-form.tsx:61-76",
+      "descripcion": "En login-form.tsx (línea 62), cuando el login es desde el dominio central (bare domain), se intenta fetch /api/auth/tenant-home sin verificar que la respuesta es válida. Si el endpoint retorna 404 o 401, el código cae silenciosamente al fallback (línea 79) sin informar al usuario del problema.",
+      "como_reproducir": "Logging in from bare domain cuando el usuario no tiene un tenant_id en DB. El error se traga silenciosamente.",
+      "fix_sugerido": "Verificar !res.ok y mostrar un error específico al usuario. Actualmente: if (res.ok && session) debería separarse en checks explícitos para error handling."
+    }
+  ],
+  "app/(auth)/forgot-password/forgot-form.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)",
+      "archivo": "app/(auth)/forgot-password/forgot-form.tsx:23",
+      "descripcion": "En forgot-form.tsx (línea 23), el redirectTo se construye con window.location.origin, permitiendo que un atacante en un subdominio 'evil.base.com' redirige los links de reset a 'evil.base.com/auth/reset-password'. Los tokens de recuperación de Supabase serían válidos desde cualquier origen.",
+      "como_reproducir": "Acceder a login desde evil.base.com, solicitar reset. El link enviado apuntará a evil.base.com.",
+      "fix_sugerido": "Hardcodear el dominio base seguro o validar que window.location.origin coincida con env.ROOT_URL, o que sea un subdominio válido del env.BASE_DOMAIN."
+    }
+  ],
+  "app/(auth)/reset-password/reset-form.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Autenticación + Cuenta (Login, Signup, Recovery, Middleware, JWT Claims)",
+      "archivo": "app/(auth)/reset-password/reset-form.tsx:58",
+      "descripcion": "En reset-form.tsx (línea 58), setTimeout redirige automáticamente al login después de 1800ms cuando done=true. Si el usuario está lento o hay latencia, puede resultar en UX confuso donde se presiona el botón pero se redirige antes de que vea el mensaje de éxito.",
+      "como_reproducir": "Actualizar contraseña y observar comportamiento en red lenta.",
+      "fix_sugerido": "Cambiar a una redirección basada en callback después de que el usuario haga click, no basada en timer. O mostrar más claramente que está redirigiendo."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Autenticación + Cuenta",
+      "archivo": "app/(auth)/reset-password/reset-form.tsx:27-37",
+      "descripcion": "ResetPasswordForm (reset-form.tsx): useEffect sin dependency array en línea 27-37 suscribe a auth.onAuthStateChange() pero NUNCA se desuscribe en cleanup (return subscription.unsubscribe()). Si usuario navega afuera + vuelve, hay múltiples listeners y memory leak.",
+      "fix_sugerido": "Ya está presente return subscription.unsubscribe() en línea 36. Pero verificar que useEffect tiene dependency array correcto: [] (empty)."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Autenticación + Cuenta",
+      "archivo": "app/(auth)/reset-password/reset-form.tsx:58 y app/invitacion/accept-form.tsx:33",
+      "descripcion": "ResetPasswordForm y AcceptForm: setTimeout usa 1800ms (1.8s) pero no cancela si usuario navega afuera. Si logout/navega en esos 1.8s, router.push() ejecuta pero sin sesión. Además, 1800ms es tan corto que pueden ocurrir dobles-clics.",
+      "como_reproducir": "1) Reset password exitoso. 2) Esperar 0.5s y navegar manualmente. 3) El setTimeout aún redirige a /login, overwrites user intent."
+    }
+  ],
+  "lib/db/oportunidades.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Oportunidades + Kanban + Pipelines",
+      "archivo": "lib/db/oportunidades.ts:235-283",
+      "descripcion": "listOportunidades() no filtra automáticamente eliminadas cuando el usuario no especifica un estado explícito. En la tabla de oportunidades, si no se pasa estado='eliminado', se muestran todas las oportunidades incluyendo las eliminadas (soft-delete).",
+      "como_reproducir": "Navega a /oportunidades/tabla sin especificar un filtro de estado. Cualquier oportunidad con estado='eliminado' aparecerá en la tabla.",
+      "fix_sugerido": "Agregar automáticamente una cláusula .neq('estado', 'eliminado') en listOportunidades() a menos que se especifique estado='eliminado' explícitamente."
+    }
+  ],
+  "components/forms/oportunidad-form.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Oportunidades + Kanban + Pipelines",
+      "archivo": "components/forms/oportunidad-form.tsx:1-296 (no contiene estrategia)",
+      "descripcion": "En OportunidadForm, el campo 'estrategia' es renderizado en detail-aside pero nunca es incluido en el formulario de create/edit. El campo existe en DB (0032_fidelizacion.sql) pero no puede ser editado vía formulario.",
+      "como_reproducir": "Intenta editar una oportunidad existente y busca el campo 'estrategia'. No aparece en el formulario principal, solo en el panel lateral.",
+      "fix_sugerido": "Agregar campo de estrategia en OportunidadForm entre los campos de 'estado' y 'valor'."
+    }
+  ],
+  "supabase/migrations/0003_rls_policies.sql": [
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "Oportunidades + Kanban + Pipelines",
+      "archivo": "supabase/migrations/0003_rls_policies.sql:122-149",
+      "descripcion": "Las políticas RLS de 'oportunidad' no filtran por 'estado'. Un asesor puede ver oportunidades eliminadas si les envían la URL directa, aunque sean asignadas a otro asesor (la RLS permite ver si asignado_id = tu_id OR es_admin).",
+      "como_reproducir": "Como asesor, intenta acceder a /oportunidades/[id_opp_otro_asesor] donde estado='eliminado'. Si RLS no filtra, verás un error 403, pero la lógica debería ser más consistente.",
+      "fix_sugerido": "Opcionalmente agregar filtro AND estado != 'eliminado' en oportunidad_select policy, o dejar que sea responsabilidad de la app-layer (como está ahora)."
+    }
+  ],
+  "app/(app)/oportunidades/nueva/page.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Oportunidades + Kanban + Pipelines",
+      "archivo": "app/(app)/oportunidades/nueva/page.tsx:1-44",
+      "descripcion": "La página nueva oportunidad (/oportunidades/nueva) no valida permisos para 'crear' oportunidad antes de mostrar el formulario. Solo la server action createOportunidadAction valida, pero un usuario sin permiso ve la UI.",
+      "como_reproducir": "Con un usuario sin permiso 'oportunidades:crear', navega a /oportunidades/nueva. Verás el formulario. Al enviar fallará, pero la UX es mala.",
+      "fix_sugerido": "Agregar await getMyPermisos() en la page.tsx y redirigir a /oportunidades si no tiene permiso antes de renderizar CreateWrapper."
+    }
+  ],
+  "components/ui/inline-edit.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Contactos",
+      "archivo": "components/ui/inline-edit.tsx:37",
+      "descripcion": "En components/ui/inline-edit.tsx línea 37, useState(value) inicializa current pero no sincroniza si el prop value cambia. Si el padre actualiza el value de un contacto en tiempo real, el estado local queda obsoleto (stale state).",
+      "como_reproducir": "Cargar contacto con nombre 'Juan', hacer inline edit a 'Carlos' pero no guardar. Si la prop value se actualiza desde el servidor, el campo seguirá mostrando 'Juan'.",
+      "fix_sugerido": "Agregar useEffect que actualice current cuando value cambie: useEffect(() => { setCurrent(value); committed.current = value; }, [value])"
+    }
+  ],
+  "app/(app)/contactos/[id]/editar/actions.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Contactos",
+      "archivo": "app/(app)/contactos/[id]/editar/actions.ts:15",
+      "descripcion": "En app/(app)/contactos/[id]/editar/actions.ts línea 15, empresa_id valida UUID pero no verifica que la empresa pertenezca al tenant actual. Un asesor podría asignar un contacto a una empresa de otro tenant si conoce el UUID.",
+      "como_reproducir": "En el form de edición, interceptar formData y reemplazar empresa_id con UUID de empresa de otro tenant. Sin validación en server, se asignará.",
+      "fix_sugerido": "En updateContacto() de mutations.ts, verificar que la empresa existe y pertenece al mismo tenant antes de actualizar"
+    }
+  ],
+  "supabase/migrations/0035_correo_campanas_api.sql": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "supabase/migrations/0035_correo_campanas_api.sql:13",
+      "descripcion": "Ausencia de Foreign Key en columna `campania_id` de tabla `correo_enviado`. Permite registrar tracking para campañas inexistentes, quebrando integridad referencial y métricas.",
+      "fix_sugerido": "Agregar: campania_id UUID REFERENCES public.campania(id) ON DELETE CASCADE,"
+    }
+  ],
+  "app/(app)/campanias/listas-panel.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "app/(app)/campanias/listas-panel.tsx:19",
+      "descripcion": "Link roto a página inexistente: listas-panel.tsx línea 19 enlaza a `/campanias/listas/${l.id}` pero no existe esa ruta (solo existe /campanias/listas/nueva).",
+      "como_reproducir": "Hacer click en el nombre de una lista en el panel. Se obtiene 404.",
+      "fix_sugerido": "Crear /campanias/listas/[id]/page.tsx con detalles/edición de la lista, o remover el link si la feature está incompleta."
+    }
+  ],
+  "lib/db/listas-envio.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "lib/db/listas-envio.ts:38",
+      "descripcion": "Acceso a `data.id` sin null-check en createListaEnvio. Si .single() retorna (data: null, error: null) en edge case, causa crash.",
+      "como_reproducir": "Caso edge case teórico si Supabase retorna ambos null. En práctica raro pero posible.",
+      "fix_sugerido": "Guardar tipo: const singleResult = await ...select('id').single(); if (!singleResult.data) throw new Error('Insert failed'); return singleResult.data.id;"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "lib/db/listas-envio.ts:38",
+      "descripcion": "data.id access sin null-check en createListaEnvio. Aunque .single() debería fallar, si retorna error pero data es null, se lanzará error al acceder a data.id.",
+      "fix_sugerido": "Agregar: if (!data) throw new Error('No se creó la lista')"
+    }
+  ],
+  "app/(app)/campanias/campanias-manager.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "app/(app)/campanias/campanias-manager.tsx:103-127",
+      "descripcion": "Componente Form en campanias-manager.tsx no es un elemento <form>. Usa <div> con Button type='button' + onClick. Si bien funciona, incumple semántica HTML y quebra navegadores viejos sin JS.",
+      "fix_sugerido": "Cambiar <div> por <form onSubmit={guardar}>. Mover onClick a onSubmit del form. Cambiar Button a type='submit'."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "app/(app)/campanias/campanias-manager.tsx:77",
+      "descripcion": "Botón de eliminar campaña sin type='button'. En HTML5, buttons sin type defaults a 'submit', lo que puede triggerear submit de formularios no intencionados."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "app/(app)/campanias/campanias-manager.tsx:119",
+      "descripcion": "HTML del email (cuerpo_html) se guarda sin sanitización. Un usuario admin podría inyectar JavaScript o tracking malicioso que se ejecute en los clientes.",
+      "fix_sugerido": "Usar librería como DOMPurify o bleach antes de guardar cuerpo_html"
+    }
+  ],
+  "app/(app)/productos/actions.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)",
+      "archivo": "app/(app)/productos/actions.ts:27",
+      "descripcion": "Checkbox 'activo' invierte su logic: cuando está desmarcado, la validación convierte undefined en true. El preprocess en línea 27 of acciones con la expresión 'v === undefined' retorna true cuando el checkbox no se envía, causando que productos se guarden como activos cuando deberían ser inactivos.",
+      "como_reproducir": "Crear un producto nuevo, dejar el checkbox 'Activo' desmarcado, guardar. Verificar en DB que origen=true en lugar de false.",
+      "fix_sugerido": "Cambiar el preprocess a: (v) => v === 'true' || v === 'on' || v === true, y asegurar que el checkbox se envía con value='' cuando está desmarcado, o usar .optional().default(false)"
+    }
+  ],
+  "app/(app)/productos/productos-manager.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)",
+      "archivo": "app/(app)/productos/productos-manager.tsx:212-215",
+      "descripcion": "Botón de eliminar (Delete) se muestra para productos 'turistea' cuando canEliminar=true, pero esos productos no deberían poder eliminarse por agencias. Solo administrador de plataforma debería poder eliminarlos.",
+      "como_reproducir": "Como agencia, cargar un producto Turistea en /productos. Si el rol tiene permiso eliminar, se verá el botón Trash2 aunque el producto sea origen='turistea'.",
+      "fix_sugerido": "Cambiar la condición en línea 212 a: {canEliminar && row.origen === 'propio' && (...)} para evitar mostrar el botón para productos Turistea"
+    }
+  ],
+  "app/(app)/catalogo/catalogo-browse.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Productos + Catálogo Turistea (Next.js 15 + Supabase)",
+      "archivo": "app/(app)/catalogo/catalogo-browse.tsx:33",
+      "descripcion": "El componente CatalogoBrowse mantiene estado stale en la variable 'done' (Set de IDs ya copiados). Si el usuario recarga la página o navega fuera y vuelve, el Set no se limpia, mostrando incorrectamente productos como ya cargados aunque no lo estén.",
+      "como_reproducir": "Copiar un producto en el catálogo (verá 'Cargado'). Recargar la página. El producto seguirá mostrando 'Cargado' aunque la lista inicial de productos ya fue refrescada.",
+      "fix_sugerido": "Agregar useEffect que resetee 'done' cuando 'productos' (props) cambian: useEffect(() => setDone(new Set()), [productos])"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Productos + Catálogo Turistea",
+      "archivo": "app/(app)/catalogo/catalogo-browse.tsx:134",
+      "descripcion": "En catalogo-browse.tsx línea 134, se accede a `res.count` sin verificar que la propiedad existe. Si `copiarMultiplesProductosAction` falla parcialmente y devuelve `{ ok: true, count: undefined }`, se interpola undefined en el mensaje."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Productos + Catálogo Turistea",
+      "archivo": "app/(app)/catalogo/catalogo-browse.tsx:122-128",
+      "descripcion": "En catalogo-browse.tsx línea 122-128, cuando se copia múltiples items, el loop que construye `items` usa `productos.filter()` sobre el arreglo inicial, no sobre `filtrados`. Si hay filtros activos, se copian productos que el usuario no ve.",
+      "como_reproducir": "1. En /catalogo, filtrar por destino=España. 2. Seleccionar y copiar visibles. 3. Se copian España+otros (no solo los filtrados)."
+    }
+  ],
+  "app/(app)/ajustes/planes/planes-manager.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Agencias (super-admin) + facturación",
+      "archivo": "app/(app)/ajustes/planes/planes-manager.tsx, línea 172",
+      "descripcion": "En planes-manager.tsx línea 171, quando se guarda un plan, `orden` se obtiene de `editing?.orden ?? 0`, pero al crear nuevo plan, siempre será 0. No hay lógica para auto-incrementar orden o rellenar huecos.",
+      "como_reproducir": "Crear 3 planes nuevos. Todos tendrán orden=0, causando que se renderizen en orden aleatorio o por creado_en.",
+      "fix_sugerido": "Calcular `orden: Math.max(...planes.map(p=>p.orden)) + 1` para nuevos planes."
+    }
+  ],
+  "app/(app)/dashboard/charts.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Reportes + Dashboard + Búsqueda",
+      "archivo": "app/(app)/dashboard/charts.tsx, línea 154",
+      "descripcion": "En EmbudoChart, Math.max(...data.map((d) => d.alcanzaron), 1) ignora el segundo parámetro 1. Debería ser Math.max(1, ...data.map(...)) para garantizar un mínimo de 1. Esto puede causar cálculo erróneo de porcentajes si data está vacío.",
+      "fix_sugerido": "Cambiar a: const max = Math.max(1, ...data.map((d) => d.alcanzaron));"
+    }
+  ],
+  "app/(app)/reportes/page.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Reportes + Dashboard + Búsqueda",
+      "archivo": "app/(app)/reportes/page.tsx, línea 20 + lib/db/dashboard.ts, línea 95",
+      "descripcion": "loadDashboard() no tiene parámetro para filtrar por rango de fechas (desde/hasta). ReportesFiltersBar permite seleccionar fechas pero loadDashboard() las ignora completamente.",
+      "fix_sugerido": "Agregar parámetros opcionales a loadDashboard(desde?: string, hasta?: string) y filtrar opportunities por fecha_esperada_cierre"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Reportes + Dashboard + Búsqueda",
+      "archivo": "app/(app)/reportes/page.tsx, línea 20",
+      "descripcion": "loadDashboard() no filtra por producto. El formulario permite filtrar por producto pero no hay código que aplique este filtro a los datos retornados.",
+      "fix_sugerido": "Agregar parámetro producto_id a loadDashboard() e implementar lógica de filtrado"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Reportes + Dashboard + Búsqueda",
+      "archivo": "app/(app)/reportes/page.tsx, línea 20",
+      "descripcion": "loadDashboard() no filtra por pipeline. Aunque el dashboard tiene un pipeline_id implícito (el default), ReportesFiltersBar permite cambiar el pipeline pero esto no afecta los datos.",
+      "fix_sugerido": "Agregar parámetro pipeline_id a loadDashboard()"
+    }
+  ],
+  "lib/db/campanias.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "lib/db/campanias.ts:114",
+      "descripcion": "data.id access sin null-check en createCampania. Mismo patrón: no verifica si data existe antes de retornar data.id.",
+      "fix_sugerido": "Agregar: if (!data) throw new Error('No se creó la campaña')"
+    }
+  ],
+  "app/(app)/campanias/listas/nueva/form.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Campañas + Listas envío + Plantillas",
+      "archivo": "app/(app)/campanias/listas/nueva/form.tsx:23-24",
+      "descripcion": "window.location.href en client component (form.tsx:23). En SSR/hydration, esto puede causar errores o comportamiento inesperado. Debería usar useSearchParams() en su lugar.",
+      "fix_sugerido": "Reemplazar: const searchParams = useSearchParams(); const filtros = searchParams.get('filtros') ?? ''"
+    }
+  ],
+  "app/(app)/agenda/google-tasks.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Agenda + Notificaciones",
+      "archivo": "app/(app)/agenda/google-tasks.tsx:59-62 vs app/(app)/agenda/tasks-actions.ts:11,19",
+      "descripcion": "El form en google-tasks.tsx tiene inputs para 'title' y 'due', pero la acción intenta leer un campo 'notes' que no existe, dejando notes vacío siempre.",
+      "como_reproducir": "Ir a Agenda, agregar una tarea, verá que el campo de notas no existe en el form pero se intenta procesar.",
+      "fix_sugerido": "Agregar un Input con name='notes' opcional en el form de google-tasks.tsx, o remover la lectura de 'notes' en tasks-actions.ts."
+    }
+  ],
+  "lib/secuencias-types.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Agenda + Notificaciones",
+      "archivo": "lib/secuencias-types.ts:4,9",
+      "descripcion": "En secuencias-types.ts, PASO_TIPOS incluye 'whatsapp' en la tabla actividad pero NO en PASO_TIPOS array. Si un paso de secuencia intenta usar 'whatsapp', pasará validación pero podría no renderizarse correctamente en formularios.",
+      "fix_sugerido": "Agregar 'whatsapp' a PASO_TIPOS const: [..., 'whatsapp', ...] para alinearse con los tipos de actividad válidos."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Agenda + Notificaciones",
+      "archivo": "lib/secuencias-types.ts:4",
+      "descripcion": "PASO_TIPOS en lib/secuencias-types.ts excluye 'whatsapp', pero inscribirEnSecuencia() en lib/db/secuencias.ts mapea p.actividad_tipo sin validación. Las actividades creadas desde una secuencia con 'whatsapp' fallaran en la DB (tipo IN constraint).",
+      "como_reproducir": "Crear una secuencia que incluya un paso con actividad_tipo='whatsapp'. Inscribir una oportunidad en esa secuencia. Las actividades se crearán pero fallarán en la DB por constraint de tipo.",
+      "fix_sugerido": "Agregar 'whatsapp' a PASO_TIPOS: export const PASO_TIPOS = [\"llamada\", \"email\", \"reunion\", \"whatsapp\", \"otra\"]"
+    }
+  ],
+  "app/(app)/ajustes/catalogo/catalogo-manager.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Productos + Catálogo Turistea",
+      "archivo": "app/(app)/ajustes/catalogo/catalogo-manager.tsx:90-98",
+      "descripcion": "En Form component de catalogo-manager.tsx, el estado local `f` se inicializa una sola vez con `useState()` pero no sincroniza cuando el prop `editing` cambia. Al pasar de crear a editar producto (o entre ediciones), los campos mantienen valores stale del producto anterior.",
+      "como_reproducir": "1. En /ajustes/catalogo, crear un producto A. 2. Sin cerrar el form, hacer clic en editar otro producto B existente. 3. Los campos siguen mostrando valores de A en lugar de B."
+    }
+  ],
+  "app/(app)/productos/[id]/editar/editor-shell.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Productos + Catálogo Turistea",
+      "archivo": "app/(app)/productos/[id]/editar/editor-shell.tsx:14-20",
+      "descripcion": "En editor-shell.tsx, se usa `querySelector` con `data-edit-id` dentro de `useEffect` sin dependencias correctas. El setTimeout(30ms) puede fallar si el DOM tarda más en renderizar. Además, invocar .click() sin debounce puede activar múltiples veces.",
+      "como_reproducir": "1. Abrir /productos/[id]/editar en dispositivo lento. 2. El botón edit podría no clickearse si renderizado tarda >30ms. 3. Múltiples renders pueden disparar .click() varias veces."
+    }
+  ],
+  "lib/db/catalogo-mayorista.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Productos + Catálogo Turistea",
+      "archivo": "lib/db/catalogo-mayorista.ts:85,142",
+      "descripcion": "En catalogo-mayorista.ts línea 85 y 142, se accede directo a `data.id` sin verificar que `data` no es null. Aunque hay chequeo de `error` previo, `single()` puede retornar data=null si la query no devuelve exactamente 1 fila."
+    }
+  ],
+  "app/(app)/oportunidades/[id]/pasajeros-section.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)",
+      "archivo": "app/(app)/oportunidades/[id]/pasajeros-section.tsx:96",
+      "descripcion": "En pasajeros-section.tsx línea 96, el Select del tipo de pasajero usa type casting incorrecto 'as \"adulto\"' sin importar qué opción seleccione. Siempre castea a 'adulto' aunque el usuario seleccione 'nino' o 'bebe'.",
+      "como_reproducir": "Ir a una oportunidad, agregar pasajero, seleccionar 'Niño' o 'Bebé' en el Select. El tipo que se guarda es siempre 'adulto'.",
+      "fix_sugerido": "Cambiar 'setTipo(e.target.value as \"adulto\")' por 'setTipo(e.target.value as \"adulto\" | \"nino\" | \"bebe\")' o simplemente 'setTipo(e.target.value as any)' y dejar que TS se encargue, o hacer el cast genérico a la union type correcta."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)",
+      "archivo": "app/(app)/oportunidades/[id]/pasajeros-section.tsx, línea 115-149",
+      "descripcion": "PasajerosSection no tiene forma de EDITAR pasajeros existentes. Existe actualizarPasajeroAction() pero nunca se invoca en la UI. Solo permite crear, subir documento y eliminar.",
+      "como_reproducir": "1. Ir a una oportunidad. 2. Agregar un pasajero. 3. Intentar editar su nombre, documento, fecha. No es posible."
+    }
+  ],
+  "app/(app)/oportunidades/[id]/habitaciones-section.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)",
+      "archivo": "app/(app)/oportunidades/[id]/habitaciones-section.tsx:71",
+      "descripcion": "En habitaciones-section.tsx línea 71, el Select para tipo de habitación usa type casting incorrecto 'as \"doble\"' sin importar qué tipo seleccione. Siempre castea a 'doble' aunque el usuario seleccione 'sencilla' o 'triple'.",
+      "como_reproducir": "Ir a una oportunidad, intentar agregar una habitación de tipo 'sencilla' o 'triple'. El tipo guardado siempre es 'doble'.",
+      "fix_sugerido": "Cambiar 'setNuevoTipo(e.target.value as \"doble\")' por 'setNuevoTipo(e.target.value as TipoHabitacion)' para hacerlo genérico."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)",
+      "archivo": "app/(app)/oportunidades/[id]/habitaciones-section.tsx:32",
+      "descripcion": "En habitaciones-section.tsx línea 32, se inicializa useState con pasajeros pero nunca se sincronizan cuando props cambian. Si props.pasajeros se actualiza, el componente usará datos stale del estado local.",
+      "como_reproducir": "Editar un pasajero (ej. cambiar tipo o nombre) desde otra sección, volver al componente HabitacionesSection. El estado local no refleja los cambios.",
+      "fix_sugerido": "Usar useEffect para sincronizar: `useEffect(() => { setPax(pasajeros); }, [pasajeros])`"
+    }
+  ],
+  "lib/db/pasajeros.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)",
+      "archivo": "lib/db/pasajeros.ts:69-71",
+      "descripcion": "En pasajeros.ts línea 69-71, la función updatePasajero no verifica tenantId antes de actualizar. Un usuario malintencionado podría actualizar pasajeros de otros tenants si conoce el ID.",
+      "como_reproducir": "Llamar directamente updatePasajero con un ID de pasajero que pertenece a otro tenant (asumiendo que RLS no está bien configurado).",
+      "fix_sugerido": "Agregar verificación de tenantId: `const user = await getSessionUser(); const { data: p } = await supabase.from('pasajero').select('tenant_id').eq('id', id).maybeSingle(); if (p?.tenant_id !== user?.tenantId) throw new Error('Acceso denegado');`"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)",
+      "archivo": "lib/db/pasajeros.ts, línea 71",
+      "descripcion": "updatePasajero() en lib/db/pasajeros.ts no verifica tenant_id antes de actualizar. Llamada a update() sin condición WHERE tenant_id, lo que permite que un usuario edite pasajeros de otro tenant si conoce el ID.",
+      "como_reproducir": "1. Como usuario de tenant A con ID pasajero X de otro tenant. 2. Llamar updatePasajero() directamente con ese ID. 3. Supabase RLS debería bloquear pero es buena práctica verificar en la función."
+    }
+  ],
+  "lib/db/habitaciones.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)",
+      "archivo": "lib/db/habitaciones.ts:46-49",
+      "descripcion": "En habitaciones.ts línea 46-49, la función asignarPasajeroHabitacion no verifica tenantId. Permite actualizar la habitación de cualquier pasajero sin validar permisos.",
+      "como_reproducir": "Un tenant podría asignar pasajeros de otro tenant a habitaciones.",
+      "fix_sugerido": "Verificar que el pasajero pertenece al mismo tenant antes de actualizar."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "Fidelización + Reservas + Itinerario (Next.js 15 + Supabase + Tailwind)",
+      "archivo": "lib/db/habitaciones.ts:40-43",
+      "descripcion": "En habitaciones.ts línea 40-43, la función eliminarHabitacion no verifica tenantId. Permite eliminar habitaciones sin validar que pertenecen al tenant actual.",
+      "como_reproducir": "Un tenant podría eliminar habitaciones que no le pertenecen si conoce el ID.",
+      "fix_sugerido": "Verificar tenant_id antes de eliminar: agregar .eq('tenant_id', user.tenantId) al query de delete."
+    }
+  ],
+  "lib/db/api-keys.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "API pública v1 + integraciones",
+      "archivo": "lib/db/api-keys.ts:48-51",
+      "descripcion": "En api-keys.ts línea 48-51, la consulta SELECT no filtra explícitamente por tenant_id. Aunque createServerSupabase() aplica RLS, falta el filtro explícito .eq('tenant_id', caller.tenantId) para seguridad multi-tenant robusta.",
+      "como_reproducir": "Si RLS falla o hay vulnerabilidad en la política, se podría ver la existencia de keys activas de otros tenants.",
+      "fix_sugerido": "Agregar .eq('tenant_id', caller.tenantId) al query de existentes."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "API pública v1 + integraciones",
+      "archivo": "lib/db/api-keys.ts:102-106",
+      "descripcion": "En api-keys.ts línea 102-106, el update de usados_mes se hace sin await y sin esperar confirmación. Hay race condition: si dos requests llegan simultáneamente, ambos verán el contador anterior e incrementarán mal. El contador quedará inconsistente.",
+      "como_reproducir": "Hacer 2+ requests simultáneos con la misma API key. El contador usados_mes no sumará correctamente.",
+      "fix_sugerido": "Cambiar .then(() => {}, () => {}) por await Promise.resolve(...) o usar una función lock/mutex en DB."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "API pública v1 + integraciones",
+      "archivo": "lib/db/api-keys.ts:102-106",
+      "descripcion": "En api-keys.ts línea 102-106, el update de usados_mes NO espera respuesta (fire-and-forget sin await). Dos requests simultáneos verán el mismo contador anterior e incrementarán mal, dejando el contador inconsistente.",
+      "como_reproducir": "Enviar 2+ requests paralelos con la misma API key en el mismo segundo. El contador quedará desincronizado.",
+      "fix_sugerido": "Cambiar la línea 102 de admin.from(...) a await admin.from(...) para asegurar que se completa antes de retornar."
+    }
+  ],
+  "app/(app)/ajustes/integraciones/integraciones-manager.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "API pública v1 + integraciones",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:158",
+      "descripcion": "En integraciones-manager.tsx línea 158, el cast 'as (\"contacto.creado\")[]' es incorrecto. Debería ser 'as EventoWebhook[]' porque EVENTOS_WEBHOOK incluye 5 eventos diferentes, no solo contacto.creado.",
+      "como_reproducir": "Crear webhook con evento 'oportunidad.etapa_cambiada'. El type checker no valida correctamente porque el cast es demasiado específico.",
+      "fix_sugerido": "Importar EventoWebhook type y usar: 'eventos as EventoWebhook[]'"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "API pública v1 + integraciones",
+      "archivo": "app/(app)/ajustes/integraciones/integraciones-manager.tsx:158",
+      "descripcion": "En integraciones-manager.tsx:158, el cast 'as (\"contacto.creado\")[]' es incorrecto. EVENTOS_WEBHOOK tiene 5 eventos distintos, pero el cast solo espera uno. Permite pasar arrays de eventos inválidos sin detección en compilación.",
+      "como_reproducir": "Seleccionar múltiples eventos (ej. contacto.creado + oportunidad.creada) y enviar. El cast incorrecto puede causar comportamiento impredecible.",
+      "fix_sugerido": "Cambiar el cast a 'as EventoWebhook[]' para que sea type-safe."
+    }
+  ],
+  "lib/db/picker-data.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "sql_invalido",
+      "modulo": "Contactos (Next.js + Supabase + RLS)",
+      "archivo": "lib/db/picker-data.ts:21-37",
+      "descripcion": "En picker-data.ts línea 21-37, los queries a Supabase no verifican el objeto .error. Si alguna query falla (por RLS, conexión o timeout), .data será undefined pero se retorna un array vacío sin indicación del error. Esto causa fallos silenciosos donde los datos de empresa, contacto, usuario etc. no cargan pero el usuario no ve ningún error.",
+      "fix_sugerido": "Verificar .error en cada query y lanzar excepción si ocurre. Ej: `const { data, error } = await supabase...; if (error) throw new Error(error.message);`"
+    }
+  ],
+  "app/(app)/contactos/[id]/editar/contacto-form.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Contactos (Next.js + Supabase + RLS)",
+      "archivo": "app/(app)/contactos/[id]/editar/contacto-form.tsx:53,90",
+      "descripcion": "En contacto-form.tsx línea 53 y 90, los selects de empresa y usuario tienen defaultValue vinculado a IDs que podrían no estar en las opciones cargadas. Si picker-data falla (error silencioso anterior), los arrays estarán vacíos pero el form seguirá intentando mostrar valores por defecto que no existen en las opciones, creando un estado inválido del select.",
+      "como_reproducir": "1. Hacer falla simulada en picker-data (ej. desconectar DB). 2. Abrir /contactos/{id}/editar. 3. El select de empresa y usuario mostrarán un estado vacío pero el formulario mostrará valores por defecto inválidos.",
+      "fix_sugerido": "Validar en el servidor que picker.empresas y picker.usuarios tengan elementos relevantes antes de renderizar. O mostrar un error si están vacíos."
+    }
+  ],
+  "app/(app)/empresas/[id]/empresa-aside.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)",
+      "archivo": "app/(app)/empresas/[id]/empresa-aside.tsx:66-67",
+      "descripcion": "InlineEditField para email en empresa-aside no valida formato de email. Acepta cualquier string sin validar estructura de correo, a diferencia del formulario principal que usa type=\"email\".",
+      "como_reproducir": "En el aside derecho, hacer clic en Email e ingresar texto inválido como 'notanemail' → se guarda sin error. En el formulario de edición, el browser rechaza esto.",
+      "fix_sugerido": "Agregar type=\"email\" a InlineEditField label=Email o validar en saveEmpresaField antes de guardar."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "a11y",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)",
+      "archivo": "app/(app)/empresas/[id]/empresa-aside.tsx:66-67",
+      "descripcion": "InlineEditField no especifica type='email' para el campo Email, por lo que no recibe validación nativa del browser ni funcionalidad de email (ej. teclado móvil con @).",
+      "como_reproducir": "Editar email en aside en mobile → el teclado no muestra @ por defecto. Cambiar a type='email' en InlineEditField.",
+      "fix_sugerido": "Pasar type='email' en el InlineEditField para Email."
+    }
+  ],
+  "app/(app)/empresas/[id]/editar/actions.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Empresas (CRUD, Sedes, Contactos, Campos Custom)",
+      "archivo": "app/(app)/empresas/[id]/editar/actions.ts:16",
+      "descripcion": "El schema de validación en empresa-form.tsx usa z.preprocess(emptyToNull) en email, pero emptyToNull nunca devuelve null para email porque el campo pasará a z.string().email() que requiere un string válido antes de poder ser nullable.",
+      "como_reproducir": "Intentar guardar formulario con email vacío → el preprocess convierte a null, pero z.string().email() se aplica al null resultante, causando error.",
+      "fix_sugerido": "Cambiar a: z.preprocess(emptyToNull, z.string().email().nullable()) - nullable DEBE estar después de .email()"
+    }
+  ],
+  "lib/db/reservas.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Fidelización + Reservas + Cotizaciones + Itinerario (Módulo multi-tenant)",
+      "archivo": "lib/db/reservas.ts, línea 104-122",
+      "descripcion": "crearReservaDesdeOportunidad() no verifica permisos del usuario sobre la oportunidad. Solo valida que exista el tenant y la agencia. Un usuario podría reservar una oportunidad de otro usuario del mismo tenant.",
+      "fix_sugerido": "Agregar verificación de ownership o permisos: verificar que oportunidad_id pertenece al usuario actual o está compartida."
+    }
+  ],
+  "app/invitacion/actions.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Autenticación + Cuenta",
+      "archivo": "app/invitacion/actions.ts:6-18",
+      "descripcion": "acceptInvitacionAction (invitacion/actions.ts): schema valida token solo por min length (10 chars). Si alguien adivina o pasa 10 caracteres aleatorios, getInvitacionByToken retorna null pero error es silencioso. getInvitacionByToken no hace rate-limit.",
+      "como_reproducir": "Hacer POST a /invitacion con token='1234567890'. El form muestra 'Invitación no válida' pero sin log de intento brute-force."
+    }
+  ],
+  "app/auth/handoff/page.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Autenticación + Cuenta",
+      "archivo": "app/auth/handoff/page.tsx:41-46",
+      "descripcion": "Handoff page (auth/handoff/page.tsx:42): localStorage.setItem() puede fallar silentemente en modo privado. Si falla, 'crm.impersonando' no se crea pero error se ignora (catch bloque vacío). Usuario no sabe que soporte mode no se activó.",
+      "como_reproducir": "Abrir handoff en modo incógnito/privado. No hay error, pero flag crm.impersonando no se guarda."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Autenticación + Cuenta",
+      "archivo": "app/auth/handoff/page.tsx:48",
+      "descripcion": "Handoff page: window.location.replace(next) NO VALIDA que 'next' sea ruta relativa. Si token malicioso contiene next='http://evil.com', la redirección te lleva fuera del app sin error. Fragment (#) protege del servidor pero no del atacante que controla tokens.",
+      "fix_sugerido": "Validar: next.startsWith('/') || next.startsWith('?'). Rechazar URLs absolutas."
+    }
+  ],
+  "app/api/auth/tenant-home/route.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Autenticación + Cuenta",
+      "archivo": "app/api/auth/tenant-home/route.ts:10-43",
+      "descripcion": "tenant-home route (app/api/auth/tenant-home/route.ts) NO VERIFICA que usuario.tenant_id coincida con subdomain/header. Si attacker tiene sesión válida de Tenant A pero está en Tenant B, endpoint retorna subdomain de Tenant A sin error. Middleware later va a bloquear (tenant_mismatch), pero interim leak de tenant mapping."
+    }
+  ],
+  "app/(app)/ajustes/secuencias/secuencias-manager.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "ux",
+      "modulo": "Agenda + Notificaciones",
+      "archivo": "app/(app)/ajustes/secuencias/secuencias-manager.tsx:115",
+      "descripcion": "En app/(app)/ajustes/secuencias/secuencias-manager.tsx línea 115, el cast de tipo es incorrecto: onChange=(e) => update(i, { ...paso, actividad_tipo: e.target.value as \"llamada\" }) siempre castea como 'llamada', no como el valor seleccionado. El usuario ve todas las opciones en el Select pero solo 'llamada' se guarda.",
+      "como_reproducir": "Ir a Ajustes > Secuencias. Editar una secuencia. Cambiar el tipo de un paso a 'reunion'. Guardar. Al reabrir, el tipo vuelve a 'llamada'.",
+      "fix_sugerido": "Cambiar el cast: as PasoSecuencia[\"actividad_tipo\"] o validar con un type guard. Ej: actividad_tipo: e.target.value as const"
+    }
+  ],
+  "supabase/migrations/0012_cuenta_google.sql": [
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "Agenda + Notificaciones",
+      "archivo": "supabase/migrations/0012_cuenta_google.sql:20-32",
+      "descripcion": "Tabla cuenta_google (0012_cuenta_google.sql) tiene RLS policies solo para SELECT y DELETE, pero NO hay INSERT/UPDATE policies explícitas. Técnicamente el upsert en saveCuentaGoogle() usa service_role (admin), pero falta documentar/implementar las policies correctas para que un usuario pueda actualizar su propia conexión en futuro.",
+      "como_reproducir": "Ver comentario en línea 31: 'Inserts/updates of tokens are performed by the server via service_role.' Sin RLS policies explícitas para INSERT/UPDATE, si se remueve service_role, el upsert fallará silenciosamente.",
+      "fix_sugerido": "Agregar policies explicit INSERT/UPDATE para usuarios sobre su propia fila. Ej: CREATE POLICY cuenta_google_upsert ... FOR ALL TO authenticated WITH CHECK (tenant_id = current_tenant_id() AND usuario_id = auth.uid())"
+    }
+  ],
+  "app/(app)/reportes/export-button.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Reportes + Dashboard + Búsqueda",
+      "archivo": "app/(app)/reportes/export-button.tsx, línea 10",
+      "descripcion": "ExportCsvButton accede a rows[0] en línea 10 sin validar si existe. Si rows está vacío, Object.keys() fallará silenciosamente o retornará array vacío, causando CSV vacío.",
+      "como_reproducir": "Exportar una tabla vacía (ej: motivos de pérdida cuando no hay oportunidades perdidas). El CSV descargará con solo headers."
+    }
+  ],
+  "app/(app)/reportes/filters-bar.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "a11y",
+      "modulo": "Reportes + Dashboard + Búsqueda",
+      "archivo": "app/(app)/reportes/filters-bar.tsx, líneas 41-90",
+      "descripcion": "ReportesFiltersBar: los <label> no están vinculados a sus <select> e <input> mediante htmlFor/id. Lectores de pantalla no podrán asociar las etiquetas con los controles.",
+      "fix_sugerido": "Agregar id a cada select/input (ej: id=\"pipeline-filter\") y htmlFor=\"pipeline-filter\" en cada <label>."
+    }
+  ],
+  "lib/db/dashboard.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Reportes + Dashboard + Búsqueda",
+      "archivo": "lib/db/dashboard.ts, líneas 154-173",
+      "descripcion": "dashboard.ts destructuring Promise.all sin manejo de .error (líneas 155-173). Si cualquier query Supabase falla, se ignora el error y se trabaja con .data indefinido. Las queries con Promise.resolve() para scope=me devuelven { data: [] } pero no tienen .error field.",
+      "fix_sugerido": "Verificar .error en destructuring o usar try-catch alrededor de Promise.all."
+    }
+  ],
+  "lib/db/webhooks.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "API pública v1 + integraciones",
+      "archivo": "lib/db/webhooks.ts:18-29",
+      "descripcion": "listWebhooks() en lib/db/webhooks.ts:18-29 NO filtra por tenant_id. Retorna todos los webhooks de todos los tenants. Aunque RLS debería proteger, la falta de filtro explícito viola la seguridad multi-tenant robusta.",
+      "como_reproducir": "Un admin de tenant A puede ver/acceder webhooks de tenant B si se bypass RLS accidentalmente.",
+      "fix_sugerido": "Agregar .eq('tenant_id', caller.tenantId) al SELECT en listWebhooks(). Igual para listReportesProgramados()."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "API pública v1 + integraciones",
+      "archivo": "lib/db/webhooks.ts:44-49",
+      "descripcion": "updateWebhook() en lib/db/webhooks.ts:44-49 NO filtra por tenant_id en el UPDATE. Un admin podría modificar un webhook de otro tenant.",
+      "como_reproducir": "Un admin con acceso a base de datos podría actualizar webhook de otro tenant mediante ID conocido.",
+      "fix_sugerido": "Agregar .eq('tenant_id', caller.tenantId) antes de .update(). Igual en deleteWebhook()."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "API pública v1 + integraciones",
+      "archivo": "lib/db/webhooks.ts:50-55",
+      "descripcion": "deleteWebhook() en lib/db/webhooks.ts:50-55 NO filtra por tenant_id. Permite eliminar webhooks de otro tenant.",
+      "como_reproducir": "Un admin obtiene el ID de un webhook de otro tenant y lo elimina.",
+      "fix_sugerido": "Agregar .eq('tenant_id', caller.tenantId) al DELETE."
+    }
+  ],
+  "app/(app)/admin/usuarios/new-usuario-form.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)",
+      "archivo": "app/(app)/admin/usuarios/new-usuario-form.tsx:59",
+      "descripcion": "Password field usando type='text' en lugar de type='password' — expone contraseña en pantalla de administrador",
+      "como_reproducir": "Crear usuario nuevo, la contraseña se muestra en texto plano en el input"
+    }
+  ],
+  "app/(app)/admin/usuarios/[id]/edit-usuario-form.tsx": [
+    {
+      "severidad": "alto",
+      "tipo": "security",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)",
+      "archivo": "app/(app)/admin/usuarios/[id]/edit-usuario-form.tsx:57",
+      "descripcion": "Password field usando type='text' en lugar de type='password' en formulario de edición de usuario",
+      "como_reproducir": "Editar usuario existente y cambiar contraseña, el campo muestra texto en lugar de asteriscos"
+    }
+  ],
+  "lib/db/nps.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)",
+      "archivo": "lib/db/nps.ts:44-70",
+      "descripcion": "listNps() no filtra explícitamente por tenant_id en SELECT — depende únicamente de RLS",
+      "fix_sugerido": "Agregar .eq('tenant_id', userTenantId) después del select() para defensa en profundidad"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "bug",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios",
+      "archivo": "lib/db/nps.ts:44-70",
+      "descripcion": "listNps() (lib/db/nps.ts:44) no filtra por tenant_id. Retorna todas las respuestas de todos los tenants en select.",
+      "fix_sugerido": "Agregar .eq('tenant_id', user.tenantId) al select de nps_respuesta."
+    }
+  ],
+  "lib/db/roles.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Ajustes (Roles, Usuarios, Planes, Comisiones, NPS, Territorios)",
+      "archivo": "lib/db/roles.ts:123-157",
+      "descripcion": "createRol() y updateRol() permiten es_admin = true sin restricción; no hay validación de que solo super-admin pueda crear roles admin",
+      "fix_sugerido": "Validar que el caller sea es_admin o super-admin antes de permitir es_admin=true en nuevo rol"
+    },
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios",
+      "archivo": "lib/db/roles.ts:176-203",
+      "descripcion": "setUsuarioRol() en lib/db/roles.ts línea 176 no verifica que el rol_id pertenezca al mismo tenant. Un admin de tenant A podría asignar roles del tenant B a sus usuarios si obtiene el ID.",
+      "como_reproducir": "1. Ser admin en un tenant. 2. Obtener rol_id de otro tenant. 3. Llamar setUsuarioRol(usuarioId, otro_tenant_rol_id). Sin validación cross-tenant, podría asignar."
+    },
+    {
+      "severidad": "alto",
+      "tipo": "logica_rota",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios",
+      "archivo": "lib/db/roles.ts:206-216",
+      "descripcion": "syncUsuariosLegacyRol() en lib/db/roles.ts línea 206 itera usuarios por rol_id sin filtrar por tenant_id, causando que cambios de rol sincronicen usuarios de otros tenants."
+    }
+  ],
+  "lib/db/comisiones.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "sql_invalido",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios",
+      "archivo": "lib/db/comisiones.ts:25-62",
+      "descripcion": "En listComisiones() (lib/db/comisiones.ts:25), se selecciona 'comision_pct' pero si la columna es 'comision_pct' en DB (snake_case), el mapping en línea 53 usa camelCase. Sin garantía schema DB.",
+      "fix_sugerido": "Verificar nombres de columnas en DB y usar consistently snake_case en Supabase queries."
+    }
+  ],
+  "lib/db/planes.ts": [
+    {
+      "severidad": "alto",
+      "tipo": "rls_problema",
+      "modulo": "Ajustes — Roles, Usuarios, Planes, Comisiones, NPS, Territorios",
+      "archivo": "lib/db/planes.ts:120-125",
+      "descripcion": "setTenantPlan() (lib/db/planes.ts:120) requiere isPlatformAdmin() pero no valida que el tenantId que recibe sea válido o pertenezca a la plataforma. Acceso directo a admin sin verificación."
+    }
+  ]
+}

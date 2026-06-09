@@ -228,19 +228,22 @@ export async function createPlantilla(input: PlantillaInput): Promise<string> {
 }
 
 export async function updatePlantilla(id: string, patch: PlantillaInput) {
-  await ensureSession();
+  const user = await ensureSession();
+  if (!user.tenantId) throw new Error("Tenant ausente");
   const supabase = await createServerSupabase();
   const { error } = await supabase
     .from("plantilla_correo")
     .update({ ...patch, actualizado_en: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("tenant_id", user.tenantId);
   if (error) throw new Error(error.message);
 }
 
 export async function deletePlantilla(id: string) {
-  await ensureSession();
+  const user = await ensureSession();
+  if (!user.tenantId) throw new Error("Tenant ausente");
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("plantilla_correo").delete().eq("id", id);
+  const { error } = await supabase.from("plantilla_correo").delete().eq("id", id).eq("tenant_id", user.tenantId);
   if (error) throw new Error(error.message);
 }
 
@@ -787,7 +790,7 @@ type SedeInput = {
 };
 
 export async function createSede(input: SedeInput): Promise<string> {
-  const user = await ensureWriter();
+  const user = await ensurePermission("empresas", "editar");
   const supabase = await createServerSupabase();
   // Ensure at most one principal per empresa
   if (input.es_principal) {
@@ -803,7 +806,7 @@ export async function createSede(input: SedeInput): Promise<string> {
 }
 
 export async function updateSede(id: string, patch: Omit<SedeInput, "empresa_id">) {
-  await ensureWriter();
+  await ensurePermission("empresas", "editar");
   const supabase = await createServerSupabase();
   if (patch.es_principal) {
     const { data: current } = await supabase
@@ -824,7 +827,7 @@ export async function updateSede(id: string, patch: Omit<SedeInput, "empresa_id"
 }
 
 export async function deleteSede(id: string) {
-  await ensureWriter();
+  await ensurePermission("empresas", "eliminar");
   const supabase = await createServerSupabase();
   const { error } = await supabase.from("sede").delete().eq("id", id);
   if (error) throw new Error(error.message);

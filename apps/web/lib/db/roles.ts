@@ -140,7 +140,7 @@ export async function createRol(input: RolInput): Promise<string> {
 }
 
 export async function updateRol(id: string, input: RolInput): Promise<void> {
-  await ensureAdmin();
+  const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
   const { error } = await supabase
     .from("rol")
@@ -150,25 +150,27 @@ export async function updateRol(id: string, input: RolInput): Promise<void> {
       es_admin: input.es_admin,
       permisos: input.permisos,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("tenant_id", caller.tenantId);
   if (error) throw new Error(error.message);
-  // Keep legacy text rol in sync for every user holding this role (drives RLS).
-  await syncUsuariosLegacyRol(id, input.es_admin);
+  // Sync limitado al tenant del caller (no toca usuarios de otros tenants).
+  await syncUsuariosLegacyRol(id, input.es_admin, caller.tenantId!);
 }
 
 export async function deleteRol(id: string): Promise<void> {
-  await ensureAdmin();
+  const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
   const { data: rol } = await supabase
     .from("rol")
     .select("es_sistema, usuario(count)")
     .eq("id", id)
+    .eq("tenant_id", caller.tenantId)
     .maybeSingle();
   if (!rol) throw new Error("Rol no encontrado");
   if (rol.es_sistema) throw new Error("No se puede eliminar un rol del sistema");
   const count = (rol.usuario as { count: number }[] | undefined)?.[0]?.count ?? 0;
   if (count > 0) throw new Error("Reasigná los usuarios antes de eliminar este rol");
-  const { error } = await supabase.from("rol").delete().eq("id", id);
+  const { error } = await supabase.from("rol").delete().eq("id", id).eq("tenant_id", caller.tenantId);
   if (error) throw new Error(error.message);
 }
 
@@ -176,12 +178,24 @@ export async function deleteRol(id: string): Promise<void> {
 export async function setUsuarioRol(usuarioId: string, rolId: string): Promise<void> {
   const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
+  // Garantizamos que el rol pertenece al mismo tenant que el caller.
   const { data: rol } = await supabase
     .from("rol")
-    .select("es_admin, nombre")
+    .select("es_admin, nombre, tenant_id")
     .eq("id", rolId)
+    .eq("tenant_id", caller.tenantId)
     .maybeSingle();
-  if (!rol) throw new Error("Rol no encontrado");
+  if (!rol) throw new Error("Rol no encontrado en tu cuenta");
+
+  // Y también que el usuario destino pertenece al mismo tenant.
+  const admin = createAdminSupabase();
+  const { data: target } = await admin
+    .from("usuario")
+    .select("id, tenant_id, nombre")
+    .eq("id", usuarioId)
+    .eq("tenant_id", caller.tenantId)
+    .maybeSingle();
+  if (!target) throw new Error("Usuario no encontrado en tu cuenta");
 
   // Lockout protection: an admin can't strip their own admin access.
   if (usuarioId === caller.id && !rol.es_admin) {
@@ -189,24 +203,27 @@ export async function setUsuarioRol(usuarioId: string, rolId: string): Promise<v
   }
 
   const legacy = rol.es_admin ? "admin" : "asesor";
-  const admin = createAdminSupabase();
   const { error } = await admin
     .from("usuario")
     .update({ rol_id: rolId, rol: legacy })
-    .eq("id", usuarioId);
+    .eq("id", usuarioId)
+    .eq("tenant_id", caller.tenantId);
   if (error) throw new Error(error.message);
 
-  const { data: u } = await admin.from("usuario").select("nombre").eq("id", usuarioId).maybeSingle();
   await admin.auth.admin.updateUserById(usuarioId, {
-    user_metadata: { nombre: u?.nombre, tenant_id: caller.tenantId, rol: legacy },
+    user_metadata: { nombre: target.nombre, tenant_id: caller.tenantId, rol: legacy },
   });
 }
 
-/** Re-sync the legacy text rol of all users holding `rolId`. */
-async function syncUsuariosLegacyRol(rolId: string, esAdmin: boolean): Promise<void> {
+/** Re-sync the legacy text rol of all users holding `rolId` — filtrado por tenant. */
+async function syncUsuariosLegacyRol(rolId: string, esAdmin: boolean, tenantId: string): Promise<void> {
   const admin = createAdminSupabase();
   const legacy = esAdmin ? "admin" : "asesor";
-  const { data: usuarios } = await admin.from("usuario").select("id, nombre, tenant_id").eq("rol_id", rolId);
+  const { data: usuarios } = await admin
+    .from("usuario")
+    .select("id, nombre, tenant_id")
+    .eq("rol_id", rolId)
+    .eq("tenant_id", tenantId);
   for (const u of usuarios ?? []) {
     await admin.from("usuario").update({ rol: legacy }).eq("id", u.id);
     await admin.auth.admin.updateUserById(u.id as string, {

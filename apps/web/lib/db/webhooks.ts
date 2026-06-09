@@ -17,10 +17,13 @@ async function ensureAdmin() {
 
 export async function listWebhooks(): Promise<Webhook[]> {
   try {
+    const u = await getSessionUser();
+    if (!u?.tenantId) return [];
     const supabase = await createServerSupabase();
     const { data } = await supabase
       .from("webhook")
       .select("id, nombre, url, eventos, activo, ultimo_envio, ultimo_estado")
+      .eq("tenant_id", u.tenantId)
       .order("creado_en", { ascending: false });
     return (data ?? []) as Webhook[];
   } catch {
@@ -42,15 +45,15 @@ export async function createWebhook(input: WebhookInput): Promise<string> {
   return data.id;
 }
 export async function updateWebhook(id: string, patch: Partial<WebhookInput> & { activo?: boolean }): Promise<void> {
-  await ensureAdmin();
+  const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("webhook").update(patch).eq("id", id);
+  const { error } = await supabase.from("webhook").update(patch).eq("id", id).eq("tenant_id", caller.tenantId);
   if (error) throw new Error(error.message);
 }
 export async function deleteWebhook(id: string): Promise<void> {
-  await ensureAdmin();
+  const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("webhook").delete().eq("id", id);
+  const { error } = await supabase.from("webhook").delete().eq("id", id).eq("tenant_id", caller.tenantId);
   if (error) throw new Error(error.message);
 }
 
