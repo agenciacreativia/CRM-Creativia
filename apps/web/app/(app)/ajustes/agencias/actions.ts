@@ -36,7 +36,10 @@ export async function verComoAgenciaAction(tenantId: string): Promise<{ ok: bool
       .eq("activo", true)
       .limit(1)
       .maybeSingle();
-    const email = (u?.email as string | undefined) ?? (tenant.admin_email as string);
+    const email = ((u?.email as string | undefined)?.trim() || (tenant.admin_email as string | undefined)?.trim() || "");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { ok: false, error: "La agencia no tiene un email de admin válido" };
+    }
 
     const { data: link, error: linkErr } = await admin.auth.admin.generateLink({ type: "magiclink", email });
     const tokenHash = link?.properties?.hashed_token;

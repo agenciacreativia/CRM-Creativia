@@ -62,6 +62,7 @@ export function PlanesManager({ initial }: { initial: Plan[] }) {
     return (
       <PlanForm
         editing={editing}
+        existing={initial}
         onDone={() => {
           setCreating(false);
           setEditing(null);
@@ -135,7 +136,7 @@ export function PlanesManager({ initial }: { initial: Plan[] }) {
   );
 }
 
-function PlanForm({ editing, onDone, onCancel }: { editing: Plan | null; onDone: () => void; onCancel: () => void }) {
+function PlanForm({ editing, onDone, onCancel, existing }: { editing: Plan | null; onDone: () => void; onCancel: () => void; existing: Plan[] }) {
   const [nombre, setNombre] = useState(editing?.nombre ?? "");
   const [descripcion, setDescripcion] = useState(editing?.descripcion ?? "");
   const [precio, setPrecio] = useState(editing?.precio ?? 0);
@@ -169,7 +170,10 @@ function PlanForm({ editing, onDone, onCancel }: { editing: Plan | null; onDone:
     setSaving(true);
     const payload = {
       nombre, descripcion: descripcion || null, precio: Number(precio) || 0, moneda, periodicidad,
-      modulos, herramientas, limites, activo, orden: editing?.orden ?? 0,
+      modulos, herramientas, limites, activo,
+      // Si editamos mantenemos el orden. Si creamos, asignamos max(orden)+1
+      // para que el plan nuevo quede al final y no choque con el existente.
+      orden: editing?.orden ?? ((existing.length === 0 ? 0 : Math.max(...existing.map((p) => p.orden ?? 0)) + 1)),
     };
     const res = editing ? await updatePlanAction(editing.id, payload) : await createPlanAction(payload);
     setSaving(false);

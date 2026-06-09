@@ -18,23 +18,29 @@ export type PickerData = {
  */
 export async function loadPickerData(): Promise<PickerData> {
   const supabase = await createServerSupabase();
-  const [{ data: empresas }, { data: contactos }, { data: pipelines }, { data: etapas }, { data: usuarios }, { data: motivos }, { data: campos }] =
-    await Promise.all([
-      supabase.from("empresa").select("id, nombre").order("nombre"),
-      supabase.from("contacto").select("id, nombre, empresa_id").order("nombre"),
-      supabase
-        .from("pipeline")
-        .select("id, nombre, es_default")
-        .order("es_default", { ascending: false })
-        .order("nombre"),
-      supabase
-        .from("etapa_pipeline")
-        .select("id, nombre, pipeline_id, orden")
-        .order("orden"),
-      supabase.from("usuario").select("id, nombre, rol").eq("activo", true).order("nombre"),
-      supabase.from("motivo_perdida").select("id, nombre").order("nombre"),
-      supabase.from("campo_personalizado").select("*").order("orden"),
-    ]);
+  const queries = await Promise.all([
+    supabase.from("empresa").select("id, nombre").order("nombre"),
+    supabase.from("contacto").select("id, nombre, empresa_id").order("nombre"),
+    supabase
+      .from("pipeline")
+      .select("id, nombre, es_default")
+      .order("es_default", { ascending: false })
+      .order("nombre"),
+    supabase
+      .from("etapa_pipeline")
+      .select("id, nombre, pipeline_id, orden")
+      .order("orden"),
+    supabase.from("usuario").select("id, nombre, rol").eq("activo", true).order("nombre"),
+    supabase.from("motivo_perdida").select("id, nombre").order("nombre"),
+    supabase.from("campo_personalizado").select("*").order("orden"),
+  ]);
+  // Log errores en vez de tragarlos silenciosamente — facilita el diagnóstico
+  // cuando una RLS o una columna nueva rompe los pickers.
+  const labels = ["empresa", "contacto", "pipeline", "etapa_pipeline", "usuario", "motivo_perdida", "campo_personalizado"];
+  queries.forEach((r, i) => {
+    if (r.error) console.error(`[picker-data] ${labels[i]}:`, r.error.message);
+  });
+  const [{ data: empresas }, { data: contactos }, { data: pipelines }, { data: etapas }, { data: usuarios }, { data: motivos }, { data: campos }] = queries;
   return {
     empresas: empresas ?? [],
     contactos: contactos ?? [],

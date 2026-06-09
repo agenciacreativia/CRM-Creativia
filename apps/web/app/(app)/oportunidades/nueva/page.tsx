@@ -1,12 +1,19 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
+import { getMyPermisos } from "@/lib/db/roles";
+import { can } from "@/lib/permissions";
 import { loadPickerData } from "@/lib/db/picker-data";
 import { CreateWrapper } from "./create-wrapper";
 
 export default async function NuevaOportunidadPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+
+  const { permisos, es_admin } = await getMyPermisos();
+  if (!can(permisos, "oportunidades", "crear", es_admin)) {
+    redirect("/oportunidades?reason=no_permission");
+  }
 
   const picker = await loadPickerData();
 

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
 import type { ApiKey } from "@/lib/db/api-keys";
-import { EVENTOS_WEBHOOK, type Webhook as Wh } from "@/lib/webhooks-types";
+import { EVENTOS_WEBHOOK, type EventoWebhook, type Webhook as Wh } from "@/lib/webhooks-types";
 import type { ReporteProgramado } from "@/lib/db/reportes-programados";
 import {
   crearApiKeyAction, revocarApiKeyAction,
@@ -155,7 +155,7 @@ function WebhooksCard({ webhooks, onError, onChange }: { webhooks: Wh[]; onError
   async function crear() {
     if (!nombre.trim() || !url.trim() || eventos.length === 0) return onError("Completá nombre, URL y al menos un evento.");
     setCreating(true);
-    const res = await crearWebhookAction({ nombre, url, eventos: eventos as ("contacto.creado")[], secret });
+    const res = await crearWebhookAction({ nombre, url, eventos: eventos as EventoWebhook[], secret });
     setCreating(false);
     if (!res.ok) onError(res.error ?? "Error");
     else { setNombre(""); setUrl(""); setSecret(""); setEventos([]); onChange(); }

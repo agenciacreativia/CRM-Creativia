@@ -82,6 +82,7 @@ export async function createCatalogoItem(input: CatalogoInput): Promise<string> 
   const admin = createAdminSupabase();
   const { data, error } = await admin.from("producto_mayorista").insert(input).select("id").single();
   if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("No se pudo crear el producto del catálogo");
   return data.id;
 }
 
@@ -139,6 +140,7 @@ export async function copiarAMisProductos(item: ProductoCopiable, markupPct: num
     .select("id")
     .single();
   if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("No se pudo copiar el producto");
   return data.id;
 }
 

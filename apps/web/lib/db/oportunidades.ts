@@ -258,6 +258,10 @@ export async function listOportunidades(opts: {
   }
   if (opts.estado && opts.estado !== "todos") {
     query = query.eq("estado", opts.estado);
+  } else {
+    // Default: ocultar oportunidades en estado "eliminado" (soft-delete 30 días).
+    // El admin que quiere ver las eliminadas usa estado=eliminado o estado=todos.
+    query = query.neq("estado", "eliminado");
   }
   if (opts.pipeline_id) {
     query = query.eq("pipeline_id", opts.pipeline_id);
