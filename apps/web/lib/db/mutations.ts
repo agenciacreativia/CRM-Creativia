@@ -338,6 +338,75 @@ export async function createContacto(
   return data.id;
 }
 
+/**
+ * Borrar contacto reasignando sus oportunidades a otro contacto.
+ *
+ * - Si `reasignarA` está presente: actualiza oportunidad.contacto_id en bloque
+ *   antes de borrar (transacción lógica: si la reasignación falla, no borramos).
+ * - Si `reasignarA` es null y hay oportunidades activas → error pedido por
+ *   el caller para forzar elegir destino.
+ * - Notas, documentos, historial: limpieza via ON DELETE CASCADE en la DB
+ *   (ver migración 0040). Si no existe el cascade aún, este delete fallará y
+ *   devolveremos el error tal cual para que el user corra la migración.
+ */
+export async function deleteContactoConReasignacion(
+  id: string,
+  reasignarA: string | null,
+): Promise<{ reasignadas: number }> {
+  await ensurePermission("contactos", "eliminar");
+  const admin = createAdminSupabase();
+
+  // 1) Listar oportunidades vinculadas al contacto (todas, no solo activas:
+  //    si dejamos huérfanas las cerradas pierden auditoría).
+  const { data: ops, error: listErr } = await admin
+    .from("oportunidad")
+    .select("id")
+    .eq("contacto_id", id);
+  if (listErr) throw new Error(listErr.message);
+  const opsCount = ops?.length ?? 0;
+
+  if (opsCount > 0) {
+    if (!reasignarA) {
+      throw new Error(
+        `Este contacto tiene ${opsCount} oportunidad(es). Seleccioná un contacto destino para reasignarlas antes de borrar.`,
+      );
+    }
+    // Validar que el destino existe y pertenece al mismo tenant. RLS lo
+    // resuelve para usuarios normales, pero usamos admin client así que
+    // verificamos manualmente para evitar cross-tenant.
+    const { data: destino, error: destErr } = await admin
+      .from("contacto")
+      .select("id, tenant_id")
+      .eq("id", reasignarA)
+      .single();
+    if (destErr || !destino) throw new Error("Contacto destino no encontrado");
+
+    const { error: srcErr, data: src } = await admin
+      .from("contacto")
+      .select("tenant_id")
+      .eq("id", id)
+      .single();
+    if (srcErr || !src) throw new Error("Contacto no encontrado");
+    if (src.tenant_id !== destino.tenant_id) {
+      throw new Error("El contacto destino debe ser del mismo tenant");
+    }
+    if (reasignarA === id) {
+      throw new Error("No podés reasignar al mismo contacto que estás borrando");
+    }
+
+    const { error: updErr } = await admin
+      .from("oportunidad")
+      .update({ contacto_id: reasignarA })
+      .eq("contacto_id", id);
+    if (updErr) throw new Error(`No se pudieron reasignar las oportunidades: ${updErr.message}`);
+  }
+
+  const { error: delErr } = await admin.from("contacto").delete().eq("id", id);
+  if (delErr) throw new Error(delErr.message);
+
+  return { reasignadas: opsCount };
+}
+
 type OportunidadUpdate = {
   nombre: string;
   empresa_id: string;

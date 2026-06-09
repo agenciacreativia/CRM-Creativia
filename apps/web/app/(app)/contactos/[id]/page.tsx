@@ -15,6 +15,9 @@ import { NotasSection } from "@/components/notas/notas-section";
 import { DocumentosPanel } from "@/components/documentos/documentos-panel";
 import { HistorialSection } from "@/components/oportunidad/historial-section";
 import { ContactoAside } from "./contacto-aside";
+import { DeleteContactoButton } from "./delete-contacto-button";
+import { getMyPermisos } from "@/lib/db/roles";
+import { can } from "@/lib/permissions";
 
 type Params = Promise<{ id: string }>;
 
@@ -27,9 +30,10 @@ function cleanPhone(s: string): string {
 
 export default async function ContactoDetailPage({ params }: { params: Params }) {
   const { id } = await params;
-  const [c, user] = await Promise.all([getContacto(id), getSessionUser()]);
+  const [c, user, perms] = await Promise.all([getContacto(id), getSessionUser(), getMyPermisos()]);
   if (!c) notFound();
   const canEdit = user?.rol === "admin";
+  const canDelete = can(perms.permisos, "contactos", "eliminar", perms.es_admin);
 
   const [notas, campos, cambios, documentos, nivel, oportunidades, empresasAsociadas] = await Promise.all([
     listNotas({ tipo: "contacto", entity_id: id }),
@@ -83,14 +87,17 @@ export default async function ContactoDetailPage({ params }: { params: Params })
             )}
           </div>
         </div>
-        {canEdit && (
-          <Link
-            href={`/contactos/${c.id}/editar`}
-            className="shrink-0 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
-          >
-            Editar
-          </Link>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {canEdit && (
+            <Link
+              href={`/contactos/${c.id}/editar`}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
+            >
+              Editar
+            </Link>
+          )}
+          {canDelete && <DeleteContactoButton id={c.id} nombre={c.nombre} />}
+        </div>
       </div>
 
       {/* Two columns */}
