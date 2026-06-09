@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { getTenantFromHeaders } from "@/lib/tenant";
 import { env } from "@/lib/env";
+import { PageHeader } from "@/components/ui/page-header";
 import { CodeSnippet } from "./code-snippet";
 
 export default async function CapturaPage() {
@@ -38,13 +38,12 @@ export default async function CapturaPage() {
 
   return (
     <div className="max-w-3xl space-y-4">
-      <div>
-        <Link href="/ajustes" className="text-sm text-brand-primary hover:underline">← Ajustes</Link>
-        <h1 className="mt-1 text-2xl font-bold">Captura de leads</h1>
-        <p className="text-sm text-gray-500">
-          Pegá este formulario en tu sitio web. Cada envío crea automáticamente un contacto y una oportunidad en tu CRM (origen «web»).
-        </p>
-      </div>
+      <PageHeader
+        title="Captura de leads"
+        subtitle="Pegá este formulario en tu sitio web. Cada envío crea automáticamente un contacto y una oportunidad en tu CRM (origen «web»)."
+        backHref="/ajustes"
+        backLabel="Ajustes"
+      />
 
       <section className="space-y-3 rounded-lg border border-gray-200 bg-white p-6">
         <div>

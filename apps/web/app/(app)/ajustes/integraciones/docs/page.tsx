@@ -1,16 +1,24 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function ApiDocsPage() {
   return (
     <div className="space-y-6">
-      <Link href="/ajustes/integraciones" className="text-sm text-brand-navy hover:underline">← Integraciones</Link>
-      <header>
-        <h1 className="text-2xl font-bold">Documentación API v1</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Una API REST simple y multi-tenant. Una sola API key activa por cuenta, con límite mensual configurable. Si se excede, los leads entrantes
-          van automáticamente a la lista de espera y no se pierden.
-        </p>
-      </header>
+      <PageHeader
+        title="Documentación API v1"
+        subtitle="Una API REST simple y multi-tenant. Una sola API key activa por cuenta, con límite mensual configurable. Si se excede, los leads entrantes van automáticamente a la lista de espera y no se pierden."
+        backHref="/ajustes/integraciones"
+        backLabel="Integraciones"
+      />
+      <p className="text-xs">
+        <Link href="/api/v1/openapi.json" className="text-brand-primary hover:underline" target="_blank">
+          📥 Spec OpenAPI 3.1 (JSON)
+        </Link>
+        {" · "}
+        <a href="https://editor.swagger.io/?url=https://turisteacrm.com/api/v1/openapi.json" className="text-brand-primary hover:underline" target="_blank" rel="noopener noreferrer">
+          🛠 Abrir en Swagger Editor
+        </a>
+      </p>
 
       <Section title="Autenticación">
         <p>Cada request requiere el header <Code>Authorization: Bearer crm_…</Code>. Generá la key en <Link href="/ajustes/integraciones" className="text-brand-primary underline">Integraciones</Link>.</p>

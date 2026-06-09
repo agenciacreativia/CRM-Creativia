@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { listCampos } from "@/lib/db/campos";
+import { PageHeader } from "@/components/ui/page-header";
 import { CamposManager } from "./campos-manager";
 
 type SearchParams = Promise<{ entidad?: string }>;
@@ -15,12 +16,10 @@ export default async function CamposPage({ searchParams }: { searchParams: Searc
 
   return (
     <div className="space-y-6 ">
-      <header>
-        <h1 className="text-2xl font-bold">Campos personalizados</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Definí campos adicionales para tus empresas, contactos y oportunidades.
-        </p>
-      </header>
+      <PageHeader
+        title="Campos personalizados"
+        subtitle="Definí campos adicionales para tus empresas, contactos y oportunidades."
+      />
 
       <CamposManager initial={campos} entidad={entidad} />
     </div>

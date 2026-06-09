@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { getOportunidad } from "@/lib/db/oportunidades";
 import { loadPickerData } from "@/lib/db/picker-data";
+import { PageHeader } from "@/components/ui/page-header";
 import { EditWrapper } from "./edit-wrapper";
 
 type Params = Promise<{ id: string }>;
@@ -13,14 +13,12 @@ export default async function EditOportunidadPage({ params }: { params: Params }
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <Link href={`/oportunidades/${id}`} className="text-sm text-brand-primary hover:underline">
-        ← {oportunidad.nombre}
-      </Link>
-
-      <header>
-        <h1 className="text-2xl font-bold">Editar oportunidad</h1>
-        <p className="text-sm text-gray-500 mt-1">{oportunidad.nombre}</p>
-      </header>
+      <PageHeader
+        title="Editar oportunidad"
+        subtitle={oportunidad.nombre}
+        backHref={`/oportunidades/${id}`}
+        backLabel={oportunidad.nombre}
+      />
 
       <section className="bg-white border border-gray-200 rounded-lg p-6">
         <EditWrapper

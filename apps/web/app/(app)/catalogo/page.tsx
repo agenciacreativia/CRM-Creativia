@@ -5,6 +5,7 @@ import { getMyPermisos } from "@/lib/db/roles";
 import { isPlatformAdmin, getTenantHerramientas } from "@/lib/db/planes";
 import { can } from "@/lib/permissions";
 import { CatalogoBrowse } from "./catalogo-browse";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function CatalogoPage() {
   // Si está conectada la base de cupos del sitio, leemos en vivo de ahí;
@@ -23,12 +24,10 @@ export default async function CatalogoPage() {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-2xl font-bold">Catálogo Turistea</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Inventario mayorista disponible para vender. {puedeCopiar ? "Copialo a tus productos con tu markup y usalo en cotizaciones." : "Consultá precios netos y disponibilidad."}
-        </p>
-      </header>
+      <PageHeader
+        title="Catálogo Turistea"
+        subtitle={`Inventario mayorista disponible para vender. ${puedeCopiar ? "Copialo a tus productos con tu markup y usalo en cotizaciones." : "Consultá precios netos y disponibilidad."}`}
+      />
       <CatalogoBrowse productos={productos} puedeCopiar={puedeCopiar} />
     </div>
   );

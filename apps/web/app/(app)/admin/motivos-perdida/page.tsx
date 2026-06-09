@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { listMotivosPerdida } from "@/lib/db/motivos";
 import { SearchInput } from "@/components/list-toolbar";
+import { PageHeader } from "@/components/ui/page-header";
 import { MotivosTable } from "./motivos-table";
 
 type SearchParams = Promise<{ q?: string }>;
@@ -15,12 +16,10 @@ export default async function MotivosPerdidaPage({ searchParams }: { searchParam
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <header>
-        <h1 className="text-2xl font-bold">Motivos de pérdida</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Personalizá los motivos que aparecen al marcar una oportunidad como perdida.
-        </p>
-      </header>
+      <PageHeader
+        title="Motivos de pérdida"
+        subtitle="Personalizá los motivos que aparecen al marcar una oportunidad como perdida."
+      />
       <SearchInput placeholder="Buscar motivo..." />
       <MotivosTable initial={motivos} />
     </div>

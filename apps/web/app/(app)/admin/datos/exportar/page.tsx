@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { listBackupLog } from "@/lib/db/backup-log";
 import { tenantTieneHerramienta } from "@/lib/db/planes";
+import { PageHeader } from "@/components/ui/page-header";
 import { ExportPanel } from "./export-panel";
 
 export default async function ExportarPage() {
@@ -14,14 +14,12 @@ export default async function ExportarPage() {
 
   return (
     <div className="space-y-6 ">
-      <Link href="/admin/datos" className="text-sm text-brand-primary hover:underline">← Datos</Link>
-
-      <header>
-        <h1 className="text-2xl font-bold">Exportar datos</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Descargá un backup completo en JSON o exportá una entidad puntual a CSV.
-        </p>
-      </header>
+      <PageHeader
+        title="Exportar datos"
+        subtitle="Descargá un backup completo en JSON o exportá una entidad puntual a CSV."
+        backHref="/admin/datos"
+        backLabel="Datos"
+      />
 
       <ExportPanel />
 

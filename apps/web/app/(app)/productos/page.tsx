@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { listProductos } from "@/lib/db/productos";
 import { getMyPermisos } from "@/lib/db/roles";
 import { can } from "@/lib/permissions";
+import { PageHeader } from "@/components/ui/page-header";
 import { ProductosManager } from "./productos-manager";
 
 export default async function ProductosPage() {
@@ -12,12 +13,10 @@ export default async function ProductosPage() {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-2xl font-bold">Productos</h1>
-        <p className="mt-1 text-xs text-gray-500">
-          Catálogo de planes y servicios. Reutilizables en cotizaciones y correos.
-        </p>
-      </header>
+      <PageHeader
+        title="Productos"
+        subtitle="Catálogo de planes y servicios. Reutilizables en cotizaciones y correos."
+      />
 
       <ProductosManager
         initial={productos}

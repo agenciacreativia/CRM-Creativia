@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Smile, Meh, Frown } from "lucide-react";
 import { getResumenNps, listNps } from "@/lib/db/nps";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString("es", { day: "numeric", month: "short", year: "numeric" });
@@ -12,10 +13,10 @@ export default async function NpsPage() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">NPS (post-viaje)</h1>
-        <p className="text-sm text-gray-500">Encuestas enviadas y respuestas. Promotores 9-10, pasivos 7-8, detractores 0-6.</p>
-      </header>
+      <PageHeader
+        title="NPS (post-viaje)"
+        subtitle="Encuestas enviadas y respuestas. Promotores 9-10, pasivos 7-8, detractores 0-6."
+      />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <Kpi label="Enviados" value={String(resumen.total)} />

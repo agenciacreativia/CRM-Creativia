@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { getUsuario } from "@/lib/db/usuarios";
+import { PageHeader } from "@/components/ui/page-header";
 import { EditUsuarioForm } from "./edit-usuario-form";
 
 type Params = Promise<{ id: string }>;
@@ -18,14 +18,12 @@ export default async function EditUsuarioPage({ params }: { params: Params }) {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <Link href="/admin/usuarios" className="text-sm text-brand-primary hover:underline">← Usuarios</Link>
-
-      <header>
-        <h1 className="text-2xl font-bold">Editar usuario</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {usuario.nombre} · {usuario.email}
-        </p>
-      </header>
+      <PageHeader
+        title="Editar usuario"
+        subtitle={`${usuario.nombre} · ${usuario.email}`}
+        backHref="/admin/usuarios"
+        backLabel="Usuarios"
+      />
 
       {isSelf && (
         <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm">

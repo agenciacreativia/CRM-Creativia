@@ -6,18 +6,29 @@
     "signing_in": "Signing in...",
     "email_required": "Email is required",
     "password_min": "Minimum 8 characters",
-    "error_invalid_credentials": "Invalid email or password"
+    "error_invalid_credentials": "Invalid email or password",
+    "forgot_password": "Forgot your password?",
+    "reset_sent": "We sent you an email with password reset instructions."
   },
   "nav": {
     "dashboard": "Dashboard",
     "empresas": "Companies",
     "contactos": "Contacts",
     "oportunidades": "Opportunities",
+    "productos": "Products",
     "agenda": "Calendar",
+    "fidelizacion": "Loyalty",
+    "campanias": "Campaigns",
+    "reportes": "Reports",
+    "catalogo": "Turistea Catalog",
+    "reservas": "Bookings",
+    "buscar": "Advanced search",
+    "ajustes": "Settings",
     "admin": "Admin",
     "datos": "Data",
     "usuarios": "Users",
-    "sign_out": "Sign out"
+    "sign_out": "Sign out",
+    "create": "Create"
   },
   "dashboard": {
     "greeting": "Hello, {{nombre}}",
@@ -31,10 +42,38 @@
   },
   "common": {
     "save": "Save",
+    "save_changes": "Save changes",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
+    "view": "View",
+    "create": "Create",
     "search": "Search",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "no_results": "No results",
+    "confirm_delete": "Are you sure you want to delete this record?",
+    "actions": "Actions",
+    "name": "Name",
+    "status": "Status",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "filter": "Filter",
+    "filters": "Filters",
+    "clear_filters": "Clear filters",
+    "export_csv": "Export CSV",
+    "required": "Required",
+    "optional": "Optional"
+  },
+  "states": {
+    "activo": "Active",
+    "ganado": "Won",
+    "perdido": "Lost",
+    "eliminado": "Deleted",
+    "prospecto": "Prospect",
+    "cliente": "Customer",
+    "inactivo": "Inactive"
   }
 }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { listComisiones } from "@/lib/db/comisiones";
 import { FilterSelect } from "@/components/list-toolbar";
+import { PageHeader } from "@/components/ui/page-header";
 import { ComisionesManager } from "./comisiones-manager";
 
 type SearchParams = Promise<{ ym?: string }>;
@@ -27,13 +28,11 @@ export default async function ComisionesPage({ searchParams }: { searchParams: S
 
   return (
     <div className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Comisiones</h1>
-          <p className="text-sm text-gray-500">Comisión por asesor según ventas ganadas y su % configurado.</p>
-        </div>
-        <FilterSelect name="ym" options={meses} />
-      </header>
+      <PageHeader
+        title="Comisiones"
+        subtitle="Comisión por asesor según ventas ganadas y su % configurado."
+        right={<FilterSelect name="ym" options={meses} />}
+      />
 
       <ComisionesManager initial={comisiones} />
     </div>

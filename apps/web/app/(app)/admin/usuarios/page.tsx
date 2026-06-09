@@ -5,6 +5,7 @@ import { listUsuarios } from "@/lib/db/usuarios";
 import { SearchInput, FilterSelect } from "@/components/list-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { NewUsuarioForm } from "./new-usuario-form";
+import { PageHeader } from "@/components/ui/page-header";
 
 type SearchParams = Promise<{ q?: string; rol?: string; activo?: string }>;
 
@@ -17,15 +18,11 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Sea
 
   return (
     <div className="space-y-6 ">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Usuarios</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Gestioná los miembros del tenant. Admins ven todo; asesores ven solo sus oportunidades.
-          </p>
-        </div>
-        <p className="text-sm text-gray-500">{usuarios.length} resultados</p>
-      </header>
+      <PageHeader
+        title="Usuarios"
+        subtitle="Gestioná los miembros del tenant. Admins ven todo; asesores ven solo sus oportunidades."
+        right={<p className="text-sm text-gray-500">{usuarios.length} resultados</p>}
+      />
 
       <div className="flex items-center gap-3 flex-wrap">
         <SearchInput placeholder="Buscar por nombre o email..." />

@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { CreditCard, AlertCircle } from "lucide-react";
 import { isPlatformAdmin } from "@/lib/db/planes";
 import { listFacturacion } from "@/lib/db/facturacion";
 import { stripeConfigurado } from "@/lib/env";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 
 const ESTADO_BADGE: Record<string, "info" | "success" | "warn" | "danger" | "default"> = {
   trial: "info",
@@ -34,11 +34,12 @@ export default async function FacturacionPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <Link href="/ajustes" className="text-sm text-brand-primary hover:underline">← Ajustes</Link>
-        <h1 className="mt-1 text-2xl font-bold">Facturación</h1>
-        <p className="text-sm text-gray-500">Estado de suscripción de cada agencia. El cobro automático se activa al conectar Stripe.</p>
-      </div>
+      <PageHeader
+        title="Facturación"
+        subtitle="Estado de suscripción de cada agencia. El cobro automático se activa al conectar Stripe."
+        backHref="/ajustes"
+        backLabel="Ajustes"
+      />
 
       {/* Estado de Stripe */}
       <div className={`flex items-start gap-3 rounded-lg border p-4 ${conectado ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}`}>

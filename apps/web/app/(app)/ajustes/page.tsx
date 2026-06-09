@@ -9,6 +9,7 @@ import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin, getTenantHerramientas } from "@/lib/db/planes";
 import { GoogleConnection } from "./google-connection";
 import { PlantillasManager } from "./plantillas-manager";
+import { PageHeader } from "@/components/ui/page-header";
 
 type SearchParams = Promise<{ google?: string }>;
 
@@ -59,10 +60,10 @@ export default async function AjustesPage({ searchParams }: { searchParams: Sear
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-2xl font-bold">Ajustes</h1>
-        <p className="text-sm text-gray-500">Configuración general, equipo, datos y plataforma.</p>
-      </header>
+      <PageHeader
+        title="Ajustes"
+        subtitle="Configuración general, equipo, datos y plataforma."
+      />
 
       {msg && (
         <div className={"rounded-md border p-3 text-sm " + (msg.tone === "ok" ? "border-green-200 bg-green-50 text-gray-800" : "border-red-200 bg-red-50 text-status-danger")}>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui/page-header";
 
 type TenantRow = {
   id: string;
@@ -29,11 +30,12 @@ export default async function CuentaPage() {
 
   return (
     <div className="space-y-4">
-      <Link href="/ajustes" className="text-sm text-brand-navy hover:underline">← Ajustes</Link>
-      <header>
-        <h1 className="text-2xl font-bold">Cuenta de mi agencia</h1>
-        <p className="text-sm text-gray-500">Datos generales de tu agencia. Cambios sensibles requieren contactar a soporte.</p>
-      </header>
+      <PageHeader
+        title="Cuenta de mi agencia"
+        subtitle="Datos generales de tu agencia. Cambios sensibles requieren contactar a soporte."
+        backHref="/ajustes"
+        backLabel="Ajustes"
+      />
 
       {!tenant ? (
         <p className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">No se pudo cargar el tenant.</p>

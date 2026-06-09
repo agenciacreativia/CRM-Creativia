@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { listAuditoria } from "@/lib/db/historial";
 import { listUsuarios } from "@/lib/db/usuarios";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { AuditoriaFilters } from "./filters";
 
 type SearchParams = Promise<{ q?: string; entidad?: string; asesor?: string; desde?: string; hasta?: string }>;
@@ -35,11 +36,12 @@ export default async function AuditoriaPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="space-y-4">
-      <header>
-        <Link href="/ajustes" className="text-sm text-brand-primary hover:underline">← Ajustes</Link>
-        <h1 className="mt-1 text-2xl font-bold">Auditoría</h1>
-        <p className="text-sm text-gray-500">Registro de toda la actividad del equipo (creaciones, ediciones, eliminaciones).</p>
-      </header>
+      <PageHeader
+        title="Auditoría"
+        subtitle="Registro de toda la actividad del equipo (creaciones, ediciones, eliminaciones)."
+        backHref="/ajustes"
+        backLabel="Ajustes"
+      />
 
       <AuditoriaFilters asesores={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))} activos={params} />
 

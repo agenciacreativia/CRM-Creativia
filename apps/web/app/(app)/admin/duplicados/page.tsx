@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { findDuplicadosContactos, findDuplicadosEmpresas } from "@/lib/db/duplicados";
+import { PageHeader } from "@/components/ui/page-header";
 import { DupList } from "./dup-list";
 import { mergeContactosAction, mergeEmpresasAction } from "./actions";
 
@@ -22,13 +22,12 @@ export default async function DuplicadosPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <header>
-        <Link href="/admin/datos" className="text-sm text-brand-primary hover:underline">← Datos</Link>
-        <h1 className="mt-1 text-2xl font-bold">Duplicados</h1>
-        <p className="text-sm text-gray-500">
-          Registros que parecen repetidos. Al fusionar, las relaciones del duplicado se reasignan al principal y luego se elimina.
-        </p>
-      </header>
+      <PageHeader
+        title="Duplicados"
+        subtitle="Registros que parecen repetidos. Al fusionar, las relaciones del duplicado se reasignan al principal y luego se elimina."
+        backHref="/admin/datos"
+        backLabel="Datos"
+      />
 
       <section className="space-y-2">
         <h2 className="text-sm font-bold uppercase text-gray-500">Contactos (por correo)</h2>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function AdminDatosPage() {
   const user = await getSessionUser();
@@ -8,10 +9,10 @@ export default async function AdminDatosPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Gestión de datos</h1>
-        <p className="text-sm text-gray-500 mt-1">Importar, exportar y administrar los datos del CRM.</p>
-      </header>
+      <PageHeader
+        title="Gestión de datos"
+        subtitle="Importar, exportar y administrar los datos del CRM."
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { getTenantConfig, RFM_DEFAULT } from "@/lib/db/tenant-config";
+import { PageHeader } from "@/components/ui/page-header";
 import { ConfigComercialForm } from "./form";
 
 export default async function ComercialPage() {
@@ -12,11 +12,12 @@ export default async function ComercialPage() {
 
   return (
     <div className="max-w-2xl space-y-4">
-      <div>
-        <Link href="/ajustes" className="text-sm text-brand-primary hover:underline">← Ajustes</Link>
-        <h1 className="mt-1 text-2xl font-bold">Configuración comercial</h1>
-        <p className="text-sm text-gray-500">Umbrales de niveles de viajero y tipo de cambio.</p>
-      </div>
+      <PageHeader
+        title="Configuración comercial"
+        subtitle="Umbrales de niveles de viajero y tipo de cambio."
+        backHref="/ajustes"
+        backLabel="Ajustes"
+      />
       <ConfigComercialForm
         rfmOro={cfg.rfm?.oro ?? RFM_DEFAULT.oro}
         rfmPlata={cfg.rfm?.plata ?? RFM_DEFAULT.plata}

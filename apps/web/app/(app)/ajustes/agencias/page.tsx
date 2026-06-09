@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { isPlatformAdmin, listPlanes } from "@/lib/db/planes";
 import { listAgencias } from "@/lib/db/agencias";
+import { PageHeader } from "@/components/ui/page-header";
 import { AgenciasManager } from "./agencias-manager";
 
 export default async function AgenciasPage() {
@@ -11,15 +11,12 @@ export default async function AgenciasPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <Link href="/ajustes" className="text-sm text-brand-primary hover:underline">
-          ← Ajustes
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold">Agencias</h1>
-        <p className="text-sm text-gray-500">
-          Creá el CRM de cada cliente, asignale un plan y gestioná su prueba gratuita y estado.
-        </p>
-      </div>
+      <PageHeader
+        title="Agencias"
+        subtitle="Creá el CRM de cada cliente, asignale un plan y gestioná su prueba gratuita y estado."
+        backHref="/ajustes"
+        backLabel="Ajustes"
+      />
 
       <AgenciasManager
         initial={agencias}

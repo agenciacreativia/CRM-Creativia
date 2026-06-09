@@ -8,6 +8,7 @@ import { listContactos } from "@/lib/db/contactos";
 import { listEmpresas } from "@/lib/db/empresas";
 import { listOportunidades } from "@/lib/db/oportunidades";
 import { FilterBuilder } from "@/components/filters/filter-builder";
+import { PageHeader } from "@/components/ui/page-header";
 
 type Modulo = "contacto" | "empresa" | "oportunidad";
 
@@ -44,10 +45,10 @@ export default async function BusquedaAvanzadaPage({ searchParams }: { searchPar
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-2xl font-bold">Búsqueda avanzada</h1>
-        <p className="text-sm text-gray-500">Elegí un módulo y armá condiciones con operadores según el tipo de campo. Los campos personalizados de tu agencia aparecen automáticamente.</p>
-      </header>
+      <PageHeader
+        title="Búsqueda avanzada"
+        subtitle="Elegí un módulo y armá condiciones con operadores según el tipo de campo. Los campos personalizados de tu agencia aparecen automáticamente."
+      />
 
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3">
         <div className="inline-flex rounded-md border border-gray-200 bg-white p-0.5">

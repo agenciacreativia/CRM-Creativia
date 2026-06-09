@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getMyPermisos } from "@/lib/db/roles";
 import { can } from "@/lib/permissions";
 import { loadPickerData } from "@/lib/db/picker-data";
+import { PageHeader } from "@/components/ui/page-header";
 import { CreateWrapper } from "./create-wrapper";
 
 export default async function NuevaOportunidadPage() {
@@ -20,8 +21,11 @@ export default async function NuevaOportunidadPage() {
   if (picker.empresas.length === 0) {
     return (
       <div className="space-y-4 max-w-2xl">
-        <Link href="/oportunidades" className="text-sm text-brand-primary hover:underline">← Oportunidades</Link>
-        <h1 className="text-2xl font-bold">Nueva oportunidad</h1>
+        <PageHeader
+          title="Nueva oportunidad"
+          backHref="/oportunidades"
+          backLabel="Oportunidades"
+        />
         <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-sm">
           Para crear una oportunidad necesitás al menos una empresa con un contacto.{" "}
           <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">
@@ -34,11 +38,11 @@ export default async function NuevaOportunidadPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <Link href="/oportunidades" className="text-sm text-brand-primary hover:underline">← Oportunidades</Link>
-
-      <header>
-        <h1 className="text-2xl font-bold">Nueva oportunidad</h1>
-      </header>
+      <PageHeader
+        title="Nueva oportunidad"
+        backHref="/oportunidades"
+        backLabel="Oportunidades"
+      />
 
       <section className="bg-white border border-gray-200 rounded-lg p-6">
         <CreateWrapper

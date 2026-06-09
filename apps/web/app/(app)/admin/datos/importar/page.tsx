@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { tenantTieneHerramienta } from "@/lib/db/planes";
+import { PageHeader } from "@/components/ui/page-header";
 import { ImportForm } from "./import-form";
 
 export default async function ImportPage() {
@@ -10,12 +11,10 @@ export default async function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Importar datos</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Subí tus archivos Excel (empresas, contactos, oportunidades) para migrar tu base actual al CRM.
-        </p>
-      </header>
+      <PageHeader
+        title="Importar datos"
+        subtitle="Subí tus archivos Excel (empresas, contactos, oportunidades) para migrar tu base actual al CRM."
+      />
 
       <ImportForm />
     </div>

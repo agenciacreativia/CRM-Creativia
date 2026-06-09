@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
+import { PageHeader } from "@/components/ui/page-header";
 import { getTenantFromHeaders } from "@/lib/tenant";
 import { listRoles } from "@/lib/db/roles";
 import { listUsuarios } from "@/lib/db/usuarios";
@@ -27,15 +27,12 @@ export default async function RolesPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <Link href="/ajustes" className="text-sm text-brand-primary hover:underline">
-          ← Ajustes
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold">Roles y cuentas</h1>
-        <p className="text-sm text-gray-500">
-          Definí roles con permisos por módulo e invitá usuarios a tu equipo.
-        </p>
-      </div>
+      <PageHeader
+        title="Roles y cuentas"
+        subtitle="Definí roles con permisos por módulo e invitá usuarios a tu equipo."
+        backHref="/ajustes"
+        backLabel="Ajustes"
+      />
 
       <section className="rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="mb-4 text-sm font-bold uppercase text-gray-500">Roles</h2>

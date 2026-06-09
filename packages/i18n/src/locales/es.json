@@ -6,18 +6,29 @@
     "signing_in": "Iniciando sesión...",
     "email_required": "Email requerido",
     "password_min": "Mínimo 8 caracteres",
-    "error_invalid_credentials": "Email o contraseña inválidos"
+    "error_invalid_credentials": "Email o contraseña inválidos",
+    "forgot_password": "¿Olvidaste tu contraseña?",
+    "reset_sent": "Te enviamos un email con instrucciones para resetear tu contraseña."
   },
   "nav": {
     "dashboard": "Dashboard",
     "empresas": "Empresas",
     "contactos": "Contactos",
     "oportunidades": "Oportunidades",
+    "productos": "Productos",
     "agenda": "Agenda",
+    "fidelizacion": "Fidelización",
+    "campanias": "Campañas",
+    "reportes": "Reportes",
+    "catalogo": "Catálogo Turistea",
+    "reservas": "Reservas",
+    "buscar": "Búsqueda avanzada",
+    "ajustes": "Ajustes",
     "admin": "Administración",
     "datos": "Datos",
     "usuarios": "Usuarios",
-    "sign_out": "Cerrar sesión"
+    "sign_out": "Cerrar sesión",
+    "create": "Crear"
   },
   "dashboard": {
     "greeting": "Hola, {{nombre}}",
@@ -31,10 +42,38 @@
   },
   "common": {
     "save": "Guardar",
+    "save_changes": "Guardar cambios",
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "edit": "Editar",
+    "view": "Ver",
+    "create": "Crear",
     "search": "Buscar",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "no_results": "Sin resultados",
+    "confirm_delete": "¿Confirmás eliminar este registro?",
+    "actions": "Acciones",
+    "name": "Nombre",
+    "status": "Estado",
+    "yes": "Sí",
+    "no": "No",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "filter": "Filtrar",
+    "filters": "Filtros",
+    "clear_filters": "Limpiar filtros",
+    "export_csv": "Exportar CSV",
+    "required": "Requerido",
+    "optional": "Opcional"
+  },
+  "states": {
+    "activo": "Activo",
+    "ganado": "Ganada",
+    "perdido": "Perdida",
+    "eliminado": "Eliminada",
+    "prospecto": "Prospecto",
+    "cliente": "Cliente",
+    "inactivo": "Inactivo"
   }
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Cake, FileWarning } from "lucide-react";
 import { getFidelizacion } from "@/lib/db/fidelizacion";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 
 function fmt(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("es", { day: "numeric", month: "short" });
@@ -12,10 +13,10 @@ export default async function FidelizacionPage() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-bold">Fidelización</h1>
-        <p className="text-sm text-gray-500">Cumpleaños próximos y documentos por vencer — oportunidades para contactar al viajero.</p>
-      </header>
+      <PageHeader
+        title="Fidelización"
+        subtitle="Cumpleaños próximos y documentos por vencer — oportunidades para contactar al viajero."
+      />
 
       <section className="rounded-lg border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3">
