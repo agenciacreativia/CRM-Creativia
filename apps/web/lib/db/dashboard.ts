@@ -155,13 +155,16 @@ export async function loadDashboard(filters: DashboardFilters = {}): Promise<{
     ? supabase.from("actividad").select("creado_por").eq("completada", true)
     : Promise.resolve({ data: [] as Array<{ creado_por: string | null }> });
 
-  // Default pipeline (for funnel).
+  // Pipelines for the funnel block. Fetch all so we can pick the one the
+  // user filtered by; if no filter, the first row (ordered es_default first)
+  // is the tenant default. Bug surfaced in QA desktop: the funnel was always
+  // pinned to the default pipeline even when the user picked another one
+  // in the filter bar.
   const pipelinePromise = supabase
     .from("pipeline")
     .select("id, nombre, es_default")
     .order("es_default", { ascending: false })
-    .order("nombre", { ascending: true })
-    .limit(1);
+    .order("nombre", { ascending: true });
 
   // historial_etapa entries — for velocity (ganadas) calculation.
   const histPromise = supabase
@@ -421,17 +424,22 @@ export async function loadDashboard(filters: DashboardFilters = {}): Promise<{
     moneda: moneda_pipeline,
   };
 
-  // ---------- Block C: Embudo de conversión (pipeline default) ----------
-  const defaultPipeline = (pipelines ?? [])[0] as { id: string; nombre: string } | undefined;
+  // ---------- Block C: Embudo de conversión ----------
+  // Pick the pipeline the user filtered by (if any), otherwise the tenant
+  // default (= first row, ordered es_default first).
+  const allPipelines = (pipelines ?? []) as Array<{ id: string; nombre: string; es_default?: boolean | null }>;
+  const targetPipeline =
+    (filters.pipeline ? allPipelines.find((p) => p.id === filters.pipeline) : null) ??
+    allPipelines[0];
   let embudo: EmbudoEtapa[] = [];
   let embudo_pipeline_nombre: string | null = null;
-  if (defaultPipeline) {
-    embudo_pipeline_nombre = defaultPipeline.nombre;
-    // Sólo opp del pipeline default. Una opp "alcanzó" la etapa N si su etapa
+  if (targetPipeline) {
+    embudo_pipeline_nombre = targetPipeline.nombre;
+    // Sólo opp del pipeline elegido. Una opp "alcanzó" la etapa N si su etapa
     // actual tiene `orden >= N` (independiente de estado), y las ganadas
     // implícitamente pasaron por todas.
     const oppsInPipe = opportunities.filter(
-      (o) => o.pipeline_id === defaultPipeline.id && o.estado !== "eliminado",
+      (o) => o.pipeline_id === targetPipeline.id && o.estado !== "eliminado",
     );
     // Listar etapas distintas vistas + sus órdenes
     const etapaByOrden = new Map<number, string>();
@@ -445,7 +453,7 @@ export async function loadDashboard(filters: DashboardFilters = {}): Promise<{
       const alcanzaron = oppsInPipe.filter((o) => {
         const e = oneOf(o.etapa_pipeline);
         if (!e) return false;
-        // Una oportunidad ganada alcanzó todas las etapas.
+        // A won opportunity reached every stage.
         if (o.estado === "ganado") return true;
         return e.orden >= orden;
       }).length;

@@ -56,7 +56,7 @@ export default async function ReportesPage({ searchParams }: { searchParams: Sea
       )}
       {(params.pipeline || params.asesor || params.desde || params.hasta) && (
         <div className="rounded-md border border-green-200 bg-green-50 px-4 py-2 text-xs text-green-800">
-          ✓ Filtros activos aplicados a KPIs, embudo, atribución y campañas.
+          ✓ Filtros aplicados: KPIs, embudo (pipeline elegido), atribución, asesores, forecast y campañas.
         </div>
       )}
 
