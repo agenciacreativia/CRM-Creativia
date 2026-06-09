@@ -63,7 +63,7 @@ export function EmpresaAside({
             { value: "inactivo", label: "Inactivo" },
           ]}
           onSave={(v) => saveEmpresaField(e.id, "estado_empresa", v)} />
-        <InlineEditField label="Email" value={e.email ?? ""} editable={canEdit}
+        <InlineEditField label="Email" type="email" value={e.email ?? ""} editable={canEdit}
           onSave={(v) => saveEmpresaField(e.id, "email", v)} />
         <InlineEditField label="Teléfono" value={e.telefono ?? ""} editable={canEdit}
           onSave={(v) => saveEmpresaField(e.id, "telefono", v)} />

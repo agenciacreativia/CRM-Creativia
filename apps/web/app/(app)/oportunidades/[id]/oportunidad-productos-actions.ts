@@ -18,7 +18,7 @@ const addSchema = z.object({
   nombre: z.string().trim().min(1, "Nombre requerido").max(300),
   cantidad: z.number().nonnegative().default(1),
   precio_unitario: z.number().nonnegative().default(0),
-  moneda: z.string().trim().max(8).default("USD"),
+  moneda: z.enum(["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"]).default("USD"),
 });
 
 export type AddProductoPayload = z.input<typeof addSchema>;

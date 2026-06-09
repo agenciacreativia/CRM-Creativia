@@ -19,10 +19,13 @@ export default function HandoffPage() {
     const hash = new URLSearchParams(window.location.hash.slice(1));
     const access_token = hash.get("access_token");
     const refresh_token = hash.get("refresh_token");
-    const next = hash.get("next") || "/dashboard";
+    const nextRaw = hash.get("next") || "/dashboard";
     const imp = hash.get("imp") === "1";
     const agencia = hash.get("agencia") || "";
     const volver = hash.get("volver") || "";
+    // Defensa anti open-redirect: el `next` debe ser una ruta relativa que arranca
+    // con "/" y NO con "//" (URLs protocol-relative que escapan al mismo host).
+    const next = /^\/[^/]/.test(nextRaw) ? nextRaw : "/dashboard";
 
     if (!access_token || !refresh_token) {
       setError("No se recibieron las credenciales de sesión.");

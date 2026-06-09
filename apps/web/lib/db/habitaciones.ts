@@ -38,13 +38,17 @@ export async function crearHabitacion(oportunidadId: string, tipo: TipoHabitacio
 }
 
 export async function eliminarHabitacion(id: string): Promise<void> {
+  const user = await getSessionUser();
+  if (!user?.tenantId) throw new Error("Sesión inválida");
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("habitacion").delete().eq("id", id);
+  const { error } = await supabase.from("habitacion").delete().eq("id", id).eq("tenant_id", user.tenantId);
   if (error) throw new Error(error.message);
 }
 
 export async function asignarPasajeroHabitacion(pasajeroId: string, habitacionId: string | null): Promise<void> {
+  const user = await getSessionUser();
+  if (!user?.tenantId) throw new Error("Sesión inválida");
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("pasajero").update({ habitacion_id: habitacionId }).eq("id", pasajeroId);
+  const { error } = await supabase.from("pasajero").update({ habitacion_id: habitacionId }).eq("id", pasajeroId).eq("tenant_id", user.tenantId);
   if (error) throw new Error(error.message);
 }

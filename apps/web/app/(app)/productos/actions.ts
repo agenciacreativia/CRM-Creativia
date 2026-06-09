@@ -24,7 +24,10 @@ const schema = z.object({
   incluye: z.preprocess(emptyToNull, z.string().max(5000).nullable()),
   no_incluye: z.preprocess(emptyToNull, z.string().max(5000).nullable()),
   proveedor: z.preprocess(emptyToNull, z.string().max(160).nullable()),
-  activo: z.preprocess((v) => v === "true" || v === "on" || v === true || v === undefined, z.boolean()),
+  // Checkbox: marcado = "on"|"true"|true. Si no viene en el FormData (desmarcado),
+  // el preprocess recibe undefined y devuelve false. Antes incluía `v === undefined`
+  // como truthy, lo que invertía la semántica (desmarcado → activo).
+  activo: z.preprocess((v) => v === "true" || v === "on" || v === true, z.boolean()),
 });
 
 export async function saveProductoAction(id: string | null, formData: FormData): Promise<ProductoResult> {

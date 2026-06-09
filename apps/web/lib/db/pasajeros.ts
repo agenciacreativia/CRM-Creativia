@@ -67,14 +67,18 @@ export async function createPasajero(input: PasajeroInput): Promise<string> {
 }
 
 export async function updatePasajero(id: string, patch: Omit<PasajeroInput, "oportunidadId">): Promise<void> {
+  const user = await getSessionUser();
+  if (!user?.tenantId) throw new Error("Sesión inválida");
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("pasajero").update(patch).eq("id", id);
+  const { error } = await supabase.from("pasajero").update(patch).eq("id", id).eq("tenant_id", user.tenantId);
   if (error) throw new Error(error.message);
 }
 
 export async function deletePasajero(id: string): Promise<void> {
+  const user = await getSessionUser();
+  if (!user?.tenantId) throw new Error("Sesión inválida");
   const supabase = await createServerSupabase();
-  const { data: p } = await supabase.from("pasajero").select("archivo_path").eq("id", id).maybeSingle();
+  const { data: p } = await supabase.from("pasajero").select("archivo_path").eq("id", id).eq("tenant_id", user.tenantId).maybeSingle();
   if (p?.archivo_path) {
     try {
       await createAdminSupabase().storage.from(DOCUMENTOS_BUCKET).remove([p.archivo_path as string]);
@@ -82,7 +86,7 @@ export async function deletePasajero(id: string): Promise<void> {
       /* ignore storage cleanup errors */
     }
   }
-  const { error } = await supabase.from("pasajero").delete().eq("id", id);
+  const { error } = await supabase.from("pasajero").delete().eq("id", id).eq("tenant_id", user.tenantId);
   if (error) throw new Error(error.message);
 }
 

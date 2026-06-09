@@ -78,12 +78,18 @@ export function OportunidadProductos({
     const p = isCustom ? null : productos.find((x) => x.id === productoId);
     if (!isCustom && !p) return;
 
+    const monedasValidas = ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"] as const;
+    type MonedaValida = (typeof monedasValidas)[number];
+    const candidateMon = (p?.moneda || defaultMoneda) as string;
+    const monedaSafe: MonedaValida = (monedasValidas as readonly string[]).includes(candidateMon)
+      ? (candidateMon as MonedaValida)
+      : "USD";
     const nuevo = {
       producto_id: p?.id ?? null,
       nombre: p?.nombre ?? "Concepto",
       cantidad: 1,
       precio_unitario: p?.precio_desde ?? 0,
-      moneda: p?.moneda || defaultMoneda,
+      moneda: monedaSafe,
     };
 
     const res = await addOportunidadProductoAction({ oportunidad_id: oportunidadId, ...nuevo });

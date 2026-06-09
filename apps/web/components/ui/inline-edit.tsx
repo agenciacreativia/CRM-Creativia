@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
-export type InlineEditType = "text" | "number" | "date" | "textarea" | "select";
+export type InlineEditType = "text" | "number" | "date" | "textarea" | "select" | "email";
 
 type Option = { value: string; label: string };
 
@@ -38,6 +38,16 @@ export function InlineEditField({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const committed = useRef(value);
+
+  // Re-sincronizamos si el server-component re-rendea con un nuevo valor
+  // (p.ej. router.refresh) y no estamos en medio de un edit local.
+  useEffect(() => {
+    if (!editing) {
+      committed.current = value;
+      setCurrent(value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   function commit() {
     setEditing(false);

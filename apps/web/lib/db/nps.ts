@@ -43,10 +43,13 @@ export async function getResumenNps(): Promise<NpsResumen> {
 
 export async function listNps(): Promise<NpsItem[]> {
   try {
+    const user = await getSessionUser();
+    if (!user?.tenantId) return [];
     const supabase = await createServerSupabase();
     const { data } = await supabase
       .from("nps_respuesta")
       .select("id, puntaje, comentario, estado, enviado_en, respondido_en, contacto:contacto_id(nombre), oportunidad:oportunidad_id(nombre)")
+      .eq("tenant_id", user.tenantId)
       .order("respondido_en", { ascending: false, nullsFirst: false })
       .order("enviado_en", { ascending: false })
       .limit(200);

@@ -60,6 +60,7 @@ export function GoogleTasks({ initial }: { initial: GoogleTask[] }) {
           <Input name="title" placeholder="¿Qué hay que hacer?" required />
           <Input name="due" type="date" />
           <Button type="submit" size="sm" disabled={saving}>{saving ? "…" : "Agregar"}</Button>
+          <Input name="notes" placeholder="Notas (opcional)" className="sm:col-span-3" />
         </form>
       )}
 
