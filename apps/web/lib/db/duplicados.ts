@@ -53,7 +53,8 @@ export async function findDuplicadosEmpresas(): Promise<Grupo<DupEmpresa>[]> {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("empresa")
-    .select("id, nombre, ciudad, contacto(count), oportunidad(count)");
+    // Embed explícito desde empresa (mig 0042 introdujo ambigüedad).
+    .select("id, nombre, ciudad, contacto:contacto!contacto_empresa_id_fkey(count), oportunidad(count)");
   if (error) return [];
   const map = new Map<string, DupEmpresa[]>();
   for (const r of (data ?? []) as Record<string, unknown>[]) {

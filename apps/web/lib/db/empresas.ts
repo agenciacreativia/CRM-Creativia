@@ -50,7 +50,9 @@ export async function listEmpresas(opts: { q?: string; estado?: string; limit?: 
 
   let query = supabase
     .from("empresa")
-    .select("id, nombre, email, telefono, ciudad, pais, estado_empresa, origen, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, campos_custom, contacto(count), oportunidad(count)")
+    // Embed explícito de contacto via FK principal (mig 0042 contacto_empresa_secundaria
+    // introdujo una segunda relación empresa↔contacto, PGRST201 con embed simple).
+    .select("id, nombre, email, telefono, ciudad, pais, estado_empresa, origen, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, campos_custom, contacto:contacto!contacto_empresa_id_fkey(count), oportunidad(count)")
     .order("nombre", { ascending: true })
     .limit(opts.limit ?? 200);
 
@@ -87,7 +89,8 @@ export async function getEmpresa(id: string): Promise<EmpresaDetail | null> {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("empresa")
-    .select("*, asignado:usuario!empresa_asignado_id_fkey(nombre), contacto(count), oportunidad(count)")
+    // Embed explícito (mig 0042 introdujo ambigüedad).
+    .select("*, asignado:usuario!empresa_asignado_id_fkey(nombre), contacto:contacto!contacto_empresa_id_fkey(count), oportunidad(count)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
