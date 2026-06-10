@@ -7,6 +7,7 @@
     "email_required": "Email requerido",
     "password_min": "Mínimo 8 caracteres",
     "error_invalid_credentials": "Email o contraseña inválidos",
+    "captcha_required": "Completá la verificación anti-bot.",
     "forgot_password": "¿Olvidaste tu contraseña?",
     "reset_sent": "Te enviamos un email con instrucciones para resetear tu contraseña."
   },

@@ -20,6 +20,11 @@ export const env = {
   BASE_DOMAIN: process.env.NEXT_PUBLIC_BASE_DOMAIN ?? "localhost:3000",
   ROOT_URL: process.env.NEXT_PUBLIC_ROOT_URL ?? "http://localhost:3000",
   DEFAULT_LOCALE: (process.env.NEXT_PUBLIC_DEFAULT_LOCALE ?? "es") as "es" | "en",
+  // Cloudflare Turnstile (CAPTCHA en login + recuperar contraseña). Si está
+  // vacío, el widget no se muestra y el login funciona sin captcha (permite
+  // activar/desactivar sin romper). Debe coordinarse con la activación de
+  // CAPTCHA en el dashboard de Supabase Auth.
+  TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "",
 };
 
 // Server-only — never inlined. Use `import "server-only"` in callers when needed.

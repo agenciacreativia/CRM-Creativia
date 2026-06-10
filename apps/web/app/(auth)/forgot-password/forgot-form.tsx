@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TurnstileWidget, TURNSTILE_ENABLED } from "@/components/auth/turnstile-widget";
 
 type FormData = { email: string };
 
@@ -14,18 +16,27 @@ export function ForgotPasswordForm() {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const turnstileRef = useRef<TurnstileInstance>(null);
   const { register, handleSubmit } = useForm<FormData>();
 
   async function onSubmit(values: FormData) {
+    if (TURNSTILE_ENABLED && !captchaToken) {
+      setError("Completá la verificación anti-bot.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     const supabase = createBrowserSupabase();
     const redirectTo = `${window.location.origin}/auth/reset-password`;
     const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
       redirectTo,
+      ...(TURNSTILE_ENABLED ? { captchaToken } : {}),
     });
     setSubmitting(false);
     if (error) {
+      turnstileRef.current?.reset();
+      setCaptchaToken("");
       // Mostramos el mensaje exacto de Supabase cuando es útil (rate-limit, formato inválido, etc.).
       const msg = error.message?.toLowerCase() ?? "";
       if (msg.includes("rate") || msg.includes("too many")) setError("Demasiados intentos. Esperá unos minutos y volvé a probar.");
@@ -64,6 +75,8 @@ export function ForgotPasswordForm() {
         <Label htmlFor="email">Email</Label>
         <Input id="email" type="email" autoComplete="email" required {...register("email", { required: true })} />
       </div>
+
+      <TurnstileWidget ref={turnstileRef} onToken={setCaptchaToken} />
 
       {error && (
         <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-status-danger">{error}</div>

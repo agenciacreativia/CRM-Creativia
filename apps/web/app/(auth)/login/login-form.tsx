@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { env } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TurnstileWidget, TURNSTILE_ENABLED } from "@/components/auth/turnstile-widget";
 
 type FormData = { email: string; password: string };
 
@@ -30,9 +32,15 @@ export function LoginForm() {
 
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const turnstileRef = useRef<TurnstileInstance>(null);
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
 
   async function onSubmit(values: FormData) {
+    if (TURNSTILE_ENABLED && !captchaToken) {
+      setServerError(t("login.captcha_required"));
+      return;
+    }
     setSubmitting(true);
     setServerError(null);
 
@@ -41,10 +49,14 @@ export function LoginForm() {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
+        options: TURNSTILE_ENABLED ? { captchaToken } : undefined,
       });
 
       if (error || !data?.session) {
         setServerError(t("login.error_invalid_credentials"));
+        // Token Turnstile es de un solo uso: reseteamos para el próximo intento.
+        turnstileRef.current?.reset();
+        setCaptchaToken("");
         return;
       }
 
@@ -134,6 +146,8 @@ export function LoginForm() {
           <p className="text-xs text-status-danger mt-1">{t("login.password_min")}</p>
         )}
       </div>
+
+      <TurnstileWidget ref={turnstileRef} onToken={setCaptchaToken} />
 
       {serverError && (
         <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-status-danger">
