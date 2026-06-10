@@ -8,7 +8,12 @@ import { createServerSupabase } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/dashboard";
+  // SEGURIDAD: validar `next` como ruta relativa interna. Sin esto, un `next`
+  // absoluto (https://evil.com) o protocol-relative (//evil.com) hace que
+  // new URL(next, origin) ignore el origin y redirija a un sitio externo
+  // (open redirect → phishing post-login).
+  const raw = url.searchParams.get("next") ?? "/dashboard";
+  const next = /^\/[^/\\]/.test(raw) ? raw : "/dashboard";
 
   if (code) {
     const supabase = await createServerSupabase();

@@ -72,10 +72,13 @@ export async function bulkEliminarContactosAction(ids: string[]): Promise<Result
   }
   const admin = createAdminSupabase();
   // Bloqueamos si alguno tiene oportunidades — el bulk no resuelve reasignación.
+  // Filtramos por tenant_id (admin client saltea RLS): sin esto el resultado
+  // del pre-check era un oráculo de existencia de UUIDs de otros tenants.
   const { data: conOps } = await admin
     .from("oportunidad")
     .select("contacto_id")
     .in("contacto_id", parsed.data.ids)
+    .eq("tenant_id", user.tenantId!)
     .limit(1);
   if ((conOps?.length ?? 0) > 0) {
     return {

@@ -46,6 +46,16 @@ export async function agregarEmpresaSecundaria(
   if (!user) throw new Error("No autenticado");
   if (!user.tenantId) throw new Error("Tenant ausente");
   const admin = createAdminSupabase();
+  // SEGURIDAD: validar que AMBOS, contacto y empresa, pertenecen al tenant del
+  // caller. La RLS WITH CHECK solo valida la columna tenant_id de la fila
+  // insertada, no que los FKs sean del mismo tenant — sin esto se podían
+  // vincular entidades ajenas etiquetadas como propias.
+  const [{ data: c }, { data: e }] = await Promise.all([
+    admin.from("contacto").select("id").eq("id", contactoId).eq("tenant_id", user.tenantId).maybeSingle(),
+    admin.from("empresa").select("id").eq("id", empresaId).eq("tenant_id", user.tenantId).maybeSingle(),
+  ]);
+  if (!c || !e) throw new Error("Contacto o empresa no encontrados en tu cuenta");
+
   const { error } = await admin
     .from("contacto_empresa_secundaria")
     .insert({ contacto_id: contactoId, empresa_id: empresaId, tenant_id: user.tenantId, rol });
@@ -62,11 +72,17 @@ export async function agregarEmpresaSecundaria(
 }
 
 export async function quitarEmpresaSecundaria(contactoId: string, empresaId: string): Promise<void> {
+  // SEGURIDAD: faltaba chequeo de sesión y filtro de tenant — cualquier usuario
+  // autenticado podía borrar un vínculo de otro tenant.
+  const user = await getSessionUser();
+  if (!user) throw new Error("No autenticado");
+  if (!user.tenantId) throw new Error("Tenant ausente");
   const admin = createAdminSupabase();
   const { error } = await admin
     .from("contacto_empresa_secundaria")
     .delete()
     .eq("contacto_id", contactoId)
-    .eq("empresa_id", empresaId);
+    .eq("empresa_id", empresaId)
+    .eq("tenant_id", user.tenantId);
   if (error && !isMissingTable(error.message)) throw new Error(error.message);
 }

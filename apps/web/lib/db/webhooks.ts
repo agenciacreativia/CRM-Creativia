@@ -4,6 +4,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
 import { EVENTOS_WEBHOOK, type Webhook } from "@/lib/webhooks-types";
+import { validarUrlWebhook, urlWebhookEsSegura } from "@/lib/security/ssrf";
 
 export type { Webhook };
 export { EVENTOS_WEBHOOK };
@@ -35,6 +36,8 @@ export type WebhookInput = { nombre: string; url: string; eventos: string[]; sec
 
 export async function createWebhook(input: WebhookInput): Promise<string> {
   const caller = await ensureAdmin();
+  // Anti-SSRF: rechaza URLs hacia la red interna antes de persistir.
+  validarUrlWebhook(input.url);
   const supabase = await createServerSupabase();
   const { data, error } = await supabase
     .from("webhook")
@@ -46,6 +49,7 @@ export async function createWebhook(input: WebhookInput): Promise<string> {
 }
 export async function updateWebhook(id: string, patch: Partial<WebhookInput> & { activo?: boolean }): Promise<void> {
   const caller = await ensureAdmin();
+  if (patch.url !== undefined) validarUrlWebhook(patch.url);
   const supabase = await createServerSupabase();
   const { error } = await supabase.from("webhook").update(patch).eq("id", id).eq("tenant_id", caller.tenantId);
   if (error) throw new Error(error.message);
@@ -69,14 +73,22 @@ export async function dispatchWebhook(tenantId: string, evento: string, payload:
     for (const w of data ?? []) {
       const eventos = (w.eventos as string[]) ?? [];
       if (!eventos.includes(evento)) continue;
+      // Anti-SSRF en tiempo de disparo: re-resolvemos el DNS y verificamos que
+      // ninguna IP sea interna. Mitiga DNS rebinding (un host que resolvía
+      // público al guardar pero apunta a la metadata interna al disparar).
+      if (!(await urlWebhookEsSegura(w.url as string))) {
+        admin.from("webhook").update({ ultimo_envio: new Date().toISOString(), ultimo_estado: 0 }).eq("id", w.id).then(() => {}, () => {});
+        continue;
+      }
       const body = JSON.stringify({ evento, payload, fecha: new Date().toISOString() });
       const headers: Record<string, string> = { "Content-Type": "application/json", "X-CRM-Event": evento };
       if (w.secret) {
         const sig = crypto.createHmac("sha256", w.secret as string).update(body).digest("hex");
         headers["X-CRM-Signature"] = sig;
       }
-      // Timeout de 5s via AbortSignal para evitar requests colgados en memoria
-      fetch(w.url as string, { method: "POST", headers, body, signal: AbortSignal.timeout(5000) })
+      // Timeout de 5s via AbortSignal para evitar requests colgados en memoria.
+      // redirect:"manual" evita que un 302 a una IP interna evada la validación.
+      fetch(w.url as string, { method: "POST", headers, body, redirect: "manual", signal: AbortSignal.timeout(5000) })
         .then(async (r) => {
           // Consumimos y descartamos el body para evitar memory leaks con respuestas grandes
           try { await r.text(); } catch { /* ignorar */ }

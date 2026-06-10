@@ -1,5 +1,6 @@
 import "server-only";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/db/filtros";
 
 export type EmpresaListItem = {
   id: string;
@@ -57,7 +58,7 @@ export async function listEmpresas(opts: { q?: string; estado?: string; limit?: 
     .limit(opts.limit ?? 200);
 
   if (opts.q) {
-    const s = `%${opts.q}%`;
+    const s = escapeLike(opts.q);
     query = query.or(`nombre.ilike.${s},email.ilike.${s},ciudad.ilike.${s}`);
   }
   if (opts.estado && opts.estado !== "todos") {

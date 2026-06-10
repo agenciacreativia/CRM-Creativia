@@ -99,16 +99,28 @@ export async function updateTerritorio(id: string, input: TerritorioInput): Prom
 }
 
 export async function deleteTerritorio(id: string): Promise<void> {
-  await ensureAdmin();
+  const caller = await ensureAdmin();
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from("territorio").delete().eq("id", id);
+  const { error } = await supabase.from("territorio").delete().eq("id", id).eq("tenant_id", caller.tenantId!);
   if (error) throw new Error(error.message);
 }
 
 export async function setUsuarioTerritorio(usuarioId: string, territorioId: string | null): Promise<void> {
-  await ensureAdmin();
+  const caller = await ensureAdmin();
   const admin = createAdminSupabase();
-  const { error } = await admin.from("usuario").update({ territorio_id: territorioId }).eq("id", usuarioId);
+  // SEGURIDAD: el admin client saltea RLS. Validamos que el usuario destino y
+  // el territorio pertenezcan al tenant del caller, y filtramos el UPDATE por
+  // tenant_id — sin esto un admin podía mover usuarios/territorios de otro tenant.
+  const { data: u } = await admin
+    .from("usuario").select("id").eq("id", usuarioId).eq("tenant_id", caller.tenantId!).maybeSingle();
+  if (!u) throw new Error("Usuario no encontrado en tu cuenta");
+  if (territorioId) {
+    const { data: terr } = await admin
+      .from("territorio").select("id").eq("id", territorioId).eq("tenant_id", caller.tenantId!).maybeSingle();
+    if (!terr) throw new Error("Territorio no encontrado en tu cuenta");
+  }
+  const { error } = await admin
+    .from("usuario").update({ territorio_id: territorioId }).eq("id", usuarioId).eq("tenant_id", caller.tenantId!);
   if (error) throw new Error(error.message);
 }
 

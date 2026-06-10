@@ -66,11 +66,13 @@ export async function bulkEliminarProductosAction(ids: string[]): Promise<Result
   }
   const admin = createAdminSupabase();
   // No borramos productos que tengan oportunidades asociadas — mostraría error
-  // poco claro por la FK. Lo chequeamos antes.
+  // poco claro por la FK. Lo chequeamos antes. Filtramos por tenant_id (admin
+  // saltea RLS) para no convertir el pre-check en un oráculo cross-tenant.
   const { data: enUso } = await admin
     .from("oportunidad_producto")
     .select("producto_id")
     .in("producto_id", parsed.data.ids)
+    .eq("tenant_id", user.tenantId!)
     .limit(1);
   if ((enUso?.length ?? 0) > 0) {
     return { ok: false, error: "Al menos un producto está usado en una oportunidad. Desactivalos o borralos uno por uno." };

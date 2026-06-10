@@ -36,12 +36,46 @@ async function perteneceAlTenant(
   return !!data;
 }
 
-const TABLAS: Record<string, { tabla: string; cols: string; required: string[] }> = {
-  contactos: { tabla: "contacto", cols: "id, nombre, email, telefono, empresa_id, creado_en", required: ["nombre", "email"] },
-  empresas: { tabla: "empresa", cols: "id, nombre, estado_empresa, telefono, creado_en", required: ["nombre"] },
-  oportunidades: { tabla: "oportunidad", cols: "id, nombre, valor, moneda, estado, pipeline_id, etapa_id, contacto_id, empresa_id, creado_en", required: ["nombre", "contacto_id", "empresa_id", "pipeline_id", "etapa_id"] },
-  productos: { tabla: "producto", cols: "id, nombre, categoria, destino, precio_desde, moneda, activo, creado_en", required: ["nombre"] },
+// `writable`: ALLOWLIST de columnas que la API pública puede setear vía body.
+// SEGURIDAD: sin esto, el insert hacía `{ tenant_id, ...body }` y el cliente
+// podía sobrescribir `tenant_id` (escritura cross-tenant) o columnas internas
+// como `en_espera`, `creado_por`, `eliminada_en`, `campos_custom`. Cualquier
+// campo del body que no esté acá se descarta.
+const TABLAS: Record<string, { tabla: string; cols: string; required: string[]; writable: string[] }> = {
+  contactos: {
+    tabla: "contacto",
+    cols: "id, nombre, email, telefono, empresa_id, creado_en",
+    required: ["nombre", "email"],
+    writable: ["nombre", "email", "telefono", "telefono_whatsapp", "cargo", "empresa_id", "descripcion", "origen", "asignado_id"],
+  },
+  empresas: {
+    tabla: "empresa",
+    cols: "id, nombre, estado_empresa, telefono, creado_en",
+    required: ["nombre"],
+    writable: ["nombre", "email", "telefono", "sitio_web", "direccion", "ciudad", "pais", "descripcion", "estado_empresa", "origen", "asignado_id"],
+  },
+  oportunidades: {
+    tabla: "oportunidad",
+    cols: "id, nombre, valor, moneda, estado, pipeline_id, etapa_id, contacto_id, empresa_id, creado_en",
+    required: ["nombre", "contacto_id", "empresa_id", "pipeline_id", "etapa_id"],
+    writable: ["nombre", "valor", "moneda", "estado", "pipeline_id", "etapa_id", "contacto_id", "empresa_id", "probabilidad_cierre", "fecha_esperada_cierre", "descripcion", "asignado_id"],
+  },
+  productos: {
+    tabla: "producto",
+    cols: "id, nombre, categoria, destino, precio_desde, moneda, activo, creado_en",
+    required: ["nombre"],
+    writable: ["nombre", "categoria", "destino", "duracion", "precio_desde", "moneda", "descripcion", "incluye", "no_incluye", "proveedor", "activo"],
+  },
 };
+
+/** Filtra el body del cliente dejando solo las columnas en la allowlist. */
+function pickWritable(body: Record<string, unknown>, writable: string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of writable) {
+    if (body[k] !== undefined) out[k] = body[k];
+  }
+  return out;
+}
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
@@ -102,7 +136,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
   ];
   if (modulo === "oportunidades") {
     fkValidaciones.push({ campo: "pipeline_id", tabla: "pipeline" });
-    fkValidaciones.push({ campo: "etapa_id", tabla: "etapa" });
+    // La tabla real es etapa_pipeline (no "etapa") — con "etapa" la validación
+    // siempre fallaba y rechazaba toda creación de oportunidad vía API.
+    fkValidaciones.push({ campo: "etapa_id", tabla: "etapa_pipeline" });
   }
   for (const { campo, tabla } of fkValidaciones) {
     const valor = body[campo];
@@ -126,7 +162,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
         body.empresa_id = created.id;
       }
     }
-    const insertHeld: Record<string, unknown> = { tenant_id: a.tenantId, en_espera: true, ...body };
+    // Allowlist + tenant_id/en_espera SIEMPRE al final, para que el body del
+    // cliente no pueda sobrescribirlos (mass-assignment cross-tenant).
+    const insertHeld: Record<string, unknown> = { ...pickWritable(body, t.writable), tenant_id: a.tenantId, en_espera: true };
     const { data: held, error: heldErr } = await admin.from(t.tabla).insert(insertHeld).select("id").single();
     if (heldErr) return NextResponse.json({ error: heldErr.message }, { status: 400, headers: CORS });
     return NextResponse.json({
@@ -147,7 +185,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mod
       body.empresa_id = created.id;
     }
   }
-  const insert: Record<string, unknown> = { tenant_id: a.tenantId, ...body };
+  // Allowlist de columnas + tenant_id al final (no sobrescribible por el body).
+  const insert: Record<string, unknown> = { ...pickWritable(body, t.writable), tenant_id: a.tenantId };
   const { data, error } = await admin.from(t.tabla).insert(insert).select(t.cols).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 400, headers: CORS });
   return NextResponse.json({ data, uso: { usados: a.usados, limite: a.limite } }, { status: 201, headers: CORS });

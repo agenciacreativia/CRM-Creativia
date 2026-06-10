@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Bold, Italic, Underline, List, ListOrdered, Link2, Eraser } from "lucide-react";
+import { sanitizeHtml } from "@/lib/security/sanitize-html";
 
 /**
  * Minimal rich-text editor (contentEditable + execCommand). Emits HTML via the
@@ -65,7 +66,7 @@ export function RichText({
           suppressContentEditableWarning
           onInput={sync}
           onBlur={sync}
-          dangerouslySetInnerHTML={{ __html: defaultHtml }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(defaultHtml) }}
           className="prose-sm min-h-[160px] max-w-none p-3 text-sm leading-relaxed outline-none [&_a]:text-brand-primary [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
         />
       </div>

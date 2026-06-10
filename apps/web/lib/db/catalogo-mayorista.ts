@@ -2,6 +2,7 @@ import "server-only";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
+import { escapeLike } from "@/lib/db/filtros";
 import { isPlatformAdmin } from "@/lib/db/planes";
 
 export type ProductoMayorista = {
@@ -47,7 +48,7 @@ export async function listCatalogoMayorista(
   const supabase = await createServerSupabase();
   let query = supabase.from("producto_mayorista").select(COLS).order("nombre");
   if (opts.q) {
-    const s = `%${opts.q}%`;
+    const s = escapeLike(opts.q);
     query = query.or(`nombre.ilike.${s},destino.ilike.${s},proveedor.ilike.${s}`);
   }
   if (opts.categoria && opts.categoria !== "todos") query = query.eq("categoria", opts.categoria);

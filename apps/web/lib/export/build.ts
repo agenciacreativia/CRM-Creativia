@@ -129,10 +129,17 @@ export function rowsToCsv(rows: Array<Record<string, unknown>>): string {
     }, new Set<string>()),
   );
 
+  // Neutraliza inyección de fórmulas (CSV injection): si un valor empieza con
+  // = + - @ tab o CR, Excel/Sheets lo interpreta como fórmula al abrir el CSV
+  // (ej. =HYPERLINK(...), DDE). Lo prefijamos con comilla simple para forzar
+  // que se trate como texto. Los datos vienen de campos libres del usuario.
+  const neutralizarFormula = (s: string): string =>
+    /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+
   const escape = (v: unknown): string => {
     if (v === null || v === undefined) return "";
     if (typeof v === "object") return JSON.stringify(v).replace(/"/g, '""');
-    const s = String(v);
+    const s = neutralizarFormula(String(v));
     if (s.includes('"') || s.includes(",") || s.includes("\n")) {
       return `"${s.replace(/"/g, '""')}"`;
     }
@@ -168,12 +175,16 @@ export function bundleToExcel(bundle: ExportBundle): Buffer {
 
   for (const [sheetKey, rows] of Object.entries(bundle.data)) {
     if (!Array.isArray(rows) || rows.length === 0) continue;
-    // Flatten JSONB-style nested objects to strings so Excel cells stay sane
+    // Flatten JSONB-style nested objects to strings so Excel cells stay sane.
+    // Además neutralizamos inyección de fórmulas en strings (mismo riesgo que
+    // en CSV): un valor que empieza con = + - @ se prefija con comilla simple.
     const flat = (rows as Record<string, unknown>[]).map((row) => {
       const out: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(row)) {
         if (v !== null && typeof v === "object" && !(v instanceof Date)) {
           out[k] = JSON.stringify(v);
+        } else if (typeof v === "string" && /^[=+\-@\t\r]/.test(v)) {
+          out[k] = `'${v}`;
         } else {
           out[k] = v;
         }

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Bold, Italic, Link as LinkIcon, List, ListOrdered, Heading2, Eye, Code as CodeIcon } from "lucide-react";
+import { sanitizeHtml } from "@/lib/security/sanitize-html";
 
 /**
  * Editor HTML liviano (contenteditable + execCommand). No requiere dependencias
@@ -80,7 +81,7 @@ export function HtmlEditor({
           onBlur={(e) => onChange((e.target as HTMLDivElement).innerHTML)}
           className="prose prose-sm max-w-none p-3 text-sm focus:outline-none"
           style={{ minHeight: `${rows * 22}px` }}
-          dangerouslySetInnerHTML={{ __html: value || "" }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }}
           data-placeholder={placeholder}
         />
       )}
@@ -94,7 +95,7 @@ export function HtmlEditor({
         />
       )}
       {mode === "preview" && (
-        <div className="prose prose-sm max-w-none border-0 p-4 text-sm" style={{ minHeight: `${rows * 22}px` }} dangerouslySetInnerHTML={{ __html: value || "<p class='text-gray-400'>Sin contenido</p>" }} />
+        <div className="prose prose-sm max-w-none border-0 p-4 text-sm" style={{ minHeight: `${rows * 22}px` }} dangerouslySetInnerHTML={{ __html: value ? sanitizeHtml(value) : "<p class='text-gray-400'>Sin contenido</p>" }} />
       )}
     </div>
   );

@@ -27,19 +27,29 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sub
     return NextResponse.json({ ok: false, error: "Cuerpo inválido" }, { status: 400, headers: CORS });
   }
 
+  // Honeypot anti-spam: un campo oculto que los humanos no completan. Si viene
+  // con valor, es un bot — respondemos 200 sin crear nada (no le damos señal).
   const str = (v: unknown) => (v == null ? "" : String(v)).trim();
-  const nombre = str(body.nombre);
-  const email = str(body.email);
+  if (str(body.website) || str(body._gotcha)) {
+    return NextResponse.json({ ok: true }, { status: 200, headers: CORS });
+  }
+
+  const nombre = str(body.nombre).slice(0, 200);
+  const email = str(body.email).slice(0, 200);
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!nombre || !email) {
     return NextResponse.json({ ok: false, error: "nombre y email son obligatorios" }, { status: 400, headers: CORS });
+  }
+  if (!EMAIL_RE.test(email)) {
+    return NextResponse.json({ ok: false, error: "email inválido" }, { status: 400, headers: CORS });
   }
 
   const res = await crearLeadPublico(subdominio, {
     nombre,
     email,
-    telefono: str(body.telefono) || null,
-    empresa: str(body.empresa) || null,
-    mensaje: str(body.mensaje) || null,
+    telefono: str(body.telefono).slice(0, 40) || null,
+    empresa: str(body.empresa).slice(0, 200) || null,
+    mensaje: str(body.mensaje).slice(0, 5000) || null,
   });
 
   return NextResponse.json(res, { status: res.ok ? 200 : 400, headers: CORS });

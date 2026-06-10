@@ -32,6 +32,15 @@ server {
 
     client_max_body_size 30M;
 
+    # Hardening de borde. HSTS fuerza HTTPS en visitas posteriores (evita SSL
+    # strip pese al redirect 301). El resto duplica la defensa de next.config
+    # por si la app no los emite. server_tokens off oculta la versión de Nginx.
+    server_tokens off;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
     # Static assets de Next (cache largo)
     location /_next/static/ {
         proxy_pass http://127.0.0.1:3000;

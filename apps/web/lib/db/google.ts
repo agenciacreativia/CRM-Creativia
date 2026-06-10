@@ -3,6 +3,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
 import { refreshAccessToken } from "@/lib/google/oauth";
+import { encryptToken, decryptToken } from "@/lib/security/crypto";
 
 export type CuentaGoogle = { email: string; scope: string | null; expiry: string; syncActividades: boolean };
 
@@ -60,16 +61,18 @@ export async function saveCuentaGoogle(args: {
   const admin = createAdminSupabase();
   const expiry = new Date(Date.now() + args.expiresIn * 1000).toISOString();
   // Keep the existing refresh_token if Google didn't return a new one.
+  // Tokens cifrados en reposo (AES-256-GCM) si TOKEN_ENCRYPTION_KEY está
+  // configurada; si no, se guardan en plano (retro-compatible).
   const row: Record<string, unknown> = {
     usuario_id: args.usuarioId,
     tenant_id: args.tenantId,
     email: args.email,
-    access_token: args.accessToken,
+    access_token: encryptToken(args.accessToken),
     scope: args.scope ?? null,
     expiry,
     actualizado_en: new Date().toISOString(),
   };
-  if (args.refreshToken) row.refresh_token = args.refreshToken;
+  if (args.refreshToken) row.refresh_token = encryptToken(args.refreshToken);
   const { error } = await admin.from("cuenta_google").upsert(row, { onConflict: "usuario_id" });
   if (error) throw new Error(error.message);
 }
@@ -98,20 +101,24 @@ export async function getValidAccessToken(usuarioId: string): Promise<string | n
       .maybeSingle();
     if (!data) return null;
 
+    // Descifrar los tokens almacenados (no-op si están en plano).
+    const accessTokenPlano = decryptToken(data.access_token as string | null);
+    const refreshTokenPlano = decryptToken(data.refresh_token as string | null);
+
     // Refresh with a 5-minute safety margin (tokens last ~1h).
     const expiresSoon = new Date(data.expiry).getTime() - Date.now() < 5 * 60_000;
-    if (!expiresSoon || !data.refresh_token) return (data.access_token as string) ?? null;
+    if (!expiresSoon || !refreshTokenPlano) return accessTokenPlano;
 
     try {
-      const refreshed = await refreshAccessToken(data.refresh_token as string);
+      const refreshed = await refreshAccessToken(refreshTokenPlano);
       const expiry = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
       await admin
         .from("cuenta_google")
-        .update({ access_token: refreshed.access_token, expiry, actualizado_en: new Date().toISOString() })
+        .update({ access_token: encryptToken(refreshed.access_token), expiry, actualizado_en: new Date().toISOString() })
         .eq("usuario_id", usuarioId);
       return refreshed.access_token;
     } catch {
-      return (data.access_token as string) ?? null; // fall back to (maybe stale) token
+      return accessTokenPlano; // fall back to (maybe stale) token
     }
   } catch {
     return null;

@@ -1,5 +1,6 @@
 import "server-only";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/db/filtros";
 
 export type UsuarioRow = {
   id: string;
@@ -26,7 +27,7 @@ export async function listUsuarios(
     .order("nombre");
 
   if (opts.q) {
-    const s = `%${opts.q}%`;
+    const s = escapeLike(opts.q);
     query = query.or(`nombre.ilike.${s},email.ilike.${s}`);
   }
   if (opts.rol && opts.rol !== "todos") {

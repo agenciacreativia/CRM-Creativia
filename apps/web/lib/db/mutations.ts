@@ -7,6 +7,7 @@ import { can, type ModuleKey, type ActionKey } from "@/lib/permissions";
 import { ejecutarReglas } from "@/lib/db/automatizaciones";
 import { dispatchWebhook } from "@/lib/db/webhooks";
 import { resolverAsesor } from "@/lib/db/cuenta-madre";
+import { sanitizeHtml } from "@/lib/security/sanitize-html";
 
 async function ensureWriter() {
   const u = await getSessionUser();
@@ -248,9 +249,11 @@ export async function createPlantilla(input: PlantillaInput): Promise<string> {
   const user = await ensureSession();
   if (!user.tenantId) throw new Error("Tenant ausente");
   const supabase = await createServerSupabase();
+  // Sanitizar el HTML antes de persistir (se renderiza en preview/compose).
+  const limpio = { ...input, cuerpo_html: sanitizeHtml(input.cuerpo_html) };
   const { data, error } = await supabase
     .from("plantilla_correo")
-    .insert({ ...input, tenant_id: user.tenantId, creado_por: user.id })
+    .insert({ ...limpio, tenant_id: user.tenantId, creado_por: user.id })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -261,9 +264,10 @@ export async function updatePlantilla(id: string, patch: PlantillaInput) {
   const user = await ensureSession();
   if (!user.tenantId) throw new Error("Tenant ausente");
   const supabase = await createServerSupabase();
+  const limpio = { ...patch, cuerpo_html: sanitizeHtml(patch.cuerpo_html) };
   const { error } = await supabase
     .from("plantilla_correo")
-    .update({ ...patch, actualizado_en: new Date().toISOString() })
+    .update({ ...limpio, actualizado_en: new Date().toISOString() })
     .eq("id", id)
     .eq("tenant_id", user.tenantId);
   if (error) throw new Error(error.message);
@@ -366,14 +370,29 @@ export async function createContacto(
 export async function deleteEmpresaConCascada(
   id: string,
 ): Promise<{ contactos: number; oportunidades_cerradas: number }> {
-  await ensurePermission("empresas", "eliminar");
+  const user = await ensurePermission("empresas", "eliminar");
+  if (!user.tenantId) throw new Error("Tenant ausente");
   const admin = createAdminSupabase();
+
+  // 0) SEGURIDAD: el admin client saltea RLS, así que verificamos manualmente
+  //    que la empresa pertenezca al tenant del caller antes de tocar nada.
+  //    Sin esto, un admin del tenant A podría pasar el UUID de una empresa de B
+  //    (visible en URLs) y borrarla con todo su cascade (IDOR cross-tenant).
+  const { data: emp, error: empErr } = await admin
+    .from("empresa")
+    .select("id")
+    .eq("id", id)
+    .eq("tenant_id", user.tenantId)
+    .maybeSingle();
+  if (empErr) throw new Error(empErr.message);
+  if (!emp) throw new Error("Empresa no encontrada");
 
   // 1) Validar: sin oportunidades activas.
   const { data: activas, error: errAct } = await admin
     .from("oportunidad")
     .select("id, nombre")
     .eq("empresa_id", id)
+    .eq("tenant_id", user.tenantId)
     .eq("estado", "activo")
     .limit(5);
   if (errAct) throw new Error(errAct.message);
@@ -386,8 +405,8 @@ export async function deleteEmpresaConCascada(
 
   // 2) Contar lo que se va a borrar (para el toast post-acción).
   const [{ count: contactosCount }, { count: cerradasCount }] = await Promise.all([
-    admin.from("contacto").select("id", { count: "exact", head: true }).eq("empresa_id", id),
-    admin.from("oportunidad").select("id", { count: "exact", head: true }).eq("empresa_id", id).neq("estado", "activo"),
+    admin.from("contacto").select("id", { count: "exact", head: true }).eq("empresa_id", id).eq("tenant_id", user.tenantId),
+    admin.from("oportunidad").select("id", { count: "exact", head: true }).eq("empresa_id", id).eq("tenant_id", user.tenantId).neq("estado", "activo"),
   ]);
 
   // 3) Borrar explícitamente las oportunidades cerradas. El FK
@@ -400,13 +419,14 @@ export async function deleteEmpresaConCascada(
       .from("oportunidad")
       .delete()
       .eq("empresa_id", id)
+      .eq("tenant_id", user.tenantId)
       .neq("estado", "activo");
     if (delOpsErr) throw new Error(`No se pudieron borrar oportunidades cerradas: ${delOpsErr.message}`);
   }
 
   // 4) Borrar la empresa. contacto.empresa_id está como ON DELETE CASCADE,
   //    así que los contactos asociados caen solos.
-  const { error: delErr } = await admin.from("empresa").delete().eq("id", id);
+  const { error: delErr } = await admin.from("empresa").delete().eq("id", id).eq("tenant_id", user.tenantId);
   if (delErr) throw new Error(delErr.message);
 
   return {
@@ -430,15 +450,29 @@ export async function deleteContactoConReasignacion(
   id: string,
   reasignarA: string | null,
 ): Promise<{ reasignadas: number }> {
-  await ensurePermission("contactos", "eliminar");
+  const user = await ensurePermission("contactos", "eliminar");
+  if (!user.tenantId) throw new Error("Tenant ausente");
   const admin = createAdminSupabase();
+
+  // 0) SEGURIDAD: el admin client saltea RLS. Verificamos que el contacto a
+  //    borrar pertenezca al tenant del caller — sin esto un admin de A podía
+  //    pasar el UUID de un contacto de B y borrarlo (IDOR cross-tenant).
+  const { data: src, error: srcErr } = await admin
+    .from("contacto")
+    .select("id")
+    .eq("id", id)
+    .eq("tenant_id", user.tenantId)
+    .maybeSingle();
+  if (srcErr) throw new Error(srcErr.message);
+  if (!src) throw new Error("Contacto no encontrado");
 
   // 1) Listar oportunidades vinculadas al contacto (todas, no solo activas:
   //    si dejamos huérfanas las cerradas pierden auditoría).
   const { data: ops, error: listErr } = await admin
     .from("oportunidad")
     .select("id")
-    .eq("contacto_id", id);
+    .eq("contacto_id", id)
+    .eq("tenant_id", user.tenantId);
   if (listErr) throw new Error(listErr.message);
   const opsCount = ops?.length ?? 0;
 
@@ -448,37 +482,30 @@ export async function deleteContactoConReasignacion(
         `Este contacto tiene ${opsCount} oportunidad(es). Seleccioná un contacto destino para reasignarlas antes de borrar.`,
       );
     }
-    // Validar que el destino existe y pertenece al mismo tenant. RLS lo
-    // resuelve para usuarios normales, pero usamos admin client así que
-    // verificamos manualmente para evitar cross-tenant.
-    const { data: destino, error: destErr } = await admin
-      .from("contacto")
-      .select("id, tenant_id")
-      .eq("id", reasignarA)
-      .single();
-    if (destErr || !destino) throw new Error("Contacto destino no encontrado");
-
-    const { error: srcErr, data: src } = await admin
-      .from("contacto")
-      .select("tenant_id")
-      .eq("id", id)
-      .single();
-    if (srcErr || !src) throw new Error("Contacto no encontrado");
-    if (src.tenant_id !== destino.tenant_id) {
-      throw new Error("El contacto destino debe ser del mismo tenant");
-    }
     if (reasignarA === id) {
       throw new Error("No podés reasignar al mismo contacto que estás borrando");
     }
+    // Validar que el destino existe Y pertenece al tenant del caller. Antes
+    // solo comparaba src.tenant_id === destino.tenant_id, lo que permitía
+    // operar enteramente con entidades de otro tenant.
+    const { data: destino, error: destErr } = await admin
+      .from("contacto")
+      .select("id")
+      .eq("id", reasignarA)
+      .eq("tenant_id", user.tenantId)
+      .maybeSingle();
+    if (destErr) throw new Error(destErr.message);
+    if (!destino) throw new Error("Contacto destino no encontrado o no pertenece a tu cuenta");
 
     const { error: updErr } = await admin
       .from("oportunidad")
       .update({ contacto_id: reasignarA })
-      .eq("contacto_id", id);
+      .eq("contacto_id", id)
+      .eq("tenant_id", user.tenantId);
     if (updErr) throw new Error(`No se pudieron reasignar las oportunidades: ${updErr.message}`);
   }
 
-  const { error: delErr } = await admin.from("contacto").delete().eq("id", id);
+  const { error: delErr } = await admin.from("contacto").delete().eq("id", id).eq("tenant_id", user.tenantId);
   if (delErr) throw new Error(delErr.message);
 
   return { reasignadas: opsCount };

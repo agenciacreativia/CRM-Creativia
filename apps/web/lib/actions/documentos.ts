@@ -26,6 +26,12 @@ function safeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 120) || "archivo";
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// Extensiones permitidas. Se excluyen svg/html/xml/htm/js/mhtml: servidos
+// inline desde el storage podrían ejecutar script (XSS en el origen de Storage).
+const EXT_BLOQUEADAS = new Set(["svg", "html", "htm", "xhtml", "xml", "mhtml", "js", "mjs", "shtml", "swf"]);
+
 export async function uploadDocumentoAction(formData: FormData): Promise<DocResult> {
   const user = await getSessionUser();
   if (!user?.tenantId) return { ok: false, error: "No autenticado" };
@@ -34,7 +40,7 @@ export async function uploadDocumentoAction(formData: FormData): Promise<DocResu
   const entityId = String(formData.get("entity_id"));
   const file = formData.get("file");
 
-  if (!["empresa", "contacto", "oportunidad"].includes(entidad) || !entityId) {
+  if (!["empresa", "contacto", "oportunidad"].includes(entidad) || !UUID_RE.test(entityId)) {
     return { ok: false, error: "Destino inválido" };
   }
   if (!(file instanceof File) || file.size === 0) {
@@ -42,6 +48,11 @@ export async function uploadDocumentoAction(formData: FormData): Promise<DocResu
   }
   if (file.size > 25 * 1024 * 1024) {
     return { ok: false, error: "El archivo supera 25 MB" };
+  }
+  // Bloquear tipos de archivo ejecutables en navegador (XSS al servir inline).
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  if (EXT_BLOQUEADAS.has(ext)) {
+    return { ok: false, error: `No se permiten archivos .${ext} por seguridad.` };
   }
 
   const storagePath = `${user.tenantId}/${entidad}/${entityId}/${crypto.randomUUID()}_${safeName(file.name)}`;
@@ -79,7 +90,10 @@ export async function uploadDocumentoAction(formData: FormData): Promise<DocResu
 }
 
 export async function signDocumentoUrlAction(id: string): Promise<DocResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "No autenticado" };
   const supabase = await createServerSupabase();
+  // El SELECT con server client aplica RLS (solo docs del tenant del usuario).
   const { data: doc } = await supabase
     .from("documento")
     .select("storage_path")
@@ -96,6 +110,8 @@ export async function signDocumentoUrlAction(id: string): Promise<DocResult> {
 }
 
 export async function deleteDocumentoAction(id: string): Promise<DocResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "No autenticado" };
   const supabase = await createServerSupabase();
   const { data: doc } = await supabase
     .from("documento")

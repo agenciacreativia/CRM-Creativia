@@ -1,5 +1,6 @@
 import "server-only";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/db/filtros";
 
 export type SearchHit = {
   type: "empresa" | "contacto" | "oportunidad";
@@ -15,7 +16,7 @@ export async function globalSearch(q: string): Promise<SearchHit[]> {
   const term = q.trim();
   if (term.length < 2) return [];
   const supabase = await createServerSupabase();
-  const like = `%${term}%`;
+  const like = escapeLike(term);
 
   const [empresas, contactos, oportunidades] = await Promise.all([
     supabase

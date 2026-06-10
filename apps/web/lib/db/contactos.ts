@@ -1,5 +1,6 @@
 import "server-only";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/db/filtros";
 
 export type ContactoListItem = {
   id: string;
@@ -59,7 +60,7 @@ export async function listContactos(opts: { q?: string; empresa_id?: string; asi
     .range(offset, offset + limit - 1);
 
   if (opts.q) {
-    const s = `%${opts.q}%`;
+    const s = escapeLike(opts.q);
     query = query.or(`nombre.ilike.${s},email.ilike.${s},cargo.ilike.${s}`);
   }
   if (opts.empresa_id) {

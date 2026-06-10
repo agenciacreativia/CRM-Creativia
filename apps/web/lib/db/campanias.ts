@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getMyAccessToken } from "@/lib/db/google";
 import { sendGmail } from "@/lib/google/gmail";
 import { registrarCorreoEnviado, aplicarTracking } from "@/lib/db/correo-tracking";
+import { sanitizeHtml } from "@/lib/security/sanitize-html";
 
 export type CampaniaMetrics = {
   campania_id: string; enviados: number; aperturas: number; abiertos_unicos: number;
@@ -125,26 +126,6 @@ export async function listCampanias(): Promise<Campania[]> {
 }
 
 export type CampaniaInput = { nombre: string; asunto: string; cuerpo_html: string; segmento: Campania["segmento"] };
-
-/**
- * Sanitización mínima del HTML del cuerpo: elimina <script>, <iframe>, atributos
- * on*= (onclick, onerror, etc.) y javascript: en hrefs. Es defensa en profundidad
- * — el envío por Gmail también filtra mucho del lado del cliente, pero queremos
- * que el HTML guardado en DB ya esté limpio para evitar XSS si se renderiza en
- * preview dentro del CRM.
- */
-function sanitizeHtml(html: string): string {
-  if (!html) return "";
-  let s = html;
-  // Bloques peligrosos
-  s = s.replace(/<\s*(script|iframe|object|embed|link|meta|style)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, "");
-  s = s.replace(/<\s*(script|iframe|object|embed|link|meta|style)\b[^>]*\/?>/gi, "");
-  // Event handlers inline (on*= en cualquier tag)
-  s = s.replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
-  // javascript: en href/src
-  s = s.replace(/(href|src)\s*=\s*("(?:\s*javascript:[^"]*)"|'(?:\s*javascript:[^']*)'|\s*javascript:[^\s>]+)/gi, '$1="#"');
-  return s;
-}
 
 export async function createCampania(input: CampaniaInput): Promise<string> {
   const caller = await ensureAdmin();

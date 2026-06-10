@@ -118,7 +118,8 @@ export async function ejecutarReglas(
               creado_por: actor?.id ?? null,
             });
           } else if (accion.tipo === "asignar") {
-            await admin.from("oportunidad").update({ asignado_id: accion.usuario_id }).eq("id", ctx.oportunidadId);
+            // Filtro de tenant defensivo (admin client saltea RLS).
+            await admin.from("oportunidad").update({ asignado_id: accion.usuario_id }).eq("id", ctx.oportunidadId).eq("tenant_id", ctx.tenantId);
           } else if (accion.tipo === "etiquetar") {
             await admin
               .from("oportunidad_etiqueta")

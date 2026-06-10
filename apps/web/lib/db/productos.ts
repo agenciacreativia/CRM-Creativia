@@ -1,5 +1,6 @@
 import "server-only";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { escapeLike } from "@/lib/db/filtros";
 import type { ItinerarioDia } from "@/lib/cotizacion/types";
 
 export type Producto = {
@@ -61,7 +62,7 @@ export async function listProductos(
   let query = supabase.from("producto").select(COLS).order("nombre", { ascending: true }).limit(opts.limit ?? 500);
 
   if (opts.q) {
-    const s = `%${opts.q}%`;
+    const s = escapeLike(opts.q);
     query = query.or(`nombre.ilike.${s},destino.ilike.${s},proveedor.ilike.${s}`);
   }
   if (opts.categoria && opts.categoria !== "todos") query = query.eq("categoria", opts.categoria);
@@ -73,7 +74,7 @@ export async function listProductos(
       // Reintento sin la columna nueva.
       let q2 = supabase.from("producto").select(COLS_LEGACY).order("nombre", { ascending: true }).limit(opts.limit ?? 500);
       if (opts.q) {
-        const s = `%${opts.q}%`;
+        const s = escapeLike(opts.q);
         q2 = q2.or(`nombre.ilike.${s},destino.ilike.${s},proveedor.ilike.${s}`);
       }
       if (opts.categoria && opts.categoria !== "todos") q2 = q2.eq("categoria", opts.categoria);
