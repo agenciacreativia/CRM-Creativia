@@ -9,7 +9,20 @@ DOMAIN="turisteacrm.com"
 echo "==> 1/5 Instalando certbot"
 sudo apt install -y certbot python3-certbot-nginx
 
-echo "==> 2/5 Config Nginx (proxy a Next en 3000, wildcard subdomain)"
+# Zonas de rate limiting (contexto http, archivo aparte en conf.d).
+# NOTA: el login del CRM va directo a Supabase Auth desde el browser, NO pasa
+# por este Nginx — la fuerza bruta de credenciales la limita Supabase. Estas
+# zonas protegen lo que SÍ pasa por el server: API pública (brute force de
+# API keys), captura de leads (spam) y tráfico general (scraping/DoS).
+echo "==> 2/5 Config rate limiting + Nginx (proxy a Next en 3000)"
+sudo tee /etc/nginx/conf.d/turistea-ratelimit.conf >/dev/null <<'RATELIMIT'
+# req/seg por IP. burst absorbe ráfagas legítimas; nodelay aplica el límite ya.
+limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+limit_req_zone $binary_remote_addr zone=leads_limit:10m rate=2r/s;
+limit_req_zone $binary_remote_addr zone=general_limit:10m rate=30r/s;
+limit_req_status 429;
+RATELIMIT
+
 sudo tee /etc/nginx/sites-available/turistea >/dev/null <<NGINX
 # Redirect HTTP → HTTPS
 server {
@@ -41,7 +54,7 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-    # Static assets de Next (cache largo)
+    # Static assets de Next (cache largo) — sin rate limit.
     location /_next/static/ {
         proxy_pass http://127.0.0.1:3000;
         proxy_set_header Host \$host;
@@ -51,8 +64,32 @@ server {
         access_log off;
     }
 
-    # Resto → Next
+    # Captura pública de leads — el más estricto (anti-spam de formularios).
+    location /api/leads/ {
+        limit_req zone=leads_limit burst=5 nodelay;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$host;
+    }
+
+    # API pública (v1 + public) — frena fuerza bruta de API keys y abuso.
+    location /api/ {
+        limit_req zone=api_limit burst=20 nodelay;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$host;
+        proxy_read_timeout 60s;
+    }
+
+    # Resto → Next (límite general holgado contra scraping/DoS).
     location / {
+        limit_req zone=general_limit burst=60 nodelay;
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;

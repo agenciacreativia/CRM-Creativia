@@ -13,7 +13,23 @@ NODE_MAJOR="22"
 echo "==> 1/8 Actualizando paquetes base"
 sudo apt update -y
 sudo apt upgrade -y
-sudo apt install -y curl git nginx ufw build-essential
+sudo apt install -y curl git nginx ufw build-essential fail2ban
+
+# fail2ban: banea IPs tras intentos fallidos de SSH (protección de fuerza
+# bruta del acceso al server). Jail de sshd con umbral conservador.
+echo "==> Configurando fail2ban (SSH brute-force)"
+sudo tee /etc/fail2ban/jail.local >/dev/null <<'F2B'
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+backend  = systemd
+
+[sshd]
+enabled = true
+F2B
+sudo systemctl enable fail2ban
+sudo systemctl restart fail2ban
 
 echo "==> 2/8 Instalando Node.js ${NODE_MAJOR} LTS"
 if ! command -v node >/dev/null 2>&1 || ! node -v | grep -q "^v${NODE_MAJOR}\."; then
