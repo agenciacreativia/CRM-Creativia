@@ -226,7 +226,7 @@ export default function LandingPage() {
             width={1677}
             height={451}
             priority
-            className="h-9 w-auto"
+            className="h-12 w-auto"
           />
           <nav className="hidden items-center gap-8 text-sm font-medium text-[var(--ink-soft)] md:flex">
             <a href="#beneficios" className="hover:text-[var(--brand-navy)]">Beneficios</a>
@@ -522,7 +522,7 @@ export default function LandingPage() {
       {/* ---------------- FOOTER ---------------- */}
       <footer className="border-t border-[var(--glass-border)]">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-5 py-10 md:flex-row">
-          <Image src="/turistea-crm.svg" alt="Turistea CRM" width={1677} height={451} className="h-8 w-auto" />
+          <Image src="/turistea-crm.svg" alt="Turistea CRM" width={1677} height={451} className="h-11 w-auto" />
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--ink-soft)]">
             <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" /> LATAM</span>
             <span className="inline-flex items-center gap-1.5"><Mail className="h-4 w-4" /> hola@agenciacreativia.com</span>
