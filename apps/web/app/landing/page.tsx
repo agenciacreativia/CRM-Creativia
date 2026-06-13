@@ -274,13 +274,13 @@ function AppScreen() {
   return (
     <div className="flex bg-[#fbfbfd]">
       {/* sidebar mini (navy) */}
-      <aside className="hidden w-36 shrink-0 flex-col bg-[var(--brand-navy-deep)] p-3 sm:flex">
+      <aside className="hidden w-24 shrink-0 flex-col bg-[var(--brand-navy-deep)] p-2 lg:flex xl:w-28 xl:p-3">
         <Image src="/turistea-crm-light.svg" alt="Turistea CRM" width={1677} height={451} className="mb-4 h-5 w-auto" />
         <div className="space-y-1">
           {MINI_NAV.map((n) => (
             <div
               key={n}
-              className={`rounded-md px-2.5 py-1.5 text-[11px] font-medium ${
+              className={`truncate rounded-md px-2 py-1 text-[9px] font-medium xl:text-[10px] ${
                 n === "Oportunidades"
                   ? "bg-[var(--brand-green)] text-[var(--brand-navy-deep)]"
                   : "text-white/55"
@@ -394,15 +394,15 @@ function IPhone() {
 
 function ProductShowcase() {
   return (
-    <div className="relative mx-auto mt-16 max-w-4xl">
+    <div className="relative mx-auto w-full max-w-xl pb-8 pl-10 lg:mx-0 lg:pb-12 lg:pl-14">
       {/* glow de fondo */}
       <div
         aria-hidden
-        className="absolute -inset-x-10 -top-12 bottom-0 -z-10 rounded-[48px] bg-gradient-to-b from-[var(--brand-green)] via-[var(--brand-sky)] to-transparent opacity-20 blur-3xl"
+        className="absolute -inset-6 -z-10 rounded-[48px] bg-gradient-to-br from-[var(--brand-green)] via-[var(--brand-sky)] to-transparent opacity-25 blur-3xl"
       />
       <MacBook />
-      {/* iPhone: flotante sobre el MacBook en desktop, centrado debajo en mobile */}
-      <div className="mx-auto mt-10 w-[170px] lg:absolute lg:-bottom-12 lg:-right-4 lg:mt-0 lg:w-[180px] lg:rotate-2">
+      {/* iPhone al frente-izquierda (como el mockup de referencia) */}
+      <div className="absolute -bottom-2 left-0 w-[30%] max-w-[138px] rotate-[-5deg] sm:w-[132px]">
         <IPhone />
       </div>
     </div>
@@ -435,51 +435,54 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* ---------------- HERO ---------------- */}
+      {/* ---------------- HERO (2 columnas) ---------------- */}
       <section className="relative overflow-hidden">
         {/* fondo sutil */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[600px] bg-gradient-to-b from-[#f6f8fc] to-white" />
-        <div className="mx-auto max-w-6xl px-5 pb-28 pt-16 text-center md:pt-24">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-4 py-1.5 text-xs font-semibold text-[var(--brand-navy)] shadow-sm">
-            <Sparkles className="h-3.5 w-3.5 text-[var(--brand-orange)]" />
-            El CRM hecho a medida para agencias de viajes
-          </span>
-
-          <h1 className="mx-auto mt-7 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight text-[var(--brand-navy)] md:text-[68px]">
-            Deja de perder ventas entre{" "}
-            <span className="relative whitespace-nowrap">
-              <span className="relative z-10">WhatsApp y Excel</span>
-              <span className="absolute bottom-1.5 left-0 z-0 h-3.5 w-full bg-[var(--brand-green)] opacity-60" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[640px] bg-gradient-to-b from-[#f6f8fc] to-white" />
+        <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-24 pt-16 lg:grid-cols-2 lg:gap-10 lg:pb-28 lg:pt-24">
+          {/* IZQUIERDA — copy */}
+          <div className="text-center lg:text-left">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-4 py-1.5 text-xs font-semibold text-[var(--brand-navy)] shadow-sm">
+              <Sparkles className="h-3.5 w-3.5 text-[var(--brand-orange)]" />
+              El CRM hecho a medida para agencias de viajes
             </span>
-          </h1>
 
-          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-[var(--ink-soft)] md:text-xl">
-            Centraliza clientes, cotizaciones, salidas y comisiones en un solo lugar.
-            Tu agencia vende más, da mejor servicio y crece sin caos —{" "}
-            <strong className="text-[var(--brand-navy)]">desde el primer día</strong>.
-          </p>
+            <h1 className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-[var(--brand-navy)] sm:text-5xl lg:text-[56px]">
+              Deja de perder ventas entre{" "}
+              <span className="relative whitespace-nowrap">
+                <span className="relative z-10">WhatsApp y Excel</span>
+                <span className="absolute bottom-1.5 left-0 z-0 h-3.5 w-full bg-[var(--brand-green)] opacity-60" />
+              </span>
+            </h1>
 
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a
-              href="#precios"
-              className="group inline-flex items-center gap-2 rounded-full bg-[var(--brand-navy)] px-7 py-3.5 text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[var(--brand-navy-deep)]"
-            >
-              Ver planes y precios
-              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-            </a>
-            <a
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-7 py-3.5 text-base font-semibold text-[var(--brand-navy)] transition hover:-translate-y-0.5 hover:border-[var(--brand-navy)]"
-            >
-              Iniciar sesión
-            </a>
+            <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[var(--ink-soft)] lg:mx-0 lg:text-xl">
+              Centraliza clientes, cotizaciones, salidas y comisiones en un solo lugar.
+              Tu agencia vende más, da mejor servicio y crece sin caos —{" "}
+              <strong className="text-[var(--brand-navy)]">desde el primer día</strong>.
+            </p>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+              <a
+                href="#precios"
+                className="group inline-flex items-center gap-2 rounded-full bg-[var(--brand-navy)] px-7 py-3.5 text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[var(--brand-navy-deep)]"
+              >
+                Ver planes y precios
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </a>
+              <a
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-7 py-3.5 text-base font-semibold text-[var(--brand-navy)] transition hover:-translate-y-0.5 hover:border-[var(--brand-navy)]"
+              >
+                Iniciar sesión
+              </a>
+            </div>
+
+            <p className="mt-5 text-sm text-[var(--ink-faint)]">
+              Sin tarjeta para empezar · Migramos tus datos · Cancela cuando quieras
+            </p>
           </div>
 
-          <p className="mt-5 text-sm text-[var(--ink-faint)]">
-            Sin tarjeta para empezar · Migramos tus datos · Cancela cuando quieras
-          </p>
-
-          {/* Mockup del producto (MacBook + iPhone) */}
+          {/* DERECHA — mockup del producto (MacBook + iPhone) */}
           <ProductShowcase />
         </div>
       </section>
