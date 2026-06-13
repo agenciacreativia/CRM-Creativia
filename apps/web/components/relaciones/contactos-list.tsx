@@ -18,7 +18,7 @@ export function ContactosList({ items }: { items: ContactoRel[] }) {
           {items.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 hover:bg-gray-50">
               <div className="min-w-0">
-                <Link href={`/contactos/${c.id}`} className="text-sm font-semibold text-brand-navy hover:underline">
+                <Link href={`/contactos/${c.id}`} className="text-sm font-semibold text-brand-primary hover:underline">
                   {c.nombre}
                 </Link>
                 <p className="text-xs text-gray-500">{c.cargo ?? "—"}{c.asignado_nombre ? ` · ${c.asignado_nombre}` : ""}</p>

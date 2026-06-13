@@ -372,6 +372,29 @@
   .text-gray-500 { color: var(--ink-faint); }
   .text-gray-400 { color: var(--ink-faint); }
 
+  /* Texto de color fijo (amber/red/green/blue/yellow/purple-700..900) usado en
+     alerts y badges sobre fondos tintados. En dark mode el fondo se oscurece
+     pero esos colores quedan ilegibles → los aclaramos. */
+  html.dark .text-amber-900,
+  html.dark .text-amber-800,
+  html.dark .text-amber-700,
+  html.dark .text-yellow-900,
+  html.dark .text-yellow-800,
+  html.dark .text-yellow-700,
+  html.dark .text-orange-900 { color: #fcd9b6; }
+  html.dark .text-red-900,
+  html.dark .text-red-800,
+  html.dark .text-red-700 { color: #ffb4ab; }
+  html.dark .text-green-900,
+  html.dark .text-green-800,
+  html.dark .text-green-700 { color: #bef264; }
+  html.dark .text-blue-900,
+  html.dark .text-blue-800,
+  html.dark .text-blue-700 { color: #a8d4fb; }
+  html.dark .text-purple-900,
+  html.dark .text-purple-800,
+  html.dark .text-purple-700 { color: #cbb4f5; }
+
   /* Soft tinted backgrounds (alerts) — Horizon palette */
   .bg-blue-50 { background-color: rgba(133, 194, 246, 0.18); }
   .bg-green-50 { background-color: rgba(170, 245, 43, 0.18); }

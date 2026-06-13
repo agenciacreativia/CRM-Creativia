@@ -30,7 +30,7 @@ export function OportunidadesList({ items, title = "Oportunidades" }: { items: O
           {items.map((o) => (
             <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 hover:bg-gray-50">
               <div className="min-w-0">
-                <Link href={`/oportunidades/${o.id}`} className="text-sm font-semibold text-brand-navy hover:underline">
+                <Link href={`/oportunidades/${o.id}`} className="text-sm font-semibold text-brand-primary hover:underline">
                   {o.nombre}
                 </Link>
                 <p className="text-xs text-gray-500">

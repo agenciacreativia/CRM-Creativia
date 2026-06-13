@@ -32,7 +32,7 @@ export default async function KanbanPage({ searchParams }: { searchParams: Searc
             href={manageHref}
             title="Gestionar embudo"
             aria-label="Gestionar embudo"
-            className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white p-2 text-gray-600 hover:bg-gray-50 hover:text-brand-navy"
+            className="inline-flex items-center justify-center rounded-md border border-gray-200 bg-white p-2 text-gray-600 hover:bg-gray-50 hover:text-brand-primary"
           >
             <Pencil className="h-3.5 w-3.5" />
           </Link>

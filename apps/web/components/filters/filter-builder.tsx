@@ -194,10 +194,10 @@ export function FilterBuilder({ modules, paramName = "filtros", entidad, vistas 
                           type="button"
                           onClick={() => aplicarVista(v)}
                           disabled={aplicandoId !== null}
-                          className="inline-flex items-center gap-1.5 text-gray-700 hover:text-brand-navy disabled:opacity-60"
+                          className="inline-flex items-center gap-1.5 text-gray-700 hover:text-brand-primary disabled:opacity-60"
                         >
                           {aplicandoId === v.id
-                            ? <Loader2 className="h-3 w-3 animate-spin text-brand-navy" />
+                            ? <Loader2 className="h-3 w-3 animate-spin text-brand-primary" />
                             : v.visibilidad === "publica" ? <Globe className="h-3 w-3 text-gray-400" /> : <Lock className="h-3 w-3 text-gray-400" />}
                           {v.nombre}
                         </button>

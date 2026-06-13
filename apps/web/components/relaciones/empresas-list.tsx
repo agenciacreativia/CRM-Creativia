@@ -17,7 +17,7 @@ export function EmpresasList({ items }: { items: EmpresaRel[] }) {
         <ul className="divide-y divide-gray-100">
           {items.map((e) => (
             <li key={e.id} className="flex items-center justify-between gap-2 px-5 py-3 hover:bg-gray-50">
-              <Link href={`/empresas/${e.id}`} className="text-sm font-semibold text-brand-navy hover:underline">
+              <Link href={`/empresas/${e.id}`} className="text-sm font-semibold text-brand-primary hover:underline">
                 {e.nombre}
               </Link>
               {e.estado && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">{e.estado}</span>}

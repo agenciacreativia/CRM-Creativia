@@ -81,7 +81,7 @@ export function ItinerarioMiniEditor({ name = "itinerario", initial = [] }: Prop
             <li key={d._uid} className="rounded-md border border-gray-200 bg-white p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="rounded bg-brand-navy/10 px-2 py-0.5 text-xs font-bold text-brand-navy">Día {d.dia}</span>
+                  <span className="rounded bg-brand-navy/10 px-2 py-0.5 text-xs font-bold text-brand-primary">Día {d.dia}</span>
                   <input
                     type="number"
                     min={1}

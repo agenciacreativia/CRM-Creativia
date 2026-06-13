@@ -28,7 +28,7 @@ function Card({ href, icon: Icon, title, sub, accent = false }: { href: string; 
       className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${accent ? "border-brand-navy/30 bg-brand-navy/[0.03] hover:bg-brand-navy/[0.06]" : "border-gray-200 bg-white hover:bg-gray-50"}`}
     >
       <div className="flex items-center gap-3">
-        <Icon className="h-5 w-5 text-brand-navy" />
+        <Icon className="h-5 w-5 text-brand-primary" />
         <div>
           <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500">{title}</h3>
           <p className="text-xs text-gray-400">{sub}</p>

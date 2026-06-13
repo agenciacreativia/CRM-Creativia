@@ -20,7 +20,7 @@ export function PageHeader({
   return (
     <header className="space-y-1">
       {backHref && (
-        <Link href={backHref} className="text-sm text-brand-navy hover:underline">
+        <Link href={backHref} className="text-sm text-brand-primary hover:underline">
           ← {backLabel ?? "Volver"}
         </Link>
       )}

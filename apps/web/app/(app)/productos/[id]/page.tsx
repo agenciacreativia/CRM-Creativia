@@ -19,7 +19,7 @@ export default async function ProductoDetailPage({ params }: { params: Params })
 
   return (
     <div className="space-y-4">
-      <Link href="/productos" className="text-sm text-brand-navy hover:underline">← Productos</Link>
+      <Link href="/productos" className="text-sm text-brand-primary hover:underline">← Productos</Link>
 
       {/* Header — siempre se ve el título arriba */}
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -119,7 +119,7 @@ export default async function ProductoDetailPage({ params }: { params: Params })
                 {ops.map((o) => (
                   <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 hover:bg-gray-50">
                     <div className="min-w-0">
-                      <Link href={`/oportunidades/${o.id}`} className="text-sm font-semibold text-brand-navy hover:underline">
+                      <Link href={`/oportunidades/${o.id}`} className="text-sm font-semibold text-brand-primary hover:underline">
                         {o.nombre}
                       </Link>
                       <p className="text-xs text-gray-500">{o.estado}{o.asignado_nombre ? ` · ${o.asignado_nombre}` : ""}</p>
