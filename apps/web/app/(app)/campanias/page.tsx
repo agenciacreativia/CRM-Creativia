@@ -6,7 +6,6 @@ import { listListasEnvio } from "@/lib/db/listas-envio";
 import { CampaniasManager } from "./campanias-manager";
 import { ListasEnvioPanel } from "./listas-panel";
 import { Mail, Users } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
 
 export default async function CampaniasPage() {
   const me = await getSessionUser();
@@ -15,10 +14,6 @@ export default async function CampaniasPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Campañas de correo"
-        subtitle="Listas de envío, plantillas HTML y envíos masivos con tracking de apertura/clic."
-      />
 
       <section className="rounded-lg border border-gray-200 bg-white">
         <header className="flex items-center justify-between border-b border-gray-100 px-5 py-3">

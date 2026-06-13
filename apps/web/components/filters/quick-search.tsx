@@ -38,7 +38,7 @@ export function QuickSearch({ placeholder = "Buscar…" }: { placeholder?: strin
         value={value}
         onChange={(ev) => setValue(ev.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-8 pr-2.5 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none sm:w-56"
+        className="h-9 w-full rounded-md border border-gray-300 bg-white pl-8 pr-2.5 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none sm:w-56"
       />
     </div>
   );

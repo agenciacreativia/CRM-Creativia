@@ -5,7 +5,6 @@ import { listUpcomingEvents } from "@/lib/google/calendar";
 import { listGoogleTasks } from "@/lib/google/tasks";
 import { AgendaView } from "./agenda-view";
 import { GoogleTasks } from "./google-tasks";
-import { PageHeader } from "@/components/ui/page-header";
 
 function fmtEvent(iso: string | null, allDay: boolean): string {
   if (!iso) return "";
@@ -47,10 +46,6 @@ export default async function AgendaPage({ searchParams }: { searchParams: Searc
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Agenda"
-        subtitle="Calendario de actividades programadas"
-      />
 
       <AgendaView
         year={year}

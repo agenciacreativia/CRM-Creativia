@@ -430,4 +430,11 @@
   .text-status-ok { color: var(--brand-green-dark); }
   .text-status-warn { color: var(--brand-orange-text); }
   .text-status-danger { color: var(--status-danger); }
+
+  /* En dark mode el rojo/verde oscuros se pierden sobre fondos oscuros: usamos
+     variantes claras para texto de estado (incluye botones "Eliminar" con
+     borde rojo) y reforzamos el borde rojo para que se vea. */
+  html.dark .text-status-danger { color: #ffb4ab; }
+  html.dark .text-status-ok { color: var(--brand-green); }
+  html.dark .border-red-200 { border-color: rgba(255, 138, 128, 0.45); }
 }

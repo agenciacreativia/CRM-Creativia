@@ -93,7 +93,7 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
           <ViewToggle active="tabla" />
           <Link
             href="/oportunidades/nueva"
-            className="inline-flex items-center justify-center rounded-md bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-deep"
+            className="inline-flex h-9 items-center justify-center rounded-md bg-brand-navy px-3 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-deep"
           >
             + Nueva
           </Link>
@@ -107,8 +107,8 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
             etiquetas={etiquetas}
           />
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-xs text-gray-500 whitespace-nowrap">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="whitespace-nowrap text-xs text-gray-500">
             {rows.length} resultados · {formatCurrency(totalValor, monedaPrincipal)} activos
           </p>
           <ListOrder fields={filterFields} />

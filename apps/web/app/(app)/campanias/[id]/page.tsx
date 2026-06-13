@@ -141,8 +141,8 @@ export default async function CampaniaDetailPage({ params }: { params: Params })
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, idx) => (
-                  <tr key={r.id} className={`border-t border-gray-100 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
+                {rows.map((r) => (
+                  <tr key={r.id} className={`border-t border-gray-100`}>
                     <td className="px-4 py-2">
                       {r.contacto_id ? (
                         <Link href={`/contactos/${r.contacto_id}`} className="text-brand-primary hover:underline">

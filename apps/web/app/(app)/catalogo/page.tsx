@@ -6,7 +6,6 @@ import { isPlatformAdmin, getTenantHerramientas } from "@/lib/db/planes";
 import { can } from "@/lib/permissions";
 import { AlertTriangle } from "lucide-react";
 import { CatalogoBrowse } from "./catalogo-browse";
-import { PageHeader } from "@/components/ui/page-header";
 
 export default async function CatalogoPage() {
   // Si está conectada la base de cupos del sitio, leemos en vivo de ahí;
@@ -29,10 +28,6 @@ export default async function CatalogoPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Catálogo Turistea"
-        subtitle={`Inventario mayorista disponible para vender. ${puedeCopiar ? "Copialo a tus productos con tu markup y usalo en cotizaciones." : "Consultá precios netos y disponibilidad."}`}
-      />
       {usaExterno && productos.length === 0 && (
         <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <p className="flex items-center gap-1.5 font-semibold"><AlertTriangle className="h-4 w-4 shrink-0" /> No se obtuvieron productos del sitio de Turistea</p>

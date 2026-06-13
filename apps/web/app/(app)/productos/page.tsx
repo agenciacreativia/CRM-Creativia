@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { listProductos } from "@/lib/db/productos";
 import { getMyPermisos } from "@/lib/db/roles";
 import { can } from "@/lib/permissions";
-import { PageHeader } from "@/components/ui/page-header";
 import { ProductosManager } from "./productos-manager";
 import { getEditableFields } from "@/lib/bulk/editable-fields";
 
@@ -16,11 +15,6 @@ export default async function ProductosPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Productos"
-        subtitle="Catálogo de planes y servicios. Reutilizables en cotizaciones y correos."
-      />
-
       <ProductosManager
         initial={productos}
         canCrear={can(permisos, "productos", "crear", es_admin)}

@@ -178,37 +178,61 @@ export function ProductosManager({
     <div className="space-y-4">
       {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <div className="inline-flex w-full rounded-md border border-gray-200 bg-white p-0.5 sm:w-auto">
-          <button
-            type="button"
-            onClick={() => switchTab("propios")}
-            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium sm:flex-none ${tab === "propios" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
-          >
-            Mis productos <span className="ml-1 text-xs opacity-70">({propios.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => switchTab("turistea")}
-            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium sm:flex-none ${tab === "turistea" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
-          >
-            Catálogo <span className="ml-1 text-xs opacity-70">({turistea.length})</span>
-          </button>
+      {/* Toolbar estándar: izquierda = tabs + buscar + crear; derecha =
+          contador + columnas. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex h-9 rounded-md border border-gray-200 bg-white p-0.5">
+            <button
+              type="button"
+              onClick={() => switchTab("propios")}
+              className={`inline-flex h-full items-center rounded px-3 text-sm font-medium ${tab === "propios" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
+            >
+              Mis productos <span className="ml-1 text-xs opacity-70">({propios.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab("turistea")}
+              className={`inline-flex h-full items-center rounded px-3 text-sm font-medium ${tab === "turistea" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
+            >
+              Catálogo <span className="ml-1 text-xs opacity-70">({turistea.length})</span>
+            </button>
+          </div>
+          <input
+            type="search"
+            value={search}
+            onChange={(ev) => setSearch(ev.target.value)}
+            placeholder="Buscar producto…"
+            className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none sm:w-56"
+          />
+          {canCrear && tab === "propios" && (
+            <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex h-9 items-center gap-1.5">
+              <Plus className="h-4 w-4" /> Nuevo producto
+            </Button>
+          )}
+          {tab === "turistea" && (
+            <Link href="/catalogo" className="inline-flex h-9 items-center rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-50">
+              Ir al catálogo
+            </Link>
+          )}
+          {canEditar && tab === "propios" && (
+            <BulkActionsInline
+              modulo="productos"
+              scope="productos"
+              editFields={editFields}
+              cols={visibleCols}
+              allIds={visible.map((p) => p.id)}
+              canEliminar={canEliminar}
+            />
+          )}
         </div>
-        <input
-          type="search"
-          value={search}
-          onChange={(ev) => setSearch(ev.target.value)}
-          placeholder="Buscar producto…"
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm placeholder-gray-400 focus:border-brand-navy focus:outline-none sm:w-56"
-        />
-        <div className="flex items-center justify-between gap-2 sm:ml-auto">
-          <p className="text-sm text-gray-500">{visible.length}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="whitespace-nowrap text-xs text-gray-500">{visible.length} resultados</p>
           <div className="relative hidden md:block">
             <button
               type="button"
               onClick={() => setColsOpen((o) => !o)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 hover:bg-gray-100"
             >
               <Columns3 className="h-4 w-4" /> Columnas
             </button>
@@ -233,26 +257,6 @@ export function ProductosManager({
               </>
             )}
           </div>
-          {canCrear && tab === "propios" && (
-            <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
-              <Plus className="h-4 w-4" /> Nuevo producto
-            </Button>
-          )}
-          {canEditar && tab === "propios" && (
-            <BulkActionsInline
-              modulo="productos"
-              scope="productos"
-              editFields={editFields}
-              cols={visibleCols}
-              allIds={visible.map((p) => p.id)}
-              canEliminar={canEliminar}
-            />
-          )}
-          {tab === "turistea" && (
-            <Link href="/catalogo" className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
-              Ir al catálogo
-            </Link>
-          )}
         </div>
       </div>
 
@@ -275,8 +279,8 @@ export function ProductosManager({
                 {tab === "propios" ? "Aún no tenés productos propios. Crealos con + Nuevo producto o copialos del catálogo." : "Aún no cargaste productos del catálogo Turistea."}
               </td></tr>
             )}
-            {visible.map((row, idx) => (
-              <tr key={row.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
+            {visible.map((row) => (
+              <tr key={row.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50`}>
                 {canEditar && tab === "propios" && (
                   <td className="px-2 py-2.5 text-center">
                     <BulkRowCheckbox id={row.id} scope="productos" />

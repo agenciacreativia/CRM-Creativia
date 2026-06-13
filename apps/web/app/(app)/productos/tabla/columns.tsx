@@ -19,7 +19,7 @@ export type ProductoColumn = {
 export const PRODUCTO_COLUMNS: ProductoColumn[] = [
   {
     key: "nombre", label: "Nombre", fixed: true,
-    render: (p) => <Link href={`/productos/${p.id}`} className="font-medium text-brand-navy hover:underline">{p.nombre}</Link>,
+    render: (p) => <Link href={`/productos/${p.id}`} className="font-medium text-brand-primary hover:underline">{p.nombre}</Link>,
   },
   { key: "categoria", label: "Categoría", render: (p) => <span className="text-gray-600">{p.categoria ?? "—"}</span> },
   { key: "destino", label: "Destino", render: (p) => <span className="text-gray-600">{p.destino ?? "—"}</span> },

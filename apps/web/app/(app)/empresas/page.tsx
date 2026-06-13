@@ -67,17 +67,17 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
 
   return (
     <div className="space-y-4">
-      {/* Toolbar superior. En mobile arma 2 filas: búsqueda + crear arriba,
-          filtros/orden debajo. En md+ todo en una línea. */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-start sm:gap-3">
+      {/* Toolbar estándar: izquierda = buscar + crear; derecha = contador +
+          orden + columnas + filtros. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <QuickSearch placeholder="Buscar empresa…" />
           {puedeCrear && (
             <Link
               href="/empresas/nueva"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep sm:hidden"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-brand-navy px-3 text-sm font-semibold text-white hover:bg-brand-navy-deep"
             >
-              <Plus className="h-3.5 w-3.5" /> Nueva
+              <Plus className="h-4 w-4" /> Nueva empresa
             </Link>
           )}
           {puedeEditarMasivo && (
@@ -90,21 +90,11 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
             />
           )}
         </div>
-        <div className="flex items-center justify-between gap-2 sm:gap-3">
-          <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
-          <div className="flex items-center gap-2">
-            <ListOrder fields={filterFields} />
-            <ColumnPicker columns={EMPRESA_COLUMNS.map((c) => ({ key: c.key, label: c.label, fixed: c.fixed }))} visibleCols={visibleCols} />
-            <FilterBuilder modules={filterModules} entidad="empresas" vistas={vistas} />
-            {puedeCrear && (
-              <Link
-                href="/empresas/nueva"
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-brand-navy px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-navy-deep"
-              >
-                <Plus className="h-3.5 w-3.5" /> Nueva empresa
-              </Link>
-            )}
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="whitespace-nowrap text-xs text-gray-500">{rows.length} resultados</p>
+          <ListOrder fields={filterFields} />
+          <ColumnPicker columns={EMPRESA_COLUMNS.map((c) => ({ key: c.key, label: c.label, fixed: c.fixed }))} visibleCols={visibleCols} />
+          <FilterBuilder modules={filterModules} entidad="empresas" vistas={vistas} />
         </div>
       </div>
 
@@ -141,8 +131,8 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
                 </td>
               </tr>
             )}
-            {rows.map((e, idx) => (
-              <tr key={e.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
+            {rows.map((e) => (
+              <tr key={e.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50`}>
                 {puedeEditarMasivo && (
                   <Td className="text-center"><BulkRowCheckbox id={e.id} scope="empresas" /></Td>
                 )}

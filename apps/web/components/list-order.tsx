@@ -31,7 +31,7 @@ export function ListOrder({ fields, paramName = "orden" }: { fields: FilterField
       <select
         value={key ?? ""}
         onChange={(e) => update(e.target.value, direction)}
-        className="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+        className="h-9 rounded-md border border-gray-300 bg-white px-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
         aria-label="Ordenar por"
       >
         <option value="">Ordenar por…</option>

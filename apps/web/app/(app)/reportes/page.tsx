@@ -7,7 +7,6 @@ import { listPipelines } from "@/lib/db/pipelines";
 import { ReportesFiltersBar } from "./filters-bar";
 import { ExportCsvButton } from "./export-button";
 import { BarsAsesores, PieMotivos, LineForecast, BarsEmbudo } from "./charts";
-import { PageHeader } from "@/components/ui/page-header";
 
 type SearchParams = Promise<{ pipeline?: string; producto?: string; asesor?: string; desde?: string; hasta?: string }>;
 
@@ -39,11 +38,6 @@ export default async function ReportesPage({ searchParams }: { searchParams: Sea
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Reportes"
-        subtitle={`Métricas de ventas y actividad${d.scope === "me" ? " (tus oportunidades)" : " del equipo"}. Exportá cada tabla a CSV.`}
-      />
-
       <ReportesFiltersBar
         pipelines={pipelines.map((p) => ({ id: p.id, nombre: p.nombre }))}
         productos={productos.map((p) => ({ id: p.id, nombre: p.nombre }))}
