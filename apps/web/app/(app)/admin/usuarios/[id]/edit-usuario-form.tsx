@@ -33,15 +33,36 @@ export function EditUsuarioForm({ usuario, isSelf }: { usuario: UsuarioRow; isSe
         <Input id="nombre" name="nombre" defaultValue={usuario.nombre} required />
       </Field>
 
+      {/* Al editar tu propio usuario, Rol y Estado se muestran deshabilitados.
+          Un <select disabled> NO se envía con el form, así que mandamos los
+          valores actuales en inputs ocultos: de lo contrario `activo` llegaría
+          vacío (→ false) y la guarda anti-lockout bloquearía hasta un cambio de
+          solo nombre. */}
+      {isSelf && (
+        <>
+          <input type="hidden" name="rol" value={usuario.rol} />
+          <input type="hidden" name="activo" value={String(usuario.activo)} />
+        </>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Field label="Rol" htmlFor="rol" error={e.rol}>
-          <Select id="rol" name="rol" defaultValue={usuario.rol} disabled={isSelf}>
+          <Select
+            id="rol"
+            name={isSelf ? undefined : "rol"}
+            defaultValue={usuario.rol}
+            disabled={isSelf}
+          >
             <option value="asesor">Asesor</option>
             <option value="admin">Admin</option>
           </Select>
         </Field>
         <Field label="Estado" htmlFor="activo" error={e.activo}>
-          <Select id="activo" name="activo" defaultValue={String(usuario.activo)} disabled={isSelf}>
+          <Select
+            id="activo"
+            name={isSelf ? undefined : "activo"}
+            defaultValue={String(usuario.activo)}
+            disabled={isSelf}
+          >
             <option value="true">Activo</option>
             <option value="false">Desactivado</option>
           </Select>
