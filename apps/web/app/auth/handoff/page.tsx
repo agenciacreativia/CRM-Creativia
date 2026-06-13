@@ -62,13 +62,23 @@ export default function HandoffPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-8">
       <div className="text-center">
+        {/* Logo según tema: full-color en light, texto blanco en dark (el navy
+            del logo a color se pierde sobre el fondo oscuro de la precarga). */}
         <Image
           src="/turistea-crm.svg"
           alt="Turistea CRM"
           width={1677}
           height={451}
           priority
-          className="mx-auto h-12 w-auto"
+          className="mx-auto h-12 w-auto dark:hidden"
+        />
+        <Image
+          src="/turistea-crm-light.svg"
+          alt="Turistea CRM"
+          width={1677}
+          height={451}
+          priority
+          className="mx-auto hidden h-12 w-auto dark:block"
         />
         {error ? (
           <p className="mt-6 text-sm text-status-danger">{error}</p>
