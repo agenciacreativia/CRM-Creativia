@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { deleteEmpresaConCascada, logCambio } from "@/lib/db/mutations";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -43,5 +42,9 @@ export async function deleteEmpresaAction(id: string): Promise<DeleteEmpresaStat
   }
 
   revalidatePath("/empresas");
-  redirect("/empresas");
+  // Navegamos del lado del cliente (el botón hace router.push). Usar redirect()
+  // acá hacía que, tras el server action, /empresas renderizara la landing
+  // pública (quirk de redirect+revalidate dentro del route group). Devolver ok
+  // y navegar en el cliente es estable.
+  return { ok: true };
 }

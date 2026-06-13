@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteEmpresaAction, getDeleteEmpresaContext } from "./delete-actions";
@@ -8,6 +9,7 @@ import { deleteEmpresaAction, getDeleteEmpresaContext } from "./delete-actions";
 type Ctx = Awaited<ReturnType<typeof getDeleteEmpresaContext>>;
 
 export function DeleteEmpresaButton({ id, nombre }: { id: string; nombre: string }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [ctx, setCtx] = useState<Ctx | null>(null);
   const [confirmText, setConfirmText] = useState("");
@@ -35,8 +37,14 @@ export function DeleteEmpresaButton({ id, nombre }: { id: string; nombre: string
     setLoading(true);
     startTransition(async () => {
       const res = await deleteEmpresaAction(id);
-      setLoading(false);
-      if (res && !res.ok) setError(res.error ?? "No se pudo borrar");
+      if (res && !res.ok) {
+        setLoading(false);
+        setError(res.error ?? "No se pudo borrar");
+        return;
+      }
+      // Éxito: navegar a la lista del lado del cliente.
+      router.push("/empresas");
+      router.refresh();
     });
   }
 

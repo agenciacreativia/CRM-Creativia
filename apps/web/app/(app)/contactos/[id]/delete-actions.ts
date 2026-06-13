@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { deleteContactoConReasignacion, logCambio } from "@/lib/db/mutations";
 import { listOportunidadesDeContacto } from "@/lib/db/relaciones";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -73,6 +72,7 @@ export async function deleteContactoAction(
 
   revalidatePath("/contactos");
   if (reasignarA) revalidatePath(`/contactos/${reasignarA}`);
-  // El detalle del contacto borrado ya no existe; redirigimos al list.
-  redirect("/contactos");
+  // Navegación client-side desde el botón (redirect() acá renderizaba la landing
+  // pública tras el server action — mismo quirk que en empresas).
+  return { ok: true };
 }

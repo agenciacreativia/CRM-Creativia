@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteContactoAction, getDeleteContactoContext } from "./delete-actions";
@@ -8,6 +9,7 @@ import { deleteContactoAction, getDeleteContactoContext } from "./delete-actions
 type Ctx = Awaited<ReturnType<typeof getDeleteContactoContext>>;
 
 export function DeleteContactoButton({ id, nombre }: { id: string; nombre: string }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [ctx, setCtx] = useState<Ctx | null>(null);
   const [reasignarA, setReasignarA] = useState<string>("");
@@ -37,9 +39,13 @@ export function DeleteContactoButton({ id, nombre }: { id: string; nombre: strin
     setLoading(true);
     startTransition(async () => {
       const res = await deleteContactoAction(id, reasignarA || null);
-      // Si llega acá es porque la action devolvió error (en caso ok hace redirect).
-      setLoading(false);
-      if (res && !res.ok) setError(res.error ?? "No se pudo borrar");
+      if (res && !res.ok) {
+        setLoading(false);
+        setError(res.error ?? "No se pudo borrar");
+        return;
+      }
+      router.push("/contactos");
+      router.refresh();
     });
   }
 
