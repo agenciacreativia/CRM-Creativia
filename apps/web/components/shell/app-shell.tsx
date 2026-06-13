@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
@@ -197,14 +198,16 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
           )}
         >
           {!sidebarCollapsed && (
-            <Link href="/dashboard" aria-label="Turistea" className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-green text-brand-navy-deep">
-                <Briefcase className="h-4 w-4" strokeWidth={2.5} />
-              </span>
-              <span className="flex flex-col leading-tight">
-                <span className="text-sm font-semibold text-white">Turistea</span>
-                <span className="text-[11px] uppercase tracking-wider text-white/40">{tenant.nombre_empresa}</span>
-              </span>
+            <Link href="/dashboard" aria-label="Turistea CRM" className="flex min-w-0 flex-col gap-1">
+              <Image
+                src="/turistea-crm-light.svg"
+                alt="Turistea CRM"
+                width={1677}
+                height={451}
+                priority
+                className="h-7 w-auto"
+              />
+              <span className="truncate text-[11px] uppercase tracking-wider text-white/40">{tenant.nombre_empresa}</span>
             </Link>
           )}
           {/* En mobile el botón de cierre del drawer; en desktop, el collapse. */}

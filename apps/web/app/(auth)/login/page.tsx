@@ -15,10 +15,10 @@ export default async function LoginPage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <div className="mb-6 text-center">
           <Image
-            src="/turistea-logo.png"
-            alt="Turistea — Mayorista de Turismo"
-            width={2000}
-            height={497}
+            src="/turistea-crm.svg"
+            alt="Turistea CRM — Mayorista de Turismo"
+            width={1677}
+            height={451}
             priority
             className="h-12 w-auto mx-auto"
           />

@@ -4,6 +4,15 @@ const nextConfig = {
   typedRoutes: false,
   transpilePackages: ["@crm/shared", "@crm/i18n"],
 
+  // El logo de marca (turistea-crm.svg) se sirve vía next/image. Next bloquea
+  // la optimización de SVG por defecto; lo habilitamos pero servimos el SVG en
+  // sandbox (script-src 'none') para que un SVG malicioso no pueda ejecutar JS.
+  images: {
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+
   // Only pull in the icons actually used instead of the whole barrel — keeps
   // dev compilation (and prod bundles) fast for icon-heavy pages like the landing.
   experimental: {

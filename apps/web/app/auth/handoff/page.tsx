@@ -63,10 +63,10 @@ export default function HandoffPage() {
     <main className="flex min-h-screen items-center justify-center p-8">
       <div className="text-center">
         <Image
-          src="/turistea-logo.png"
+          src="/turistea-crm.svg"
           alt="Turistea CRM"
-          width={2000}
-          height={497}
+          width={1677}
+          height={451}
           priority
           className="mx-auto h-12 w-auto"
         />
