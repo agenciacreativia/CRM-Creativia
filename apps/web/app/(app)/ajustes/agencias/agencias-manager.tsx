@@ -79,7 +79,7 @@ export function AgenciasManager({ initial, planes }: { initial: Agencia[]; plane
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       {creada && <CredencialesPanel creada={creada} onClose={() => setCreada(null)} />}
 
@@ -244,7 +244,7 @@ function NuevaAgencia({
       <h2 className="flex items-center gap-2 text-sm font-bold uppercase text-gray-500">
         <Building2 className="h-4 w-4" /> Nueva agencia
       </h2>
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Nombre de la agencia">

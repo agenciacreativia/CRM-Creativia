@@ -130,7 +130,7 @@ export function OportunidadProductos({
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-sm font-bold uppercase text-gray-500">

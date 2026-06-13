@@ -43,7 +43,7 @@ export function AcceptForm({ token, email, nombre: initialNombre }: { token: str
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <Field label="Correo">
         <Input value={email} disabled className="bg-gray-50" />

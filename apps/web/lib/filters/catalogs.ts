@@ -20,7 +20,7 @@ const ORIGEN_CONTACTO = [
   { value: "otro", label: "Otro" },
 ];
 
-export const FIXED_FIELDS: Record<"empresa" | "contacto" | "oportunidad", FilterField[]> = {
+export const FIXED_FIELDS: Record<"empresa" | "contacto" | "oportunidad" | "producto", FilterField[]> = {
   empresa: [
     { key: "nombre", label: "Nombre", type: "texto" },
     { key: "email", label: "Email", type: "texto" },
@@ -38,6 +38,10 @@ export const FIXED_FIELDS: Record<"empresa" | "contacto" | "oportunidad", Filter
       ],
     },
     { key: "origen", label: "Origen", type: "seleccion", options: ORIGEN_EMPRESA },
+    { key: "sitio_web", label: "Sitio web", type: "texto" },
+    { key: "direccion", label: "Dirección", type: "texto" },
+    { key: "descripcion", label: "Descripción", type: "texto" },
+    { key: "asignado_id", label: "Propietario", type: "seleccion" },
     { key: "creado_en", label: "Fecha de creación", type: "fecha" },
   ],
   contacto: [
@@ -45,7 +49,11 @@ export const FIXED_FIELDS: Record<"empresa" | "contacto" | "oportunidad", Filter
     { key: "cargo", label: "Cargo", type: "texto" },
     { key: "email", label: "Email", type: "texto" },
     { key: "telefono", label: "Teléfono", type: "texto" },
+    { key: "telefono_whatsapp", label: "WhatsApp", type: "texto" },
     { key: "origen", label: "Origen", type: "seleccion", options: ORIGEN_CONTACTO },
+    { key: "descripcion", label: "Descripción", type: "texto" },
+    { key: "empresa_nombre", label: "Empresa", type: "texto" },
+    { key: "asignado_id", label: "Propietario", type: "seleccion" },
   ],
   oportunidad: [
     { key: "nombre", label: "Nombre", type: "texto" },
@@ -72,6 +80,27 @@ export const FIXED_FIELDS: Record<"empresa" | "contacto" | "oportunidad", Filter
     },
     { key: "probabilidad_cierre", label: "Probabilidad (%)", type: "numero" },
     { key: "fecha_esperada_cierre", label: "Cierre esperado", type: "fecha" },
+    // type "seleccion" sin options acá: las opciones (usuarios/pipelines/etapas
+    // del tenant) se inyectan dinámicamente en lib/filters/server.ts.
+    { key: "asignado_id", label: "Propietario", type: "seleccion" },
+    { key: "pipeline_id", label: "Embudo", type: "seleccion" },
+    { key: "etapa_id", label: "Etapa actual", type: "seleccion" },
+    { key: "etapa_anterior_id", label: "Etapa anterior", type: "seleccion" },
+    { key: "fecha_entrado_etapa", label: "Entró a etapa actual", type: "fecha" },
+    { key: "descripcion", label: "Descripción", type: "texto" },
+    { key: "creado_en", label: "Fecha de creación", type: "fecha" },
+  ],
+  producto: [
+    { key: "nombre", label: "Nombre", type: "texto" },
+    { key: "categoria", label: "Categoría", type: "texto" },
+    { key: "destino", label: "Destino", type: "texto" },
+    { key: "precio_desde", label: "Precio desde", type: "numero" },
+    {
+      key: "moneda",
+      label: "Moneda",
+      type: "seleccion",
+      options: ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"].map((m) => ({ value: m, label: m })),
+    },
   ],
 };
 

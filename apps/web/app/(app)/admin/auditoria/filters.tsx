@@ -27,7 +27,7 @@ export function AuditoriaFilters({
         <Filter className="h-3.5 w-3.5" /> Filtros
       </div>
       <div className="flex-1 min-w-44">
-        <label className="mb-1 block text-[11px] text-gray-500">Buscar</label>
+        <label className="mb-1 block text-xs text-gray-500">Buscar</label>
         <div className="relative">
           <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           <input
@@ -40,7 +40,7 @@ export function AuditoriaFilters({
         </div>
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Entidad</label>
+        <label className="mb-1 block text-xs text-gray-500">Entidad</label>
         <select
           value={activos.entidad ?? ""}
           onChange={(e) => set("entidad", e.target.value)}
@@ -53,7 +53,7 @@ export function AuditoriaFilters({
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Asesor</label>
+        <label className="mb-1 block text-xs text-gray-500">Asesor</label>
         <select
           value={activos.asesor ?? ""}
           onChange={(e) => set("asesor", e.target.value)}
@@ -64,11 +64,11 @@ export function AuditoriaFilters({
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Desde</label>
+        <label className="mb-1 block text-xs text-gray-500">Desde</label>
         <input type="date" value={activos.desde ?? ""} onChange={(e) => set("desde", e.target.value)} className="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm" />
       </div>
       <div>
-        <label className="mb-1 block text-[11px] text-gray-500">Hasta</label>
+        <label className="mb-1 block text-xs text-gray-500">Hasta</label>
         <input type="date" value={activos.hasta ?? ""} onChange={(e) => set("hasta", e.target.value)} className="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm" />
       </div>
       {has && (

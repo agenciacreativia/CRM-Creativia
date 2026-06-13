@@ -95,12 +95,12 @@ export function PipelineEditor({ pipeline }: { pipeline: PipelineDetail }) {
   return (
     <div className="space-y-3 pb-20">
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>
+        <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>
       )}
 
       {/* Embudo: compact (sticky save abajo) */}
       <form id="pipeline-form" onSubmit={onUpdatePipeline} className="rounded-lg border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Embudo</h2>
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">Embudo</h2>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <Field label="Nombre" htmlFor="nombre" required>
             <Input id="nombre" name="nombre" defaultValue={pipeline.nombre} required />
@@ -117,10 +117,10 @@ export function PipelineEditor({ pipeline }: { pipeline: PipelineDetail }) {
       <section className="rounded-lg border border-gray-200 bg-white p-4">
         <header className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Etapas</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Etapas</h2>
             <p className="text-xs text-gray-400">Arrastrá para reordenar.</p>
           </div>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">{etapas.length}</span>
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{etapas.length}</span>
         </header>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

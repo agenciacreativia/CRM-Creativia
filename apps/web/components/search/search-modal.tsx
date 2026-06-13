@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Building2, User, Briefcase, Search, type LucideIcon } from "lucide-react";
 
 type Hit = {
   type: "empresa" | "contacto" | "oportunidad";
@@ -16,10 +17,10 @@ const TYPE_LABEL: Record<Hit["type"], string> = {
   contacto: "Contacto",
   oportunidad: "Oportunidad",
 };
-const TYPE_ICON: Record<Hit["type"], string> = {
-  empresa: "🏢",
-  contacto: "👤",
-  oportunidad: "💼",
+const TYPE_ICON: Record<Hit["type"], LucideIcon> = {
+  empresa: Building2,
+  contacto: User,
+  oportunidad: Briefcase,
 };
 
 /**
@@ -111,7 +112,7 @@ export function SearchModal() {
   return (
     <div ref={containerRef} className="relative w-56">
       <div className="flex items-center gap-2 px-3 py-1.5 bg-white focus-within:ring-2 focus-within:ring-brand-primary rounded-md border border-gray-300 transition-colors">
-        <span className="text-gray-400 text-sm">🔎</span>
+        <Search className="h-4 w-4 shrink-0 text-gray-400" />
         <input
           ref={inputRef}
           type="text"
@@ -151,7 +152,7 @@ export function SearchModal() {
                         i === activeIdx ? "bg-blue-50" : "hover:bg-gray-50"
                       }`}
                     >
-                      <span className="text-lg flex-shrink-0">{TYPE_ICON[h.type]}</span>
+                      {(() => { const Icon = TYPE_ICON[h.type]; return <Icon className="h-5 w-5 flex-shrink-0 text-gray-500" />; })()}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{h.title}</p>
                         {h.subtitle && (

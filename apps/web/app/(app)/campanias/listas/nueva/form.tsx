@@ -30,7 +30,7 @@ export function NuevaListaForm({ fields }: { fields: FilterField[] }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-5">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <Field label="Nombre de la lista" required>
           <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Clientes oro AR sin viaje 2026" required />
@@ -42,7 +42,8 @@ export function NuevaListaForm({ fields }: { fields: FilterField[] }) {
 
       <div>
         <p className="mb-1 text-xs font-medium text-gray-600">Filtros (mismos operadores que el módulo Contactos)</p>
-        <FilterBuilder fields={fields} />
+        {/* Lista de campaña: siempre segmenta contactos, sin selector de módulo. */}
+        <FilterBuilder modules={[{ key: "contacto", label: "Contactos", fields }]} />
         <p className="mt-1 text-xs text-gray-400">Los filtros se almacenan en la URL y se guardan junto con la lista.</p>
       </div>
 

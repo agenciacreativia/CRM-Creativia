@@ -14,14 +14,7 @@ import {
   deleteActividadAction,
 } from "./actividades-actions";
 import { cn } from "@/lib/utils";
-
-const TIPO_ICONS: Record<Actividad["tipo"], string> = {
-  llamada: "📞",
-  email: "✉️",
-  whatsapp: "💬",
-  reunion: "📅",
-  otra: "•",
-};
+import { ActividadIcon } from "./actividad-icon";
 
 const TIPO_LABEL: Record<Actividad["tipo"], string> = {
   llamada: "Llamada",
@@ -132,11 +125,11 @@ export function ActividadesSection({
             <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-3">
               <Field label="Tipo" htmlFor="tipo">
                 <Select id="tipo" name="tipo" defaultValue="llamada">
-                  <option value="llamada">📞 Llamada</option>
-                  <option value="email">✉️ Email</option>
-                  <option value="whatsapp">💬 WhatsApp</option>
-                  <option value="reunion">📅 Reunión</option>
-                  <option value="otra">• Otra</option>
+                  <option value="llamada">Llamada</option>
+                  <option value="email">Email</option>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="reunion">Reunión</option>
+                  <option value="otra">Otra</option>
                 </Select>
               </Field>
               <Field label="Fecha programada" htmlFor="fecha_programada" hint="Dejá vacío si es ad-hoc">
@@ -172,7 +165,7 @@ export function ActividadesSection({
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span>{TIPO_ICONS[a.tipo]}</span>
+                  <ActividadIcon tipo={a.tipo} className="h-4 w-4 text-gray-500" />
                   <span className="text-sm font-medium text-gray-900">{TIPO_LABEL[a.tipo]}</span>
                   {a.fecha_programada && (
                     <span className="text-xs text-gray-500">· {formatDateTime(a.fecha_programada)}</span>

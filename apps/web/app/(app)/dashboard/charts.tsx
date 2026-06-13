@@ -179,7 +179,7 @@ export function EmbudoChart({ data }: { data: EmbudoDatum[] }) {
           </div>
         );
       })}
-      <div className="flex items-center gap-3 text-[10px] text-gray-400 pt-1">
+      <div className="flex items-center gap-3 text-[11px] text-gray-400 pt-1">
         <div className="w-28 shrink-0" />
         <div className="flex-1">Cantidad alcanzada</div>
         <div className="w-16 shrink-0 text-right">Conv. vs etapa previa</div>

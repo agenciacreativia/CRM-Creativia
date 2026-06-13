@@ -42,7 +42,7 @@ export default async function CuentaPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Identidad</h2>
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">Identidad</h2>
             <dl className="space-y-2 text-sm">
               <Row k="Nombre comercial" v={tenant.nombre_empresa ?? "—"} />
               <Row k="Subdominio" v={tenant.subdominio ?? "—"} />
@@ -51,7 +51,7 @@ export default async function CuentaPage() {
             </dl>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-5">
-            <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Plan y operaciones</h2>
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">Plan y operaciones</h2>
             <dl className="space-y-2 text-sm">
               <Row k="Plan" v={tenant.plan ?? "—"} />
               <Row k="Estado" v={tenant.estado ?? "—"} />

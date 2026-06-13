@@ -5,6 +5,7 @@
  * identically for built-in and custom fields.
  */
 import type { FilterCondition, FilterField, FilterSpec } from "./types";
+import { resolveModuleRecords, selfModule, type ListaKey, type ModuloKey } from "./relations";
 
 function fieldValue(
   row: Record<string, unknown>,
@@ -44,15 +45,16 @@ function asComparable(v: unknown, type: FilterField["type"]): number | null {
   return null;
 }
 
-function evalCondition(
-  row: Record<string, unknown>,
+/** Evalúa una condición sobre UN registro plano (la fila self o un relacionado). */
+function evalConditionOnRecord(
+  record: Record<string, unknown>,
   cond: FilterCondition,
   fields: FilterField[],
 ): boolean {
   const field = fields.find((f) => f.key === cond.field);
   if (!field) return false;
 
-  const raw = fieldValue(row, field);
+  const raw = fieldValue(record, field);
 
   switch (cond.operator) {
     case "vacio":
@@ -112,15 +114,42 @@ function evalCondition(
   }
 }
 
-/** Evaluate the full spec against one row. */
+/**
+ * Evalúa una condición resolviendo el módulo correcto: self → la fila;
+ * relacionado (empresa/contacto) → el objeto en _rel; producto (to-many) →
+ * pasa si ALGÚN producto cumple. Cada condición usa SOLO los campos de su
+ * módulo, así que "Empresa: ciudad = X" nunca mira el contacto.
+ */
+function evalConditionMulti(
+  row: Record<string, unknown>,
+  cond: FilterCondition,
+  fieldsByModule: Record<string, FilterField[]>,
+  lista: ListaKey,
+): boolean {
+  const moduleKey = (cond.module ?? selfModule(lista)) as ModuloKey;
+  const fields = fieldsByModule[moduleKey] ?? [];
+  const records = resolveModuleRecords(row, lista, moduleKey);
+
+  // Sin registros del módulo (ej. oportunidad sin productos): solo "está vacío"
+  // puede ser verdadero; cualquier otra condición no se cumple.
+  if (records.length === 0) return cond.operator === "vacio";
+
+  return records.some((rec) => evalConditionOnRecord(rec, cond, fields));
+}
+
+/**
+ * Evalúa el spec completo contra una fila.
+ * @param fieldsByModule mapa moduloKey → campos de ese módulo
+ * @param lista entidad ancla de la lista (oportunidad/empresa/contacto/producto)
+ */
 export function rowMatches(
   row: Record<string, unknown>,
   spec: FilterSpec,
-  fields: FilterField[],
+  fieldsByModule: Record<string, FilterField[]>,
+  lista: ListaKey,
 ): boolean {
-  const andOk =
-    spec.and.length === 0 || spec.and.every((c) => evalCondition(row, c, fields));
-  const orOk =
-    spec.or.length === 0 || spec.or.some((c) => evalCondition(row, c, fields));
+  const evalC = (c: FilterCondition) => evalConditionMulti(row, c, fieldsByModule, lista);
+  const andOk = spec.and.length === 0 || spec.and.every(evalC);
+  const orOk = spec.or.length === 0 || spec.or.some(evalC);
   return andOk && orOk;
 }

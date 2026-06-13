@@ -30,7 +30,7 @@ export function ComisionesManager({ initial }: { initial: ComisionAsesor[] }) {
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       {monedasDistintas && (
         <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
           Hay asesores con monedas distintas. Los totales mostrados solo incluyen los registros en {moneda}.

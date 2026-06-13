@@ -1,7 +1,8 @@
 import Link from "next/link";
 import {
-  ShieldCheck, ChevronRight, Package2, Building2, Zap, ListOrdered, Globe, Store, CreditCard, Gem, MapPinned,
-  Plug, Database, ClipboardList, GitMerge, Percent, MessageCircle, UserCog, Mail, Settings as SettingsIcon,
+  ChevronRight, Package2, Building2, Zap, ListOrdered, Globe, Store, CreditCard, Gem, MapPinned,
+  Plug, ClipboardList, GitMerge, Percent, MessageCircle, UserCog, Mail, Settings as SettingsIcon,
+  Upload, Download, GitBranch, Tags, XCircle,
 } from "lucide-react";
 import { getCuentaGoogle } from "@/lib/db/google";
 import { listPlantillas } from "@/lib/db/plantillas";
@@ -39,7 +40,7 @@ function Card({ href, icon: Icon, title, sub, accent = false }: { href: string; 
 }
 
 function GroupTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="mt-5 mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">{children}</h2>;
+  return <h2 className="mt-5 mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">{children}</h2>;
 }
 
 export default async function AjustesPage({ searchParams }: { searchParams: SearchParams }) {
@@ -76,8 +77,12 @@ export default async function AjustesPage({ searchParams }: { searchParams: Sear
         <>
           <GroupTitle>Equipo</GroupTitle>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-            <Card href="/admin/usuarios" icon={UserCog} title="Usuarios" sub="Miembros del equipo, alta y edición" />
-            {puedeRoles && <Card href="/ajustes/roles" icon={ShieldCheck} title="Roles y permisos" sub="Roles personalizados e invitaciones" />}
+            <Card
+              href="/admin/usuarios"
+              icon={UserCog}
+              title="Usuarios y roles"
+              sub={puedeRoles ? "Miembros del equipo, roles, permisos e invitaciones" : "Miembros del equipo, alta y edición"}
+            />
             <Card href="/ajustes/cuenta" icon={Building2} title="Cuenta de mi agencia" sub="Datos de la empresa, logo, dominio, moneda" />
           </div>
         </>
@@ -87,8 +92,12 @@ export default async function AjustesPage({ searchParams }: { searchParams: Sear
       {isAdmin && (
         <>
           <GroupTitle>Datos</GroupTitle>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Card href="/admin/datos" icon={Database} title="Gestión de datos" sub="Importar, exportar, pipelines, campos, motivos" />
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+            <Card href="/admin/datos/importar" icon={Upload} title="Importar datos" sub="Subí Excel: empresas, contactos y oportunidades" />
+            <Card href="/admin/datos/exportar" icon={Download} title="Exportar datos" sub="Backup JSON o CSV por entidad" />
+            <Card href="/admin/pipelines" icon={GitBranch} title="Pipelines y etapas" sub="Embudos, orden de etapas y alertas" />
+            <Card href="/admin/campos" icon={Tags} title="Campos personalizados" sub="Campos extra por empresa, contacto y oportunidad" />
+            <Card href="/admin/motivos-perdida" icon={XCircle} title="Motivos de pérdida" sub="Motivos al marcar una oportunidad perdida" />
             <Card href="/admin/auditoria" icon={ClipboardList} title="Auditoría" sub="Registro de cambios del equipo" />
             <Card href="/admin/duplicados" icon={GitMerge} title="Duplicados" sub="Detección y fusión" />
           </div>

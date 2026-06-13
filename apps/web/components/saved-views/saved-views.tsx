@@ -136,7 +136,7 @@ export function SavedViews({
 
             {error && <div className="mb-2 rounded border border-red-200 bg-red-50 p-2 text-xs text-status-danger">{error}</div>}
 
-            <label className="mb-1 block text-[11px] font-medium text-gray-600" htmlFor="vista-nombre">
+            <label className="mb-1 block text-xs font-medium text-gray-600" htmlFor="vista-nombre">
               Nombre
             </label>
             <input

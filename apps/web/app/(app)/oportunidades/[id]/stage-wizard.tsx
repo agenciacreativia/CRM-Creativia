@@ -55,10 +55,13 @@ export function StageWizard({
         {etapas.map((e, i) => {
           const done = i < currentIndex;
           const active = i === currentIndex;
+          // Colores fijos (no usar text-brand-primary / bg-brand-primary: en dark
+          // mode se remapean a verde lima y el texto desaparece sobre el chevron
+          // lima). brand-navy y brand-navy-deep son literales → legibles en ambos temas.
           const bg = active
-            ? "bg-brand-primary text-white"
+            ? "bg-brand-navy text-white"
             : done
-              ? "bg-[var(--brand-green)] text-brand-primary"
+              ? "bg-[var(--brand-green)] text-brand-navy-deep"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200";
           return (
             <button

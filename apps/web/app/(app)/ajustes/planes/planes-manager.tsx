@@ -78,7 +78,7 @@ export function PlanesManager({ initial }: { initial: Plan[] }) {
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{initial.length} planes</p>
@@ -183,7 +183,7 @@ function PlanForm({ editing, onDone, onCancel, existing }: { editing: Plan | nul
 
   return (
     <div className="space-y-5">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       {/* Datos del plan */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">

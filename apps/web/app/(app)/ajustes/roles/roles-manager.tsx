@@ -53,7 +53,7 @@ export function RolesManager({ initial }: { initial: Rol[] }) {
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-400">Definí roles y qué puede hacer cada uno en cada módulo.</p>
@@ -87,7 +87,7 @@ export function RolesManager({ initial }: { initial: Rol[] }) {
                     const verbs = PERMISSION_ACTIONS.filter((a) => p?.[a.key]).map((a) => a.label[0]);
                     if (verbs.length === 0) return null;
                     return (
-                      <span key={m.key} className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-600">
+                      <span key={m.key} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">
                         {m.label}: {verbs.join("")}
                       </span>
                     );
@@ -157,7 +157,7 @@ function RolForm({ editing, onDone, onCancel }: { editing: Rol | null; onDone: (
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Nombre del rol">

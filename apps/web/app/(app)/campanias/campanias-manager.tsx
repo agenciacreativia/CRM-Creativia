@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Megaphone, Plus, Send, Trash2 } from "lucide-react";
+import { Megaphone, Plus, Send, Trash2, AlertTriangle, MailOpen, MousePointerClick, Undo2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export function CampaniasManager({ initial, metricas = {} }: { initial: Campania
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       {okMsg && <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-gray-800">{okMsg}</div>}
 
       <div className="flex items-center justify-between">
@@ -88,15 +88,15 @@ export function CampaniasManager({ initial, metricas = {} }: { initial: Campania
                   )}
                 </p>
                 {c.estado === "enviada" && c.error_resumen && (
-                  <p className="mt-1 rounded border border-red-200 bg-red-50 px-2 py-1 text-[11px] text-status-danger" title="Último error registrado durante el envío">
-                    ⚠ {c.error_resumen}
+                  <p role="alert" className="mt-1 flex items-center gap-1 rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-status-danger" title="Último error registrado durante el envío">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> {c.error_resumen}
                   </p>
                 )}
                 {c.estado === "enviada" && metricas[c.id] && (
-                  <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-gray-600">
-                    <span title="Tasa de apertura">📨 Aperturas: <strong>{metricas[c.id].tasa_apertura ?? "—"}%</strong> ({metricas[c.id].abiertos_unicos})</span>
-                    <span title="Tasa de click">🖱 Clicks: <strong>{metricas[c.id].tasa_click ?? "—"}%</strong> ({metricas[c.id].click_unicos})</span>
-                    <span title="Bounces (rebotes)">↩ Bounces: <strong>{metricas[c.id].bounces}</strong></span>
+                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-600">
+                    <span className="inline-flex items-center gap-1" title="Tasa de apertura"><MailOpen className="h-3.5 w-3.5" /> Aperturas: <strong>{metricas[c.id].tasa_apertura ?? "—"}%</strong> ({metricas[c.id].abiertos_unicos})</span>
+                    <span className="inline-flex items-center gap-1" title="Tasa de click"><MousePointerClick className="h-3.5 w-3.5" /> Clicks: <strong>{metricas[c.id].tasa_click ?? "—"}%</strong> ({metricas[c.id].click_unicos})</span>
+                    <span className="inline-flex items-center gap-1" title="Bounces (rebotes)"><Undo2 className="h-3.5 w-3.5" /> Bounces: <strong>{metricas[c.id].bounces}</strong></span>
                   </div>
                 )}
               </div>
@@ -139,7 +139,7 @@ function Form({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }
       onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); guardar(); }}
       className="space-y-4 rounded-lg border border-gray-200 bg-white p-5"
     >
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Nombre interno"><Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Promo invierno" /></Field>
         <Field label="Segmento (estado empresa)">
@@ -154,7 +154,7 @@ function Form({ onCancel, onDone }: { onCancel: () => void; onDone: () => void }
       <Field label="Asunto"><Input value={asunto} onChange={(e) => setAsunto(e.target.value)} placeholder="¡Promo exclusiva!" /></Field>
       <Field label="Cuerpo del correo">
         <HtmlEditor value={cuerpo} onChange={setCuerpo} placeholder="<p>Hola {{nombre}}, te queremos contar…</p>" rows={12} />
-        <p className="mt-1 text-[11px] text-gray-400">Variables disponibles: <code>{"{{nombre}}"}</code>, <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>.</p>
+        <p className="mt-1 text-xs text-gray-400">Variables disponibles: <code>{"{{nombre}}"}</code>, <code>{"{{empresa}}"}</code>, <code>{"{{email}}"}</code>.</p>
       </Field>
       <div className="flex items-center gap-2 border-t border-gray-100 pt-4">
         <Button type="submit" disabled={saving}>{saving ? "Guardando…" : "Crear campaña"}</Button>

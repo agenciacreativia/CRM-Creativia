@@ -22,7 +22,7 @@ export function ListasEnvioPanel({ listas }: { listas: ListaEnvio[] }) {
             </span>
             <p className="text-xs text-gray-500">{l.descripcion ?? "—"} · creada {new Date(l.creado_en).toLocaleDateString("es")}</p>
           </div>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700">{l.contactos} contactos</span>
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">{l.contactos} contactos</span>
         </li>
       ))}
     </ul>

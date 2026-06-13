@@ -30,6 +30,11 @@ export type FilterField = {
 };
 
 export type FilterCondition = {
+  /**
+   * Módulo de la condición: "oportunidad" | "empresa" | "contacto" | "producto".
+   * Si falta (specs viejos), el motor asume el módulo ancla de la lista.
+   */
+  module?: string;
   field: string; // FilterField.key
   operator: FilterOperator;
   value: string;

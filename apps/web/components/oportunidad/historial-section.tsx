@@ -49,7 +49,7 @@ export function HistorialSection({
               <li key={e.id} className="relative">
                 <span className="absolute -left-[15px] top-1.5 h-2 w-2 rounded-full bg-gray-300" />
                 <p className="text-sm text-gray-700">{e.texto}</p>
-                <p className="text-[11px] text-gray-400">
+                <p className="text-xs text-gray-400">
                   {e.autor ?? "—"} · {formatDateTime(e.fecha)}
                 </p>
               </li>

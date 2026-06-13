@@ -52,7 +52,7 @@ export function TerritoriosManager({
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-400">Zonas comerciales con meta. Asigná vendedores externos a cada zona y seguí el cumplimiento.</p>
@@ -147,7 +147,7 @@ function Form({ editing, onDone, onCancel }: { editing: Territorio | null; onDon
 
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-5">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <Field label="Nombre"><Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Bogotá Norte" /></Field>
         <Field label="Descripción (opcional)"><Input value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></Field>
@@ -175,7 +175,7 @@ function Kpi({ label, value, tone = "default" }: { label: string; value: string;
   const cls = tone === "ok" ? "text-green-700" : tone === "warn" ? "text-amber-700" : tone === "off" ? "text-status-danger" : "text-gray-900";
   return (
     <div className="rounded-md border border-gray-100 bg-gray-50 px-2 py-1.5">
-      <p className="text-[10px] uppercase text-gray-400">{label}</p>
+      <p className="text-[11px] uppercase text-gray-400">{label}</p>
       <p className={`text-sm font-semibold ${cls}`}>{value}</p>
     </div>
   );

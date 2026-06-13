@@ -71,9 +71,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        // Poppins everywhere (Stitch). Fallbacks keep system stable if not loaded.
-        sans: ["Poppins", "Inter", "system-ui", "sans-serif"],
-        display: ["Poppins", "Inter", "system-ui", "sans-serif"],
+        // Poppins self-hosted vía next/font (variable --font-poppins). Fallbacks
+        // mantienen el sistema estable si la fuente no cargó.
+        sans: ["var(--font-poppins)", "Poppins", "Inter", "system-ui", "sans-serif"],
+        display: ["var(--font-poppins)", "Poppins", "Inter", "system-ui", "sans-serif"],
       },
       fontSize: {
         // Stitch typography scale.

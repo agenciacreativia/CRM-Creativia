@@ -61,7 +61,7 @@ export function AutomatizacionesManager({
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-400">Automatizá tareas, asignaciones y etiquetas según lo que pasa en tus oportunidades.</p>
         <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
@@ -151,7 +151,7 @@ function ReglaForm({
 
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-5">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Nombre de la regla">

@@ -95,7 +95,7 @@ export function CuentasManager({
 
   return (
     <div className="space-y-6">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       {/* Existing users */}
       <div>

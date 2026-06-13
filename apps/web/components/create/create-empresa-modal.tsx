@@ -41,7 +41,7 @@ export function CreateEmpresaModal({
     <Modal title="Nueva empresa" onClose={onClose} size="max-w-2xl">
       <form action={formAction} className="space-y-5">
         {state.error && (
-          <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">
+          <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">
             {state.error}
           </div>
         )}

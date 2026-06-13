@@ -87,7 +87,7 @@ export function HabitacionesSection({
         )}
       </div>
 
-      {error && <div className="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       {/* Validación */}
       {validacion.ok ? (

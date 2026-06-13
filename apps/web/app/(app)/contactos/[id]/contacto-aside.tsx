@@ -73,7 +73,7 @@ export function ContactoAside({
           onSave={(v) => saveContactoField(c.id, "telefono_whatsapp", v)} />
 
         <div className="py-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Empresa</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Empresa</p>
           <Link href={`/empresas/${c.empresa_id}`} className="mt-0.5 inline-block text-sm text-brand-primary hover:underline">
             {c.empresa_nombre}
           </Link>

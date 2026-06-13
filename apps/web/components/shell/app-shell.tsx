@@ -23,7 +23,6 @@ import {
   Settings,
   Bell,
   Mail,
-  Search,
   Eye,
   Menu as MenuIcon,
   X,
@@ -142,7 +141,6 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
     { href: "/fidelizacion", label: "Fidelización", icon: Heart, mod: "contactos" },
     { href: "/campanias", label: "Campañas", icon: Mail, mod: "contactos" },
     { href: "/reportes", label: "Reportes", icon: BarChart3, mod: "dashboard" },
-    { href: "/buscar", label: "Búsqueda avanzada", icon: Search, mod: "dashboard" },
   ];
   const navItems = allNavItems.filter((i) => can(permisos, i.mod, "ver", isAdmin));
   // Catálogo mayorista de Turistea: visible para todas las agencias (no es un módulo de permisos).
@@ -205,7 +203,7 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
               </span>
               <span className="flex flex-col leading-tight">
                 <span className="text-sm font-semibold text-white">Turistea</span>
-                <span className="text-[10px] uppercase tracking-wider text-white/40">{tenant.nombre_empresa}</span>
+                <span className="text-[11px] uppercase tracking-wider text-white/40">{tenant.nombre_empresa}</span>
               </span>
             </Link>
           )}
@@ -261,7 +259,7 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
 
         {/* Footer */}
         {!sidebarCollapsed && (
-          <div className="border-t border-white/5 px-4 py-3 text-[11px] text-white/40">
+          <div className="border-t border-white/5 px-4 py-3 text-xs text-white/40">
             <a href="https://agenciacreativia.com/" target="_blank" rel="noopener noreferrer" className="block hover:text-brand-green">
               Agencia Creativia
             </a>
@@ -350,7 +348,7 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
               >
                 <Bell className="h-5 w-5" />
                 {notificaciones.length > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-status-danger px-1 text-[10px] font-bold text-white">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-status-danger px-1 text-[11px] font-bold text-white">
                     {notificaciones.length > 9 ? "9+" : notificaciones.length}
                   </span>
                 )}
@@ -363,7 +361,7 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
                   </div>
                   <div className="my-1 border-t border-gray-100" />
                   {notificaciones.length === 0 ? (
-                    <p className="px-3 py-6 text-center text-sm text-gray-400">Estás al día 🎉</p>
+                    <p className="px-3 py-6 text-center text-sm text-gray-400">Estás al día</p>
                   ) : (
                     <div className="max-h-96 overflow-y-auto">
                       {notificaciones.map((n) => (

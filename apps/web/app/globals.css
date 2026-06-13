@@ -1,6 +1,5 @@
-/* IMPORTANT: @import must come BEFORE @tailwind / any other rule (CSS spec). */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
-
+/* Poppins se carga self-hosted vía next/font (app/layout.tsx) y se expone como
+   la variable CSS --font-poppins. Ya no importamos desde fonts.googleapis.com. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,7 +31,9 @@
 
     --ink: #081d2d;
     --ink-soft: #47464f;
-    --ink-faint: #787680;
+    /* Subido de #787680 (~4.4:1) a #5b5966 (~6.5:1) para cumplir WCAG AA en
+       texto secundario/metadatos sobre superficies claras. */
+    --ink-faint: #5b5966;
     --ink-inverse: #e8f2ff;
 
     --brand-navy: #272255;
@@ -41,6 +42,10 @@
     --brand-green: #aaf52b;
     --brand-green-dark: #446900;
     --brand-orange: #ea6a30;
+    /* Naranja oscuro SOLO para texto sobre superficies claras (#ea6a30 da ~3.4:1
+       y falla AA en texto chico; #a8401c ≈ 6.8:1). El naranja brillante sigue
+       siendo el color de fondo de badges/CTA. */
+    --brand-orange-text: #a8401c;
     --brand-orange-soft: #ffb598;
     --brand-sky: #85c2f6;
 
@@ -89,6 +94,8 @@
     --ink-soft: #c9c5d0;
     --ink-faint: #85c2f6;
     --ink-inverse: #081d2d;
+    /* En oscuro el texto warn usa el naranja claro (legible sobre superficies oscuras). */
+    --brand-orange-text: #ffb598;
 
     --outline: #2a3855;
     --outline-soft: rgba(133, 194, 246, 0.10);
@@ -108,12 +115,75 @@
   html, body { @apply h-full; }
 
   body {
-    font-family: "Poppins", Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-poppins), "Poppins", Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     color: var(--ink);
     background: var(--surface);
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  /*
+   * Anillo de foco accesible y consistente para TODO elemento interactivo que
+   * no sea un input/textarea/select (esos ya tienen su propio estilo de foco).
+   * Solo en :focus-visible → no molesta al click con mouse, sí al teclado.
+   */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [role="tab"]:focus-visible,
+  [role="menuitem"]:focus-visible,
+  [tabindex]:not([tabindex="-1"]):focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--brand-navy);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  html.dark a:focus-visible,
+  html.dark button:focus-visible,
+  html.dark [role="button"]:focus-visible,
+  html.dark [role="tab"]:focus-visible,
+  html.dark [role="menuitem"]:focus-visible,
+  html.dark [tabindex]:not([tabindex="-1"]):focus-visible,
+  html.dark summary:focus-visible {
+    outline-color: var(--brand-sky);
+  }
+}
+
+/*
+ * Respeta la preferencia del sistema "reducir movimiento": corta transiciones,
+ * animaciones y scroll suave para usuarios con sensibilidad al movimiento.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Targets táctiles (regla touch-target-size). En dispositivos de puntero grueso
+ * (touch) los controles interactivos cumplen el mínimo de 44px; el desktop con
+ * mouse mantiene su densidad. Excluimos controles dentro de celdas de tabla
+ * densas explícitamente marcados, y los checkboxes ganan un área mayor.
+ */
+@media (pointer: coarse) {
+  button:not(:disabled):not(.no-min-touch),
+  [role="button"]:not(.no-min-touch),
+  select,
+  summary,
+  .icon-btn,
+  a.inline-flex {
+    min-height: 44px;
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
   }
 }
 
@@ -159,7 +229,7 @@
     box-shadow: none !important;
     border-radius: var(--radius);
     color: var(--ink);
-    font-family: "Poppins", inherit;
+    font-family: var(--font-poppins), "Poppins", inherit;
   }
   input::placeholder, textarea::placeholder {
     color: var(--ink-faint) !important;
@@ -222,7 +292,7 @@
     line-height: 1;
   }
   .pill-ok { background: rgba(170, 245, 43, 0.18); color: var(--brand-green-dark); }
-  .pill-warn { background: rgba(234, 106, 48, 0.16); color: var(--brand-orange); }
+  .pill-warn { background: rgba(234, 106, 48, 0.16); color: var(--brand-orange-text); }
   .pill-danger { background: rgba(186, 26, 26, 0.12); color: var(--status-danger); }
   .pill-navy { background: rgba(39, 34, 85, 0.10); color: var(--brand-navy); }
 
@@ -252,6 +322,15 @@
   .card-featured .text-gray-900,
   .card-featured .text-brand-primary {
     color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  /* Panel lateral (bulk-edit): entra deslizándose desde el borde derecho. */
+  @keyframes panel-slide-in-right {
+    from { transform: translateX(100%); opacity: 0.5; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .animate-panel-in {
+    animation: panel-slide-in-right 0.2s ease-out;
   }
 
   /* Round icon button (36×36) */
@@ -341,7 +420,7 @@
     color: var(--ink-faint) !important;
   }
 
-  /* Recharts text labels */
+  /* Recharts text labels (ejes, etiquetas de torta) */
   .recharts-text { fill: var(--ink-faint); }
 
   /* Status backgrounds */
@@ -349,6 +428,6 @@
   .bg-status-warn { background-color: var(--brand-orange); color: #fff; }
   .bg-status-danger { background-color: var(--status-danger); color: #fff; }
   .text-status-ok { color: var(--brand-green-dark); }
-  .text-status-warn { color: var(--brand-orange); }
+  .text-status-warn { color: var(--brand-orange-text); }
   .text-status-danger { color: var(--status-danger); }
 }

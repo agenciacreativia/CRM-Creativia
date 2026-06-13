@@ -37,7 +37,7 @@ export function SecuenciasManager({ initial }: { initial: Secuencia[] }) {
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-400">Plantillas de seguimiento. Al inscribir una oportunidad se generan las actividades fechadas.</p>
         <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
@@ -99,7 +99,7 @@ function SecuenciaForm({ editing, onDone, onCancel }: { editing: Secuencia | nul
 
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-5">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Nombre"><Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Nutrición de lead" /></Field>
         <Field label="Descripción (opcional)"><Input value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></Field>

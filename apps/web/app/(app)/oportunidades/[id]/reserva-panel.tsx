@@ -62,7 +62,7 @@ export function ReservaPanel({
         )}
       </div>
 
-      {error && <div className="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       {okMsg && <div className="mb-3 rounded border border-green-200 bg-green-50 p-3 text-sm text-gray-800"><Check className="mr-1 inline h-4 w-4 text-green-600" />{okMsg}</div>}
 
       {creating && (

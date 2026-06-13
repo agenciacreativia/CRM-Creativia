@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   parseAndPreviewAction,
@@ -155,7 +156,7 @@ function PreviewPanel({
         <SamplePreview
           title="Primeros contactos"
           rows={preview.contactos.sample.map(
-            (c) => `${c.nombre} → ${c.empresa_match ?? "❌ sin empresa"}`,
+            (c) => `${c.nombre} → ${c.empresa_match ?? "sin empresa"}`,
           )}
         />
       )}
@@ -172,8 +173,8 @@ function PreviewPanel({
 
       {totalWarnings > 0 && (
         <details className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm">
-          <summary className="cursor-pointer font-medium text-yellow-900">
-            ⚠️ {totalWarnings} advertencias
+          <summary className="flex cursor-pointer items-center gap-1.5 font-medium text-yellow-900">
+            <AlertTriangle className="h-4 w-4 shrink-0" /> {totalWarnings} advertencias
           </summary>
           <ul className="mt-2 space-y-1 text-yellow-900 list-disc list-inside">
             {[...preview.contactos.warnings, ...preview.oportunidades.warnings].map((w, i) => (
@@ -239,13 +240,13 @@ function DonePanel({ result }: { result: CommitResult }) {
           <li>✓ Etapas creadas: <strong>{result.etapas_creadas}</strong></li>
         )}
         {result.contactos_sin_empresa > 0 && (
-          <li className="text-yellow-700">
-            ⚠ Contactos sin empresa (no importados): <strong>{result.contactos_sin_empresa}</strong>
+          <li className="flex items-center gap-1.5 text-yellow-700">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Contactos sin empresa (no importados): <strong>{result.contactos_sin_empresa}</strong>
           </li>
         )}
         {result.oportunidades_sin_asignado > 0 && (
-          <li className="text-yellow-700">
-            ⚠ Oportunidades con propietario sin match: <strong>{result.oportunidades_sin_asignado}</strong>
+          <li className="flex items-center gap-1.5 text-yellow-700">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Oportunidades con propietario sin match: <strong>{result.oportunidades_sin_asignado}</strong>
           </li>
         )}
       </ul>

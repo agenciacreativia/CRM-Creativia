@@ -75,7 +75,7 @@ export function InlineEditField({
 
   return (
     <div className="group py-1.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</p>
 
       {!editing ? (
         <button

@@ -38,7 +38,7 @@ export function CatalogoManager({ initial }: { initial: ProductoMayorista[] }) {
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{initial.length} productos en el catálogo</p>
         <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
@@ -115,7 +115,7 @@ function Form({ editing, onDone, onCancel }: { editing: ProductoMayorista | null
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6">
       <h2 className="text-sm font-bold uppercase text-gray-500">{editing ? "Editar producto" : "Nuevo producto del catálogo"}</h2>
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Nombre"><Input value={f.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Ej. Europa Clásica 12 días" /></Field>
         <Field label="Categoría"><Select value={f.categoria} onChange={(e) => set("categoria", e.target.value)}><option value="">—</option>{CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}</Select></Field>

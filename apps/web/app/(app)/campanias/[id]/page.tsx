@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 
 type Params = Promise<{ id: string }>;
 
@@ -106,8 +106,8 @@ export default async function CampaniaDetailPage({ params }: { params: Params })
       </div>
 
       {camp.error_resumen && (
-        <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">
-          ⚠ Último error: {camp.error_resumen}
+        <p role="alert" className="flex items-center gap-1.5 rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">
+          <AlertTriangle className="h-4 w-4 shrink-0" /> Último error: {camp.error_resumen}
         </p>
       )}
 
@@ -129,7 +129,7 @@ export default async function CampaniaDetailPage({ params }: { params: Params })
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] uppercase text-gray-500">
+              <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
                 <tr>
                   <th className="px-4 py-2 font-medium">Contacto</th>
                   <th className="px-4 py-2 font-medium">Email</th>

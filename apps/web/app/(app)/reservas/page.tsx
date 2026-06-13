@@ -2,6 +2,7 @@ import { cuposConfigurado } from "@/lib/supabase/externo";
 import { isPlatformAdmin } from "@/lib/db/planes";
 import { listSolicitudesExternas } from "@/lib/db/reservas-externo";
 import { resolverMiAgencia, mapReservasPorSolicitud } from "@/lib/db/reservas";
+import { AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { ReservasView } from "./reservas-view";
 
@@ -10,8 +11,8 @@ export default async function ReservasPage() {
     return (
       <div className="max-w-2xl space-y-4">
         <PageHeader title="Reservas" />
-        <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-          <p className="font-semibold">⚠️ Falta configurar la conexión con Turistea</p>
+        <div role="alert" className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+          <p className="flex items-center gap-1.5 font-semibold"><AlertTriangle className="h-4 w-4 shrink-0" /> Falta configurar la conexión con Turistea</p>
           <p>
             Este módulo lee las reservas desde el inventario del sitio web de Turistea. Para que funcione,
             el servidor del CRM necesita dos variables de entorno con la URL y la API key del proyecto

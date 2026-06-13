@@ -38,7 +38,7 @@ export function ReportesFiltersBar({
         <Filter className="h-3.5 w-3.5" /> Filtros
       </div>
       <div>
-        <label htmlFor="filtro-embudo" className="mb-1 block text-[11px] text-gray-500">Embudo</label>
+        <label htmlFor="filtro-embudo" className="mb-1 block text-xs text-gray-500">Embudo</label>
         <select
           id="filtro-embudo"
           value={activos.pipeline ?? ""}
@@ -50,7 +50,7 @@ export function ReportesFiltersBar({
         </select>
       </div>
       <div>
-        <label htmlFor="filtro-producto" className="mb-1 block text-[11px] text-gray-500">Producto</label>
+        <label htmlFor="filtro-producto" className="mb-1 block text-xs text-gray-500">Producto</label>
         <select
           id="filtro-producto"
           value={activos.producto ?? ""}
@@ -62,7 +62,7 @@ export function ReportesFiltersBar({
         </select>
       </div>
       <div>
-        <label htmlFor="filtro-asesor" className="mb-1 block text-[11px] text-gray-500">Asesor</label>
+        <label htmlFor="filtro-asesor" className="mb-1 block text-xs text-gray-500">Asesor</label>
         <select
           id="filtro-asesor"
           value={activos.asesor ?? ""}
@@ -74,7 +74,7 @@ export function ReportesFiltersBar({
         </select>
       </div>
       <div>
-        <label htmlFor="filtro-desde" className="mb-1 block text-[11px] text-gray-500">Desde</label>
+        <label htmlFor="filtro-desde" className="mb-1 block text-xs text-gray-500">Desde</label>
         <input
           id="filtro-desde"
           type="date"
@@ -84,7 +84,7 @@ export function ReportesFiltersBar({
         />
       </div>
       <div>
-        <label htmlFor="filtro-hasta" className="mb-1 block text-[11px] text-gray-500">Hasta</label>
+        <label htmlFor="filtro-hasta" className="mb-1 block text-xs text-gray-500">Hasta</label>
         <input
           id="filtro-hasta"
           type="date"

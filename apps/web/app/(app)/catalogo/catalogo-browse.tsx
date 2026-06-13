@@ -147,7 +147,7 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       {/* Toolbar: búsqueda + toggle filtros + markup */}
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
@@ -160,7 +160,7 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
           onClick={() => setShowFilters((v) => !v)}
           className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm ${filtrosActivos ? "border-brand-primary bg-blue-50 text-brand-primary" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
         >
-          <Filter className="h-4 w-4" /> Filtros {filtrosActivos && <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-primary px-1 text-[10px] font-bold text-white">!</span>}
+          <Filter className="h-4 w-4" /> Filtros {filtrosActivos && <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-primary px-1 text-[11px] font-bold text-white">!</span>}
         </button>
         {filtrosActivos && (
           <button onClick={limpiarFiltros} className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
@@ -268,12 +268,12 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
                   )}
                   <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
                     {p.categoria && (
-                      <span className="rounded-md bg-brand-green px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-navy-deep">
+                      <span className="rounded-md bg-brand-green px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-brand-navy-deep">
                         {p.categoria}
                       </span>
                     )}
                     {lowStock && (
-                      <span className="rounded-md bg-brand-orange px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                      <span className="rounded-md bg-brand-orange px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                         Low Stock
                       </span>
                     )}
@@ -292,12 +292,12 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
 
                   <div className="mt-4 flex items-end justify-between border-t border-gray-100 pt-3">
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Neto desde</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Neto desde</p>
                       <p className="text-lg font-bold tracking-tight text-gray-900">{money(desde, p.moneda)}</p>
                     </div>
                     {puedeCopiar && venta != null && (
                       <div className="text-right">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Tu venta</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Tu venta</p>
                         <p className="text-base font-bold text-brand-navy">{money(venta, p.moneda)}</p>
                       </div>
                     )}
@@ -339,7 +339,7 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
 function FilterCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1 block text-[11px] font-medium uppercase text-gray-500">{label}</label>
+      <label className="mb-1 block text-xs font-medium uppercase text-gray-500">{label}</label>
       {children}
     </div>
   );
@@ -349,7 +349,7 @@ function SalidasList({ salidas, moneda }: { salidas: SalidaCatalogo[]; moneda: s
   return (
     <div className="mt-2 max-h-56 overflow-y-auto rounded border border-gray-100 bg-gray-50">
       <table className="w-full text-xs">
-        <thead className="bg-gray-100 text-[10px] uppercase text-gray-500">
+        <thead className="bg-gray-100 text-[11px] uppercase text-gray-500">
           <tr>
             <th className="px-2 py-1 text-left">Salida</th>
             <th className="px-2 py-1 text-left">Aero.</th>

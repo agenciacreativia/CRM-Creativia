@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Download, Wrench } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 
 export default function ApiDocsPage() {
@@ -10,13 +11,13 @@ export default function ApiDocsPage() {
         backHref="/ajustes/integraciones"
         backLabel="Integraciones"
       />
-      <p className="text-xs">
-        <Link href="/api/v1/openapi.json" className="text-brand-primary hover:underline" target="_blank">
-          📥 Spec OpenAPI 3.1 (JSON)
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+        <Link href="/api/v1/openapi.json" className="inline-flex items-center gap-1 text-brand-primary hover:underline" target="_blank">
+          <Download className="h-3.5 w-3.5" /> Spec OpenAPI 3.1 (JSON)
         </Link>
-        {" · "}
-        <a href="https://editor.swagger.io/?url=https://turisteacrm.com/api/v1/openapi.json" className="text-brand-primary hover:underline" target="_blank" rel="noopener noreferrer">
-          🛠 Abrir en Swagger Editor
+        <span className="text-gray-300">·</span>
+        <a href="https://editor.swagger.io/?url=https://turisteacrm.com/api/v1/openapi.json" className="inline-flex items-center gap-1 text-brand-primary hover:underline" target="_blank" rel="noopener noreferrer">
+          <Wrench className="h-3.5 w-3.5" /> Abrir en Swagger Editor
         </a>
       </p>
 

@@ -1,20 +1,22 @@
 import Link from "next/link";
 import { listOportunidades } from "@/lib/db/oportunidades";
 import { getSessionUser } from "@/lib/auth";
-import { listUsuarios } from "@/lib/db/usuarios";
 import { listEtiquetas, etiquetasPorEntidad } from "@/lib/db/etiquetas";
 import { listVistas } from "@/lib/db/vistas";
 import { getMyPermisos } from "@/lib/db/roles";
 import { can } from "@/lib/permissions";
 import { FilterBuilder } from "@/components/filters/filter-builder";
 import { ListOrder } from "@/components/list-order";
-import { SavedViews } from "@/components/saved-views/saved-views";
 import { ViewToggle } from "@/components/oportunidades/view-toggle";
-import { getFilterFields } from "@/lib/filters/server";
+import { getListFilterConfig, fieldsByModule } from "@/lib/filters/server";
 import { decodeFilterSpec, specHasConditions } from "@/lib/filters/types";
 import { rowMatches } from "@/lib/filters/evaluate";
 import { sortRows } from "@/lib/filters/sort";
 import { OportunidadesTable } from "./oportunidades-table";
+import { ColumnPicker } from "./column-picker";
+import { resolveVisibleCols } from "./columns";
+import { getEditableFields } from "@/lib/bulk/editable-fields";
+import { BulkActionsInline } from "@/components/bulk/bulk-actions-inline";
 
 type SearchParams = Promise<{
   estado?: string;
@@ -27,6 +29,7 @@ type SearchParams = Promise<{
   mine?: string;
   filtros?: string;
   orden?: string;
+  cols?: string;
 }>;
 
 function formatCurrency(value: number | null, moneda: string): string {
@@ -45,7 +48,7 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
   const spec = decodeFilterSpec(params.filtros);
   const hasAdvanced = specHasConditions(spec);
 
-  const [rowsRaw, filterFields] = await Promise.all([
+  const [rowsRaw, filterModules] = await Promise.all([
     listOportunidades({
       estado: params.estado,
       pipeline_id: params.pipeline,
@@ -56,11 +59,16 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
       valor_max: Number.isFinite(valorMax as number) ? valorMax : undefined,
       limit: hasAdvanced ? 2000 : 200,
     }),
-    getFilterFields("oportunidad"),
+    getListFilterConfig("oportunidad"),
   ]);
+  // Campos del módulo ancla (oportunidad) para ordenar/ListOrder; el mapa por
+  // módulo alimenta al motor para evaluar condiciones cross-módulo.
+  const filterFields = filterModules.find((m) => m.key === "oportunidad")!.fields;
+  const fbm = fieldsByModule(filterModules);
+  const visibleCols = resolveVisibleCols(params.cols);
 
   const filtered =
-    hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
+    hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, fbm, "oportunidad")) : rowsRaw;
   const rows = sortRows(filtered, params.orden, filterFields);
 
   const totalValor = rows
@@ -68,8 +76,7 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
     .reduce((s, r) => s + (r.valor ?? 0), 0);
   const monedaPrincipal = rows[0]?.moneda ?? "USD";
 
-  const [usuarios, etiquetas, etiquetasMap, vistas, perms] = await Promise.all([
-    listUsuarios(),
+  const [etiquetas, etiquetasMap, vistas, perms] = await Promise.all([
     listEtiquetas(),
     etiquetasPorEntidad("oportunidad", rows.map((r) => r.id)),
     listVistas("oportunidades"),
@@ -77,11 +84,12 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
   ]);
   const canEditar = can(perms.permisos, "oportunidades", "editar", perms.es_admin);
   const canEliminar = can(perms.permisos, "oportunidades", "eliminar", perms.es_admin);
+  const editFields = canEditar ? await getEditableFields("oportunidades").catch(() => []) : [];
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <ViewToggle active="tabla" />
           <Link
             href="/oportunidades/nueva"
@@ -89,25 +97,30 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
           >
             + Nueva
           </Link>
+          <BulkActionsInline
+            modulo="oportunidades"
+            scope="oportunidades"
+            editFields={editFields}
+            cols={visibleCols}
+            allIds={rows.map((r) => r.id)}
+            canEliminar={canEliminar}
+            etiquetas={etiquetas}
+          />
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-xs text-gray-500 whitespace-nowrap">
             {rows.length} resultados · {formatCurrency(totalValor, monedaPrincipal)} activos
           </p>
           <ListOrder fields={filterFields} />
-          <FilterBuilder fields={filterFields} />
+          <ColumnPicker visibleCols={visibleCols} />
+          <FilterBuilder modules={filterModules} entidad="oportunidades" vistas={vistas} />
         </div>
       </div>
-
-      <SavedViews entidad="oportunidades" vistas={vistas} />
 
       <OportunidadesTable
         rows={rows}
         etiquetasMap={etiquetasMap}
-        usuarios={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))}
-        etiquetas={etiquetas}
-        canEditar={canEditar}
-        canEliminar={canEliminar}
+        visibleCols={visibleCols}
       />
     </div>
   );

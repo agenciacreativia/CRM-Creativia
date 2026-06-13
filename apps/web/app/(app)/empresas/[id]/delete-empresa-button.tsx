@@ -130,7 +130,7 @@ export function DeleteEmpresaButton({ id, nombre }: { id: string; nombre: string
             )}
 
             {error && (
-              <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-status-danger">
+              <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-status-danger">
                 {error}
               </p>
             )}

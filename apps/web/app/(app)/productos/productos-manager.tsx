@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Columns3, X, MapPin } from "lucide-react";
+import { BulkActionsInline } from "@/components/bulk/bulk-actions-inline";
+import { BulkRowCheckbox, BulkSelectAllCheckbox, clearBulk } from "@/components/bulk/selection-store";
+import type { FilterField } from "@/lib/filters/types";
+import { PRODUCTO_COLUMNS, PRODUCTO_DEFAULT_COLS } from "./tabla/columns";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,11 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import type { Producto } from "@/lib/db/productos";
 import { saveProductoAction } from "./actions";
 import { ItinerarioMiniEditor } from "@/components/producto/itinerario-mini-editor";
-import {
-  bulkActivarProductosAction,
-  bulkCambiarCategoriaProductosAction,
-  bulkEliminarProductosAction,
-} from "@/components/bulk/bulk-productos-actions";
 
 const MONEDAS = ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"];
 const PRODUCTO_CATEGORIAS = ["Paquete", "Vuelo", "Hotel", "Crucero", "Tour", "Traslado", "Asistencia", "Otro"];
@@ -32,11 +31,13 @@ export function ProductosManager({
   canCrear = true,
   canEditar = true,
   canEliminar = true,
+  editFields = [],
 }: {
   initial: Producto[];
   canCrear?: boolean;
   canEditar?: boolean;
   canEliminar?: boolean;
+  editFields?: FilterField[];
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Producto | null>(null);
@@ -45,34 +46,29 @@ export function ProductosManager({
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"propios" | "turistea">("propios");
   const [search, setSearch] = useState("");
-  // Bulk selection: solo aplicable a la pestaña "propios" (los del catálogo
-  // Turistea son read-only desde acá).
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkBusy, setBulkBusy] = useState(false);
+  // Columnas visibles (estado local; productos no usa ?cols= porque ya es un island client).
+  const [visibleCols, setVisibleCols] = useState<string[]>(PRODUCTO_DEFAULT_COLS);
+  const [colsOpen, setColsOpen] = useState(false);
+  const cols = PRODUCTO_COLUMNS.filter((c) => visibleCols.includes(c.key));
 
-  function toggleSelected(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  function toggleCol(key: string) {
+    setVisibleCols((prev) => {
+      const set = new Set(prev);
+      if (set.has(key)) set.delete(key);
+      else set.add(key);
+      if (!set.has("nombre")) set.add("nombre");
+      return PRODUCTO_COLUMNS.filter((c) => set.has(c.key)).map((c) => c.key);
     });
   }
-  function clearSelection() {
-    setSelectedIds(new Set());
+
+  // La selección masiva vive en el store por eventos (scope "productos"), igual
+  // que el resto de listas. Al cambiar de pestaña limpiamos para no arrastrar
+  // selección entre "propios" y "catálogo".
+  function switchTab(t: "propios" | "turistea") {
+    clearBulk("productos");
+    setTab(t);
   }
-  async function runBulk<T>(label: string, fn: () => Promise<T & { ok: boolean; error?: string; afectados?: number }>) {
-    setBulkBusy(true);
-    setError(null);
-    const res = await fn();
-    setBulkBusy(false);
-    if (!res.ok) {
-      setError(res.error ?? `Error en ${label}`);
-      return;
-    }
-    clearSelection();
-    router.refresh();
-  }
+
   const propios = initial.filter((p) => p.origen === "propio");
   const turistea = initial.filter((p) => p.origen === "turistea");
   const base = tab === "propios" ? propios : turistea;
@@ -114,7 +110,7 @@ export function ProductosManager({
         <h2 className="text-sm font-bold uppercase text-gray-500">
           {editing ? "Editar producto" : "Nuevo producto"}
         </h2>
-        {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+        {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="Nombre" htmlFor="nombre" required>
@@ -180,20 +176,20 @@ export function ProductosManager({
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="inline-flex w-full rounded-md border border-gray-200 bg-white p-0.5 sm:w-auto">
           <button
             type="button"
-            onClick={() => setTab("propios")}
+            onClick={() => switchTab("propios")}
             className={`flex-1 rounded px-3 py-1.5 text-sm font-medium sm:flex-none ${tab === "propios" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Mis productos <span className="ml-1 text-xs opacity-70">({propios.length})</span>
           </button>
           <button
             type="button"
-            onClick={() => setTab("turistea")}
+            onClick={() => switchTab("turistea")}
             className={`flex-1 rounded px-3 py-1.5 text-sm font-medium sm:flex-none ${tab === "turistea" ? "bg-brand-navy text-white" : "text-gray-600 hover:bg-gray-50"}`}
           >
             Catálogo <span className="ml-1 text-xs opacity-70">({turistea.length})</span>
@@ -208,10 +204,49 @@ export function ProductosManager({
         />
         <div className="flex items-center justify-between gap-2 sm:ml-auto">
           <p className="text-sm text-gray-500">{visible.length}</p>
+          <div className="relative hidden md:block">
+            <button
+              type="button"
+              onClick={() => setColsOpen((o) => !o)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <Columns3 className="h-4 w-4" /> Columnas
+            </button>
+            {colsOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setColsOpen(false)} aria-hidden />
+                <div className="absolute right-0 z-50 mt-2 w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-xl">
+                  <div className="mb-1 flex items-center justify-between px-1">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Columnas visibles</span>
+                    <button type="button" onClick={() => setColsOpen(false)} className="text-gray-400 hover:text-gray-700"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                  <div className="max-h-72 space-y-0.5 overflow-y-auto">
+                    {PRODUCTO_COLUMNS.map((c) => (
+                      <label key={c.key} className={`flex items-center gap-2 rounded px-2 py-1.5 text-sm ${c.fixed ? "text-gray-400" : "cursor-pointer text-gray-700 hover:bg-gray-50"}`}>
+                        <input type="checkbox" checked={visibleCols.includes(c.key)} disabled={c.fixed} onChange={() => toggleCol(c.key)} className="rounded" />
+                        {c.label}
+                        {c.fixed && <span className="ml-auto text-[11px] uppercase text-gray-300">fija</span>}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           {canCrear && tab === "propios" && (
             <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
               <Plus className="h-4 w-4" /> Nuevo producto
             </Button>
+          )}
+          {canEditar && tab === "propios" && (
+            <BulkActionsInline
+              modulo="productos"
+              scope="productos"
+              editFields={editFields}
+              cols={visibleCols}
+              allIds={visible.map((p) => p.id)}
+              canEliminar={canEliminar}
+            />
           )}
           {tab === "turistea" && (
             <Link href="/catalogo" className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
@@ -223,20 +258,20 @@ export function ProductosManager({
 
       <div className="hidden md:block overflow-hidden rounded-lg border border-gray-200 bg-white">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
             <tr>
-              {canEditar && tab === "propios" && <th className="w-8 px-2 py-3" aria-label="Selección" />}
-              <th className="px-4 py-3 font-bold">Nombre</th>
-              <th className="px-4 py-3 font-bold">Categoría</th>
-              <th className="px-4 py-3 font-bold">Destino</th>
-              <th className="px-4 py-3 font-bold text-right">Desde</th>
-              <th className="px-4 py-3 font-bold">Estado</th>
+              {canEditar && tab === "propios" && (
+                <th className="w-8 px-2 py-3"><BulkSelectAllCheckbox scope="productos" ids={visible.map((p) => p.id)} /></th>
+              )}
+              {cols.map((c) => (
+                <th key={c.key} className={`px-4 py-3 font-bold ${c.align === "right" ? "text-right" : ""}`}>{c.label}</th>
+              ))}
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 && (
-              <tr><td colSpan={canEditar && tab === "propios" ? 7 : 6} className="py-8 text-center text-gray-500">
+              <tr><td colSpan={cols.length + 1 + (canEditar && tab === "propios" ? 1 : 0)} className="py-8 text-center text-gray-500">
                 {tab === "propios" ? "Aún no tenés productos propios. Crealos con + Nuevo producto o copialos del catálogo." : "Aún no cargaste productos del catálogo Turistea."}
               </td></tr>
             )}
@@ -244,25 +279,12 @@ export function ProductosManager({
               <tr key={row.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50 ${idx % 2 ? "bg-blue-50/30" : ""}`}>
                 {canEditar && tab === "propios" && (
                   <td className="px-2 py-2.5 text-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(row.id)}
-                      onChange={() => toggleSelected(row.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="rounded"
-                      aria-label={`Seleccionar ${row.nombre}`}
-                    />
+                    <BulkRowCheckbox id={row.id} scope="productos" />
                   </td>
                 )}
-                <td className="px-4 py-2.5 font-medium text-gray-900">
-                  <Link href={`/productos/${row.id}`} className="text-brand-navy hover:underline">{row.nombre}</Link>
-                </td>
-                <td className="px-4 py-2.5 text-gray-600">{row.categoria ?? "—"}</td>
-                <td className="px-4 py-2.5 text-gray-600">{row.destino ?? "—"}</td>
-                <td className="px-4 py-2.5 text-right text-gray-700">{fmtPrice(row.precio_desde, row.moneda)}</td>
-                <td className="px-4 py-2.5">
-                  <Badge variant={row.activo ? "success" : "default"}>{row.activo ? "activo" : "inactivo"}</Badge>
-                </td>
+                {cols.map((c) => (
+                  <td key={c.key} className={`px-4 py-2.5 ${c.align === "right" ? "text-right" : ""}`}>{c.render(row)}</td>
+                ))}
                 {/* Lote UX: quitamos lápiz + papelera por fila. La edición se hace
                     clickeando el nombre del producto (link a /productos/[id])
                     y desde ahí se accede a editar/eliminar. Para acciones
@@ -286,14 +308,9 @@ export function ProductosManager({
         {visible.map((row) => (
           <div key={row.id} className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 active:bg-gray-50">
             {canEditar && tab === "propios" && (
-              <input
-                type="checkbox"
-                checked={selectedIds.has(row.id)}
-                onChange={() => toggleSelected(row.id)}
-                onClick={(e) => e.stopPropagation()}
-                className="shrink-0 rounded"
-                aria-label={`Seleccionar ${row.nombre}`}
-              />
+              <div className="shrink-0">
+                <BulkRowCheckbox id={row.id} scope="productos" />
+              </div>
             )}
             <Link href={`/productos/${row.id}`} className="flex flex-1 min-w-0 flex-col gap-1">
               <div className="flex items-center justify-between gap-2">
@@ -302,7 +319,7 @@ export function ProductosManager({
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
                 {row.categoria && <span>{row.categoria}</span>}
-                {row.destino && <span>📍 {row.destino}</span>}
+                {row.destino && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {row.destino}</span>}
                 <span className="font-medium text-gray-700">{fmtPrice(row.precio_desde, row.moneda)}</span>
               </div>
             </Link>
@@ -310,74 +327,6 @@ export function ProductosManager({
         ))}
       </div>
 
-      {/* Barra inferior de acciones masivas — solo en tab "propios" con permiso.
-          En mobile: full-width al pie. En sm+: isla flotante centrada. */}
-      {canEditar && tab === "propios" && selectedIds.size > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 sm:bottom-4 sm:flex sm:justify-center sm:px-4" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-          <div className="flex flex-wrap items-center gap-2 border-t border-gray-200 bg-white px-3 py-2 shadow-lg sm:gap-3 sm:rounded-lg sm:border sm:px-4">
-            <span className="text-sm font-medium text-gray-700">
-              <strong>{selectedIds.size}</strong> seleccionado(s)
-            </span>
-            <button
-              type="button"
-              disabled={bulkBusy}
-              onClick={() => runBulk("activar", () => bulkActivarProductosAction([...selectedIds], true))}
-              className="rounded border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {bulkBusy ? "Procesando…" : "Activar"}
-            </button>
-            <button
-              type="button"
-              disabled={bulkBusy}
-              onClick={() => runBulk("desactivar", () => bulkActivarProductosAction([...selectedIds], false))}
-              className="rounded border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Desactivar
-            </button>
-            <select
-              defaultValue=""
-              disabled={bulkBusy}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (!v) return;
-                runBulk("cambiar categoría", () =>
-                  bulkCambiarCategoriaProductosAction([...selectedIds], v === "__null__" ? null : v),
-                );
-                e.target.value = "";
-              }}
-              className="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
-            >
-              <option value="">Categoría…</option>
-              <option value="__null__">(sin categoría)</option>
-              {PRODUCTO_CATEGORIAS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            {canEliminar && (
-              <button
-                type="button"
-                disabled={bulkBusy}
-                onClick={() => {
-                  if (!confirm(`¿Eliminar ${selectedIds.size} producto(s)? No se podrá deshacer.`)) return;
-                  runBulk("eliminar", () => bulkEliminarProductosAction([...selectedIds]));
-                }}
-                className="inline-flex items-center gap-1 rounded border border-red-200 bg-white px-2.5 py-1 text-xs text-status-danger hover:bg-red-50 disabled:opacity-50"
-              >
-                <Trash2 className="h-3 w-3" /> Eliminar
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={clearSelection}
-              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-              aria-label="Limpiar selección"
-              title="Limpiar selección"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

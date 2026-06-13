@@ -46,7 +46,7 @@ export function ConfigComercialForm({
 
   return (
     <div className="space-y-5">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <section className="rounded-lg border border-gray-200 bg-white p-5">
         <h2 className="mb-1 text-sm font-bold uppercase text-gray-500">Niveles de viajero (RFM)</h2>

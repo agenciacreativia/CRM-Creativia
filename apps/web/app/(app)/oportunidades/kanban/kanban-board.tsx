@@ -223,12 +223,12 @@ function Column({
       <header className="mb-3 flex items-center justify-between px-1.5">
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("h-2 w-2 rounded-full shrink-0", COL_DOTS[colorIndex % COL_DOTS.length])} />
-          <h3 className="truncate text-[11px] font-bold uppercase tracking-wider text-gray-700">{stage.nombre}</h3>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">{stage.oportunidades.length}</span>
+          <h3 className="truncate text-xs font-bold uppercase tracking-wider text-gray-700">{stage.nombre}</h3>
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{stage.oportunidades.length}</span>
         </div>
       </header>
       {(totalValue > 0 || stage.dias_maximo_alerta != null) && (
-        <p className="mb-2 px-1.5 text-[11px] text-gray-500">
+        <p className="mb-2 px-1.5 text-xs text-gray-500">
           {totalValue > 0 && <span className="font-semibold text-gray-700">{formatCurrency(totalValue, moneda)}</span>}
           {stage.dias_maximo_alerta != null && (
             <span className="ml-1.5 text-gray-400">· alerta {stage.dias_maximo_alerta}d</span>
@@ -294,7 +294,7 @@ function Card({ card, isDragging }: { card: KanbanCard; isDragging?: boolean }) 
         <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+              "rounded-full px-1.5 py-0.5 text-[11px] font-semibold",
               card.color === "red" ? "bg-status-danger/15 text-status-danger" :
               card.color === "yellow" ? "bg-brand-orange/15 text-brand-orange" :
               "bg-gray-100 text-gray-600",
@@ -305,7 +305,7 @@ function Card({ card, isDragging }: { card: KanbanCard; isDragging?: boolean }) 
           {card.asignado_nombre && (
             <span
               title={card.asignado_nombre}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-navy text-[10px] font-bold text-white"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-navy text-[11px] font-bold text-white"
             >
               {initials(card.asignado_nombre)}
             </span>

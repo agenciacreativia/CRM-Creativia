@@ -1,20 +1,23 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { listContactos } from "@/lib/db/contactos";
 import { FilterBuilder } from "@/components/filters/filter-builder";
 import { QuickSearch } from "@/components/filters/quick-search";
 import { ListOrder } from "@/components/list-order";
-import { getFilterFields } from "@/lib/filters/server";
+import { getListFilterConfig, fieldsByModule } from "@/lib/filters/server";
+import { listVistas } from "@/lib/db/vistas";
 import { decodeFilterSpec, specHasConditions } from "@/lib/filters/types";
 import { rowMatches } from "@/lib/filters/evaluate";
 import { sortRows } from "@/lib/filters/sort";
 import { getMyPermisos } from "@/lib/db/roles";
 import { can } from "@/lib/permissions";
-import { listUsuarios } from "@/lib/db/usuarios";
-import { BulkContactosBar } from "@/components/bulk/bulk-contactos-bar";
-import { BulkRowCheckbox } from "@/components/bulk/bulk-empresas-bar";
+import { BulkRowCheckbox, BulkSelectAllCheckbox } from "@/components/bulk/selection-store";
+import { BulkActionsInline } from "@/components/bulk/bulk-actions-inline";
+import { ColumnPicker } from "@/components/tabla/column-picker";
+import { CONTACTO_COLUMNS, resolveContactoCols } from "./tabla/columns";
+import { getEditableFields } from "@/lib/bulk/editable-fields";
 
-type SearchParams = Promise<{ filtros?: string; orden?: string; q?: string }>;
+type SearchParams = Promise<{ filtros?: string; orden?: string; q?: string; cols?: string }>;
 
 function quickMatch(r: { nombre: string; email?: string | null; cargo?: string | null; empresa_nombre?: string | null }, q: string) {
   const n = q.toLowerCase();
@@ -32,28 +35,30 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
   const hasAdvanced = specHasConditions(spec);
   const q = params.q?.trim() ?? "";
 
-  const [rowsRaw, filterFields, perms] = await Promise.all([
+  const [rowsRaw, filterModules, perms, vistas] = await Promise.all([
     listContactos({ limit: hasAdvanced || q ? 2000 : 200 }),
-    getFilterFields("contacto"),
+    getListFilterConfig("contacto"),
     getMyPermisos(),
+    listVistas("contactos"),
   ]);
+  const filterFields = filterModules.find((m) => m.key === "contacto")!.fields;
+  const fbm = fieldsByModule(filterModules);
   const puedeCrear = can(perms.permisos, "contactos", "crear", perms.es_admin);
   const puedeEditarMasivo = can(perms.permisos, "contactos", "editar", perms.es_admin);
-  // Solo traemos usuarios si el bulk bar va a renderizarse (necesita el picker
-  // de reasignación). Y lo hacemos defensivo: si RLS bloquea la tabla usuario
-  // para asesores, no queremos que reviente la página entera. Catch → [].
-  const usuarios = puedeEditarMasivo
-    ? await listUsuarios({ activo: "activos" }).catch(() => [])
-    : [];
+  const puedeEliminar = can(perms.permisos, "contactos", "eliminar", perms.es_admin);
+  const editFields = puedeEditarMasivo ? await getEditableFields("contactos").catch(() => []) : [];
 
-  let filtered = hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, filterFields)) : rowsRaw;
+  let filtered = hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, fbm, "contacto")) : rowsRaw;
   if (q) filtered = filtered.filter((r) => quickMatch(r, q));
   const rows = sortRows(filtered, params.orden, filterFields);
+
+  const visibleCols = resolveContactoCols(params.cols);
+  const cols = CONTACTO_COLUMNS.filter((c) => visibleCols.includes(c.key));
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
-        <div className="flex items-center justify-between gap-2 sm:justify-start sm:gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-start sm:gap-3">
           <QuickSearch placeholder="Buscar contacto…" />
           {puedeCrear && (
             <Link
@@ -63,12 +68,23 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
               <Plus className="h-3.5 w-3.5" /> Nuevo
             </Link>
           )}
+          {puedeEditarMasivo && (
+            <BulkActionsInline
+              modulo="contactos"
+              scope="contactos"
+              editFields={editFields}
+              cols={visibleCols}
+              allIds={rows.map((r) => r.id)}
+              canEliminar={puedeEliminar}
+            />
+          )}
         </div>
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <p className="text-xs text-gray-500 whitespace-nowrap">{rows.length} resultados</p>
           <div className="flex items-center gap-2">
             <ListOrder fields={filterFields} />
-            <FilterBuilder fields={filterFields} />
+            <ColumnPicker columns={CONTACTO_COLUMNS.map((c) => ({ key: c.key, label: c.label, fixed: c.fixed }))} visibleCols={visibleCols} />
+            <FilterBuilder modules={filterModules} entidad="contactos" vistas={vistas} />
             {puedeCrear && (
               <Link
                 href="/contactos/nuevo"
@@ -81,27 +97,22 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
         </div>
       </div>
 
-      {puedeEditarMasivo && (
-        <BulkContactosBar usuarios={usuarios.map((u) => ({ id: u.id, nombre: u.nombre }))} />
-      )}
-
       <div className="hidden md:block bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-[11px] uppercase tracking-wider text-gray-500">
+          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
             <tr>
-              {puedeEditarMasivo && <Th className="w-8" aria-label="Selección" />}
-              <Th className="font-bold">Nombre</Th>
-              <Th className="font-bold">Cargo</Th>
-              <Th className="font-bold">Empresa</Th>
-              <Th className="font-bold">Email</Th>
-              <Th className="font-bold">Asignado</Th>
-              <Th className="font-bold text-right">Oportunidades</Th>
+              {puedeEditarMasivo && (
+                <Th className="w-8"><BulkSelectAllCheckbox scope="contactos" ids={rows.map((r) => r.id)} /></Th>
+              )}
+              {cols.map((c) => (
+                <Th key={c.key} className={`font-bold ${c.align === "right" ? "text-right" : ""}`}>{c.label}</Th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={puedeEditarMasivo ? 7 : 6} className="text-center text-gray-500 py-8">
+                <td colSpan={cols.length + (puedeEditarMasivo ? 1 : 0)} className="text-center text-gray-500 py-8">
                   {q
                     ? <>No hay contactos que coincidan con <strong>{q}</strong>.</>
                     : <>No hay contactos todavía. <Link href="/admin/datos/importar" className="text-brand-primary hover:underline">Importar →</Link></>}
@@ -113,20 +124,9 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
                 {puedeEditarMasivo && (
                   <Td className="text-center"><BulkRowCheckbox id={c.id} scope="contactos" /></Td>
                 )}
-                <Td>
-                  <Link href={`/contactos/${c.id}`} className="text-brand-primary hover:underline font-medium">
-                    {c.nombre}
-                  </Link>
-                </Td>
-                <Td className="text-gray-600">{c.cargo ?? "—"}</Td>
-                <Td>
-                  <Link href={`/empresas/${c.empresa_id}`} className="text-gray-700 hover:underline">
-                    {c.empresa_nombre}
-                  </Link>
-                </Td>
-                <Td className="text-gray-600">{c.email}</Td>
-                <Td className="text-gray-600">{c.asignado_nombre ?? <span className="text-gray-400" aria-label="Sin asignar">no asignado</span>}</Td>
-                <Td className="text-right">{c.oportunidades_count}</Td>
+                {cols.map((col) => (
+                  <Td key={col.key} className={col.align === "right" ? "text-right" : ""}>{col.render(c)}</Td>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -159,7 +159,7 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
               </p>
               <p className="truncate text-xs text-gray-500">{c.email}</p>
               {c.asignado_nombre && (
-                <p className="text-xs text-gray-400">👤 {c.asignado_nombre}</p>
+                <p className="inline-flex items-center gap-1 text-xs text-gray-400"><User className="h-3 w-3" /> {c.asignado_nombre}</p>
               )}
             </Link>
           </div>

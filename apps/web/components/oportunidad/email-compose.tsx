@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Send } from "lucide-react";
+import { Send, Paperclip, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -64,8 +64,8 @@ export function EmailCompose({
   if (!googleConnected) {
     return (
       <div className="mb-4 space-y-2 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
-        <p className="font-medium">
-          📧 Para enviar correos desde el CRM necesitás conectar tu cuenta de Gmail.
+        <p className="flex items-center gap-1.5 font-medium">
+          <Mail className="h-4 w-4 shrink-0" /> Para enviar correos desde el CRM necesitás conectar tu cuenta de Gmail.
         </p>
         <p className="text-xs">
           Los correos se envían usando tu propia cuenta de Google, los destinatarios los reciben
@@ -181,7 +181,7 @@ export function EmailCompose({
               <span
                 key={f.token}
                 title={f.label}
-                className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] text-gray-600"
+                className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-600"
               >
                 {f.token}
               </span>
@@ -218,7 +218,7 @@ export function EmailCompose({
                     on ? "border-brand-primary bg-[rgba(39,34,85,0.06)] text-brand-primary" : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
                   }`}
                 >
-                  📎 {d.nombre}
+                  <Paperclip className="h-3.5 w-3.5" /> {d.nombre}
                 </button>
               );
             })}

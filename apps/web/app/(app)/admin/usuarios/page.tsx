@@ -2,9 +2,16 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { listUsuarios } from "@/lib/db/usuarios";
+import { listRoles } from "@/lib/db/roles";
+import { listInvitaciones } from "@/lib/db/invitaciones";
+import { tenantTieneHerramienta } from "@/lib/db/planes";
+import { getTenantFromHeaders } from "@/lib/tenant";
+import { env } from "@/lib/env";
 import { SearchInput, FilterSelect } from "@/components/list-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { NewUsuarioForm } from "./new-usuario-form";
+import { RolesManager } from "@/app/(app)/ajustes/roles/roles-manager";
+import { CuentasManager } from "@/app/(app)/ajustes/roles/cuentas-manager";
 import { PageHeader } from "@/components/ui/page-header";
 
 type SearchParams = Promise<{ q?: string; rol?: string; activo?: string }>;
@@ -14,16 +21,30 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Sea
   if (me?.rol !== "admin") redirect("/dashboard");
 
   const params = await searchParams;
-  const usuarios = await listUsuarios({ q: params.q, rol: params.rol, activo: params.activo });
+  // La sección de Roles solo si el plan incluye la herramienta.
+  const puedeRoles = await tenantTieneHerramienta("roles_permisos");
+
+  const [usuarios, roles, invitaciones, tenant] = await Promise.all([
+    listUsuarios({ q: params.q, rol: params.rol, activo: params.activo }),
+    puedeRoles ? listRoles() : Promise.resolve([]),
+    puedeRoles ? listInvitaciones() : Promise.resolve([]),
+    puedeRoles ? getTenantFromHeaders() : Promise.resolve(null),
+  ]);
+
+  const scheme = env.BASE_DOMAIN.includes("localhost") ? "http" : "https";
+  const inviteBaseUrl = `${scheme}://${tenant?.subdominio ?? "app"}.${env.BASE_DOMAIN}/invitacion`;
 
   return (
-    <div className="space-y-6 ">
+    <div className="space-y-6">
       <PageHeader
-        title="Usuarios"
-        subtitle="Gestioná los miembros del tenant. Admins ven todo; asesores ven solo sus oportunidades."
-        right={<p className="text-sm text-gray-500">{usuarios.length} resultados</p>}
+        title="Usuarios y roles"
+        subtitle="Miembros del equipo, roles con permisos por módulo e invitaciones."
+        backHref="/ajustes"
+        backLabel="Ajustes"
+        right={<p className="text-sm text-gray-500">{usuarios.length} usuarios</p>}
       />
 
+      {/* === USUARIOS === */}
       <div className="flex items-center gap-3 flex-wrap">
         <SearchInput placeholder="Buscar por nombre o email..." />
         <FilterSelect
@@ -96,6 +117,33 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Sea
         <h2 className="text-sm font-bold uppercase text-gray-500 mb-4">Crear usuario</h2>
         <NewUsuarioForm />
       </section>
+
+      {/* === ROLES Y CUENTAS (si el plan lo incluye) === */}
+      {puedeRoles && (
+        <>
+          <section className="rounded-lg border border-gray-200 bg-white p-6">
+            <h2 className="mb-4 text-sm font-bold uppercase text-gray-500">Roles y permisos</h2>
+            <RolesManager initial={roles} />
+          </section>
+
+          <section className="rounded-lg border border-gray-200 bg-white p-6">
+            <h2 className="mb-4 text-sm font-bold uppercase text-gray-500">Cuentas e invitaciones</h2>
+            <CuentasManager
+              usuarios={usuarios.map((u) => ({
+                id: u.id,
+                nombre: u.nombre,
+                email: u.email,
+                rol_id: u.rol_id,
+                activo: u.activo,
+              }))}
+              roles={roles.map((r) => ({ id: r.id, nombre: r.nombre, es_admin: r.es_admin }))}
+              invitaciones={invitaciones}
+              currentUserId={me.id}
+              inviteBaseUrl={inviteBaseUrl}
+            />
+          </section>
+        </>
+      )}
     </div>
   );
 }

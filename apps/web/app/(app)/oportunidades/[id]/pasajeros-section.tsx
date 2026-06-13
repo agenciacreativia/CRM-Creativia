@@ -88,7 +88,7 @@ export function PasajerosSection({
         )}
       </div>
 
-      {error && <div className="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       {adding && (
         <div className="mb-4 grid grid-cols-1 gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 md:grid-cols-6">

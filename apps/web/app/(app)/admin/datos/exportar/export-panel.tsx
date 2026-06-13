@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 
@@ -145,7 +146,8 @@ export function ExportPanel() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button onClick={() => downloadBundle("xlsx")} disabled={working !== null || noneSelected}>
-            {working === "bundle-xlsx" ? "Generando..." : "📊 Descargar Excel (.xlsx)"}
+            <FileSpreadsheet className="h-4 w-4" />
+            {working === "bundle-xlsx" ? "Generando..." : "Descargar Excel (.xlsx)"}
           </Button>
           <Button
             variant="secondary"

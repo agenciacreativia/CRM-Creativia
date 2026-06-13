@@ -22,9 +22,9 @@ export default async function CampaniasPage() {
 
       <section className="rounded-lg border border-gray-200 bg-white">
         <header className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500">
             <Users className="h-3.5 w-3.5" /> Listas de envío
-            <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700">{listas.length}</span>
+            <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">{listas.length}</span>
           </h2>
           <Link href="/campanias/listas/nueva" className="text-xs font-semibold text-brand-primary hover:underline">+ Nueva lista</Link>
         </header>
@@ -33,7 +33,7 @@ export default async function CampaniasPage() {
 
       <section className="rounded-lg border border-gray-200 bg-white">
         <header className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500">
             <Mail className="h-3.5 w-3.5" /> Envíos
           </h2>
         </header>

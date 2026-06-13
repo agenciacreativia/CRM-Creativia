@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Mail, Phone, MessageCircle } from "lucide-react";
 import { getContacto } from "@/lib/db/contactos";
 import { listNotas } from "@/lib/db/notas";
 import { listCampos } from "@/lib/db/campos";
@@ -77,17 +78,17 @@ export default async function ContactoDetailPage({ params }: { params: Params })
           <div className="mt-3 flex flex-wrap gap-2">
             {c.email && (
               <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1.5 rounded-md bg-brand-primary px-3 py-1.5 text-sm text-white transition-colors hover:bg-blue-700">
-                ✉️ Email
+                <Mail className="h-4 w-4" /> Email
               </a>
             )}
             {c.telefono && (
               <a href={`tel:${cleanPhone(c.telefono)}`} className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50">
-                📞 Llamar
+                <Phone className="h-4 w-4" /> Llamar
               </a>
             )}
             {c.telefono_whatsapp && (
               <a href={`https://wa.me/${cleanPhone(c.telefono_whatsapp)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md bg-green-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-green-700">
-                💬 WhatsApp
+                <MessageCircle className="h-4 w-4" /> WhatsApp
               </a>
             )}
           </div>

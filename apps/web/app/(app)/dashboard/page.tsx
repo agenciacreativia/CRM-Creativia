@@ -10,14 +10,7 @@ import {
   ForecastChart,
   EmbudoChart,
 } from "./charts";
-
-const TIPO_ICON: Record<string, string> = {
-  llamada: "📞",
-  email: "✉️",
-  whatsapp: "💬",
-  reunion: "📅",
-  otra: "•",
-};
+import { ActividadIcon } from "@/components/oportunidad/actividad-icon";
 
 function fmtCurrency(n: number, m: string) {
   return new Intl.NumberFormat("es", { style: "currency", currency: m, maximumFractionDigits: 0 }).format(n);
@@ -83,7 +76,7 @@ export default async function DashboardPage() {
               accent="orange"
               title="Actividades vencidas"
               count={atencion.actividades_vencidas.length}
-              empty="No tienes actividades vencidas. 🎉"
+              empty="No tienes actividades vencidas."
             >
               {atencion.actividades_vencidas.slice(0, 5).map((a) => (
                 <AtencionRow
@@ -91,7 +84,7 @@ export default async function DashboardPage() {
                   href={`/oportunidades/${a.oportunidad_id}`}
                   primary={
                     <>
-                      <span className="mr-1.5">{TIPO_ICON[a.tipo] ?? "•"}</span>
+                      <ActividadIcon tipo={a.tipo} className="mr-1.5 inline h-3.5 w-3.5" />
                       {a.oportunidad_nombre}
                     </>
                   }
@@ -106,7 +99,7 @@ export default async function DashboardPage() {
               accent="orange"
               title="Oportunidades estancadas"
               count={atencion.oportunidades_estancadas.length}
-              empty="Todo dentro de los plazos. 🚀"
+              empty="Todo dentro de los plazos."
               hint="Pasaron el límite de su etapa"
             >
               {atencion.oportunidades_estancadas.slice(0, 5).map((o) => (
@@ -214,8 +207,8 @@ export default async function DashboardPage() {
             {dash.actividades_proximas.map((a) => (
               <li key={a.id} className="py-2 flex items-center justify-between">
                 <div>
-                  <p className="text-sm">
-                    <span className="mr-2">{TIPO_ICON[a.tipo] ?? "•"}</span>
+                  <p className="flex items-center text-sm">
+                    <ActividadIcon tipo={a.tipo} className="mr-2 inline h-3.5 w-3.5 shrink-0" />
                     <Link href={`/oportunidades/${a.oportunidad_id}`} className="text-brand-primary hover:underline font-medium">
                       {a.oportunidad_nombre}
                     </Link>
@@ -278,7 +271,7 @@ function KpiCard({
 }) {
   const inner = (
     <>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>
       <p className="mt-3 text-4xl font-bold tracking-tight text-gray-900">{value}</p>
       {hint && <p className="mt-2 text-xs text-gray-500">{hint}</p>}
     </>
@@ -291,7 +284,7 @@ function KpiCard({
 function ForecastKpi({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>
       <p className="mt-3 text-3xl font-bold tracking-tight text-gray-900">{value}</p>
       <p className="mt-1.5 text-xs text-gray-500">{sub}</p>
     </div>
@@ -308,7 +301,7 @@ function ChartCard({
 }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-5">
-      <h3 className="mb-4 text-[11px] font-bold uppercase tracking-wider text-gray-500">{title}</h3>
+      <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-500">{title}</h3>
       {children}
     </div>
   );
@@ -339,7 +332,7 @@ function AtencionCard({
   return (
     <div className="flex flex-col rounded-lg border border-gray-200 bg-white p-5">
       <div className="mb-3 flex items-baseline justify-between gap-2">
-        <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+        <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500">
           <span className={`h-2 w-2 rounded-full ${ATENCION_DOT[accent]}`} />
           {title}
         </h3>

@@ -4,6 +4,11 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 
 const COLORS = ["#272255", "#aaf52b", "#ea6a30", "#85c2f6", "#446900", "#c6c0fd"];
 
+// Texto de leyenda legible en ambos temas. Recharts por defecto lo pinta con el
+// color de la serie (navy/verde oscuro → ilegible en dark). El marcador mantiene
+// su color; solo forzamos el color del texto.
+const legendFmt = (value: string) => <span style={{ color: "var(--ink-soft)" }}>{value}</span>;
+
 export function BarsAsesores({ data }: { data: { nombre: string; ganadas: number; perdidas: number }[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
@@ -12,7 +17,7 @@ export function BarsAsesores({ data }: { data: { nombre: string; ganadas: number
         <XAxis dataKey="nombre" tick={{ fontSize: 11 }} />
         <YAxis tick={{ fontSize: 11 }} />
         <Tooltip />
-        <Legend />
+        <Legend formatter={legendFmt} />
         <Bar dataKey="ganadas" fill="#aaf52b" name="Ganadas" />
         <Bar dataKey="perdidas" fill="#ea6a30" name="Perdidas" />
       </BarChart>
@@ -28,7 +33,7 @@ export function PieMotivos({ data }: { data: { name: string; value: number }[] }
           {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
         </Pie>
         <Tooltip />
-        <Legend />
+        <Legend formatter={legendFmt} />
       </PieChart>
     </ResponsiveContainer>
   );

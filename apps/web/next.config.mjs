@@ -27,9 +27,12 @@ const nextConfig = {
     const csp = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline'",
+      // Google Fonts: el CSS se sirve desde fonts.googleapis.com y los .woff2
+      // desde fonts.gstatic.com. Sin esto la CSP bloquea la fuente Poppins y el
+      // <link> dispara un error Event no manejado.
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
+      "font-src 'self' data: https://fonts.gstatic.com",
       "connect-src 'self' https://*.supabase.co https://*.supabase.in https://www.googleapis.com https://oauth2.googleapis.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",

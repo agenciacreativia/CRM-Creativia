@@ -10,13 +10,28 @@ export type OportunidadListItem = {
   empresa_id: string;
   empresa_nombre: string;
   contacto_nombre: string;
+  pipeline_id: string;
   pipeline_nombre: string;
+  etapa_id: string;
   etapa_nombre: string;
+  etapa_anterior_id: string | null;
+  etapa_anterior_nombre: string | null;
+  fecha_entrado_etapa: string | null;
+  descripcion: string | null;
+  asignado_id: string | null;
   asignado_nombre: string | null;
   probabilidad_cierre: number | null;
   fecha_esperada_cierre: string | null;
   creado_en: string;
   campos_custom: Record<string, unknown>;
+  // Datos de las entidades relacionadas, para evaluar filtros cross-módulo
+  // (Empresa/Contacto/Producto) sobre la lista de oportunidades. No se
+  // muestran en la tabla; solo los usa el motor de filtros.
+  _rel: {
+    empresa: Record<string, unknown> | null;
+    contacto: Record<string, unknown> | null;
+    productos: Record<string, unknown>[];
+  };
 };
 
 export type OportunidadDetail = {
@@ -154,11 +169,33 @@ type RawOpportunityRow = {
   fecha_esperada_cierre: string | null;
   creado_en: string;
   campos_custom: Record<string, unknown> | null;
-  empresa: EmbeddedRef<{ nombre: string }>;
-  contacto: EmbeddedRef<{ nombre: string }>;
+  pipeline_id: string;
+  etapa_id: string;
+  fecha_entrado_etapa: string | null;
+  descripcion: string | null;
+  empresa: EmbeddedRef<EmpresaRel>;
+  contacto: EmbeddedRef<ContactoRel>;
   pipeline: EmbeddedRef<{ nombre: string }>;
   etapa_pipeline: EmbeddedRef<{ nombre: string }>;
   usuario: EmbeddedRef<{ nombre: string }>;
+  oportunidad_producto?: { producto: EmbeddedRef<ProductoRel> }[] | null;
+  historial_etapa?: { etapa_anterior: EmbeddedRef<{ id: string; nombre: string }> }[] | null;
+};
+
+// Subconjuntos de campos de las entidades relacionadas que se pueden filtrar
+// desde la lista de oportunidades.
+type EmpresaRel = {
+  nombre: string; ciudad: string | null; pais: string | null;
+  estado_empresa: string | null; origen: string | null;
+  email: string | null; telefono: string | null;
+};
+type ContactoRel = {
+  nombre: string; cargo: string | null; email: string | null;
+  telefono: string | null; origen: string | null;
+};
+type ProductoRel = {
+  nombre: string; categoria: string | null; destino: string | null;
+  precio_desde: number | null; moneda: string | null;
 };
 
 export type EtapaItem = {
@@ -283,23 +320,33 @@ export async function listOportunidades(opts: {
   valor_min?: number;
   valor_max?: number;
   limit?: number;
+  ids?: string[];
 } = {}): Promise<OportunidadListItem[]> {
   const supabase = await createServerSupabase();
 
   let query = supabase
     .from("oportunidad")
     .select(
-      "id, nombre, valor, moneda, estado, empresa_id, asignado_id, probabilidad_cierre, fecha_esperada_cierre, creado_en, campos_custom, empresa(nombre), contacto(nombre), pipeline(nombre), etapa_pipeline(nombre), usuario!oportunidad_asignado_id_fkey(nombre)",
+      "id, nombre, valor, moneda, estado, empresa_id, asignado_id, pipeline_id, etapa_id, probabilidad_cierre, fecha_esperada_cierre, creado_en, fecha_entrado_etapa, descripcion, campos_custom, " +
+        "empresa(nombre, ciudad, pais, estado_empresa, origen, email, telefono), " +
+        "contacto(nombre, cargo, email, telefono, origen), " +
+        "pipeline(nombre), etapa_pipeline(nombre), usuario!oportunidad_asignado_id_fkey(nombre), " +
+        "oportunidad_producto(producto(nombre, categoria, destino, precio_desde, moneda)), " +
+        "historial_etapa(etapa_anterior(id, nombre))",
     )
     .order("creado_en", { ascending: false })
-    .limit(opts.limit ?? 200);
+    // Solo la última entrada del historial por oportunidad → su etapa_anterior.
+    .order("cambiado_en", { ascending: false, foreignTable: "historial_etapa" })
+    .limit(1, { foreignTable: "historial_etapa" })
+    .limit(opts.ids?.length ? opts.ids.length : opts.limit ?? 200);
 
+  if (opts.ids?.length) query = query.in("id", opts.ids);
   if (opts.q) {
     query = query.ilike("nombre", `%${opts.q}%`);
   }
   if (opts.estado && opts.estado !== "todos") {
     query = query.eq("estado", opts.estado);
-  } else {
+  } else if (!opts.ids?.length) {
     // Default: ocultar oportunidades en estado "eliminado" (soft-delete 30 días).
     // El admin que quiere ver las eliminadas usa estado=eliminado o estado=todos.
     query = query.neq("estado", "eliminado");
@@ -330,9 +377,18 @@ export async function listOportunidades(opts: {
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data ?? []).map((row: RawOpportunityRow) => {
+  // Cast: el embed anidado oportunidad_producto(producto(...)) confunde al tipo
+  // inferido de PostgREST (lo vuelve GenericStringError). RawOpportunityRow es
+  // la forma real de la fila.
+  return ((data ?? []) as unknown as RawOpportunityRow[]).map((row) => {
     const oneOf = <T extends { nombre: string }>(v: T | T[] | null): T | null =>
       Array.isArray(v) ? v[0] ?? null : v;
+    const empresaRel = oneOf(row.empresa);
+    const contactoRel = oneOf(row.contacto);
+    const productosRel = (row.oportunidad_producto ?? [])
+      .map((op) => oneOf(op.producto))
+      .filter((p): p is ProductoRel => !!p);
+    const etapaAnterior = oneOf((row.historial_etapa ?? [])[0]?.etapa_anterior ?? null);
     return {
       id: row.id,
       nombre: row.nombre,
@@ -340,15 +396,27 @@ export async function listOportunidades(opts: {
       moneda: row.moneda,
       estado: row.estado,
       empresa_id: row.empresa_id,
-      empresa_nombre: oneOf(row.empresa)?.nombre ?? "—",
-      contacto_nombre: oneOf(row.contacto)?.nombre ?? "—",
+      empresa_nombre: empresaRel?.nombre ?? "—",
+      contacto_nombre: contactoRel?.nombre ?? "—",
+      pipeline_id: row.pipeline_id,
       pipeline_nombre: oneOf(row.pipeline)?.nombre ?? "—",
+      etapa_id: row.etapa_id,
       etapa_nombre: oneOf(row.etapa_pipeline)?.nombre ?? "—",
+      etapa_anterior_id: etapaAnterior?.id ?? null,
+      etapa_anterior_nombre: etapaAnterior?.nombre ?? null,
+      fecha_entrado_etapa: row.fecha_entrado_etapa,
+      descripcion: row.descripcion,
+      asignado_id: row.asignado_id,
       asignado_nombre: oneOf(row.usuario)?.nombre ?? null,
       probabilidad_cierre: row.probabilidad_cierre,
       fecha_esperada_cierre: row.fecha_esperada_cierre,
       creado_en: row.creado_en,
       campos_custom: row.campos_custom ?? {},
+      _rel: {
+        empresa: empresaRel as Record<string, unknown> | null,
+        contacto: contactoRel as Record<string, unknown> | null,
+        productos: productosRel as Record<string, unknown>[],
+      },
     };
   });
 }

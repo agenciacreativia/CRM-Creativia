@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Phone, Mail, Calendar, Luggage, Receipt, StickyNote, Paperclip, type LucideIcon } from "lucide-react";
 import { ActividadesSection } from "@/components/oportunidad/actividades-section";
 import { NotasSection } from "@/components/notas/notas-section";
 import { DocumentosPanel } from "@/components/documentos/documentos-panel";
@@ -27,14 +28,14 @@ export type PlanTools = {
   documentos: boolean;
 };
 
-const ALL_TABS: { key: TabKey; label: string; icon: string; tool?: keyof PlanTools }[] = [
-  { key: "llamada", label: "Llamada", icon: "📞" },
-  { key: "email", label: "Correo", icon: "✉️", tool: "correo" },
-  { key: "reunion", label: "Reunión", icon: "📅" },
-  { key: "productos", label: "Productos", icon: "🧳", tool: "productos" },
-  { key: "cotizacion", label: "Cotización", icon: "🧾", tool: "cotizacion" },
-  { key: "notas", label: "Notas", icon: "📝" },
-  { key: "documentos", label: "Documentos", icon: "📎", tool: "documentos" },
+const ALL_TABS: { key: TabKey; label: string; icon: LucideIcon; tool?: keyof PlanTools }[] = [
+  { key: "llamada", label: "Llamada", icon: Phone },
+  { key: "email", label: "Correo", icon: Mail, tool: "correo" },
+  { key: "reunion", label: "Reunión", icon: Calendar },
+  { key: "productos", label: "Productos", icon: Luggage, tool: "productos" },
+  { key: "cotizacion", label: "Cotización", icon: Receipt, tool: "cotizacion" },
+  { key: "notas", label: "Notas", icon: StickyNote },
+  { key: "documentos", label: "Documentos", icon: Paperclip, tool: "documentos" },
 ];
 
 export function ActivityTabs({
@@ -95,7 +96,7 @@ export function ActivityTabs({
                 : "text-gray-500 hover:text-gray-800"
             }`}
           >
-            <span>{t.icon}</span>
+            <t.icon className="h-4 w-4" />
             {t.label}
           </button>
         ))}

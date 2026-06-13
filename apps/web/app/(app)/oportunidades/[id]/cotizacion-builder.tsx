@@ -82,7 +82,7 @@ export function CotizacionBuilder({
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-bold uppercase text-gray-500">Cotizaciones</h2>
         <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
@@ -209,7 +209,7 @@ function CotizacionForm({
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="md:col-span-2">

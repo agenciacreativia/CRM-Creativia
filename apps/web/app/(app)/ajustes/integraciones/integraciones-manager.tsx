@@ -31,7 +31,7 @@ export function IntegracionesManager({
 
   return (
     <div className="space-y-6">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
 
       {/* 2FA */}
       <section className="rounded-lg border border-gray-200 bg-white p-5">
@@ -129,14 +129,14 @@ function ApiKeysCard({ apiKeys, onError, onChange }: { apiKeys: ApiKey[]; onErro
               </div>
               {!k.revocada && k.limite_mes != null && (
                 <div className="mt-1.5">
-                  <div className="flex items-center justify-between text-[11px] text-gray-500">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
                     <span>Uso del mes</span>
                     <span>{k.usados_mes.toLocaleString("es")} / {k.limite_mes.toLocaleString("es")}</span>
                   </div>
                   <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
                     <div className={`h-full ${pct >= 100 ? "bg-status-danger" : pct >= 80 ? "bg-amber-500" : "bg-brand-navy"}`} style={{ width: `${pct}%` }} />
                   </div>
-                  {pct >= 100 && <p className="mt-1 text-[11px] text-status-danger">Límite excedido — los leads entrantes irán a la lista de espera.</p>}
+                  {pct >= 100 && <p className="mt-1 text-xs text-status-danger">Límite excedido — los leads entrantes irán a la lista de espera.</p>}
                 </div>
               )}
             </li>

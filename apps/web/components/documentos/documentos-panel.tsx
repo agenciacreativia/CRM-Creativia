@@ -96,7 +96,7 @@ export function DocumentosPanel({
       )}
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>
+        <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>
       )}
 
       {initial.length === 0 ? (

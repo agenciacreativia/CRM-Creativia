@@ -20,7 +20,7 @@ export function DupList({
   const [busy, setBusy] = useState<string | null>(null);
 
   if (grupos.length === 0) {
-    return <p className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500">Sin duplicados de {tipo === "contacto" ? "contactos" : "empresas"}. 🎉</p>;
+    return <p className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500">Sin duplicados de {tipo === "contacto" ? "contactos" : "empresas"}.</p>;
   }
 
   async function merge(primaryId: string, dupId: string, primaryName: string) {
@@ -35,7 +35,7 @@ export function DupList({
 
   return (
     <div className="space-y-3">
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
+      {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
       {grupos.map((g) => (
         <div key={g.clave} className="rounded-lg border border-amber-200 bg-amber-50/40 p-3">
           <p className="mb-2 text-xs font-semibold uppercase text-amber-700">Coinciden por «{g.clave}»</p>
@@ -45,7 +45,7 @@ export function DupList({
                 <div className="min-w-0">
                   <span className="font-medium text-gray-900">{it.nombre}</span>
                   {i === 0 && (
-                    <span className="ml-2 inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                    <span className="ml-2 inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-[11px] font-semibold text-green-700">
                       <Crown className="h-3 w-3" /> principal
                     </span>
                   )}

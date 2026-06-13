@@ -124,7 +124,7 @@ export function DeleteContactoButton({ id, nombre }: { id: string; nombre: strin
             )}
 
             {error && (
-              <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-status-danger">
+              <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-status-danger">
                 {error}
               </p>
             )}
