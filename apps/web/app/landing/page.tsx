@@ -125,7 +125,6 @@ const PLANS = [
     name: "Lite",
     tagline: "Para arrancar a ordenar tu agencia",
     price: "29",
-    accent: "card-stripe-sky",
     badge: null as string | null,
     cta: "Empezar con Lite",
     highlight: false,
@@ -144,7 +143,6 @@ const PLANS = [
     name: "Premium",
     tagline: "El favorito de las agencias que quieren crecer",
     price: "69",
-    accent: "",
     badge: "Más popular",
     cta: "Quiero Premium",
     highlight: true,
@@ -164,7 +162,6 @@ const PLANS = [
     name: "Ultimate",
     tagline: "Para redes y mayoristas que escalan en serio",
     price: "129",
-    accent: "card-stripe-green",
     badge: "Todo incluido",
     cta: "Hablar de Ultimate",
     highlight: false,
@@ -211,32 +208,227 @@ const FAQS = [
 ];
 
 /* ------------------------------------------------------------------ */
+/*  PRODUCT SHOWCASE — mockup real del producto (MacBook + iPhone)     */
+/* ------------------------------------------------------------------ */
+
+// Datos calcados de una captura real del Kanban en light mode.
+const KANBAN_COLS = [
+  {
+    name: "Interesado", dot: "#85c2f6", count: 3, sum: "9.150",
+    cards: [
+      { t: "Cancún 7 noches — Familia Ospina", a: "Riviera Maya Travel", v: "4.200", who: "JP", c: "#6d5ce0" },
+      { t: "Eje Cafetero 4D/3N — Grupo colegio", a: "Viajes Andinos Tour", v: "1.850", who: "SA", c: "#2bb673" },
+    ],
+  },
+  {
+    name: "Contactado", dot: "#272255", count: 4, sum: "18.180",
+    cards: [
+      { t: "Europa Clásica 12 días — Grupo senior", a: "Euro Destinos Premium", v: "9.800", who: "JP", c: "#6d5ce0" },
+      { t: "Machu Picchu + Valle Sagrado", a: "Cusco Inca Trips", v: "2.650", who: "SA", c: "#2bb673" },
+    ],
+  },
+  {
+    name: "Cotizado", dot: "#7fce00", count: 4, sum: "12.740",
+    cards: [
+      { t: "Bariloche ski semana — Pareja", a: "Patagonia Expediciones", v: "3.750", who: "JP", c: "#6d5ce0" },
+      { t: "San Andrés 5D/4N — Promo octubre", a: "Caribe Sol Operadora", v: "1.490", who: "SA", c: "#2bb673" },
+    ],
+  },
+  {
+    name: "Negociación", dot: "#ff8400", count: 3, sum: "24.195",
+    cards: [
+      { t: "Riviera Maya 6 noches — Familia Vélez", a: "Riviera Maya Travel", v: "4.850", who: "JP", c: "#6d5ce0" },
+      { t: "Tour Europa Mediterránea — 8 pax", a: "Euro Destinos Premium", v: "12.400", who: "SA", c: "#2bb673" },
+    ],
+  },
+  {
+    name: "Cierre", dot: "#94a3b8", count: 1, sum: "3.950",
+    cards: [
+      { t: "Glaciar Perito Moreno + El Calafate", a: "Patagonia Expediciones", v: "3.950", who: "AD", c: "#0e8f6f" },
+    ],
+  },
+];
+
+const MINI_NAV = ["Dashboard", "Empresas", "Contactos", "Oportunidades", "Productos", "Reportes"];
+
+function DealCard({ t, a, v, who, c }: { t: string; a: string; v: string; who: string; c: string }) {
+  return (
+    <div className="rounded-lg border border-[var(--glass-border)] bg-white p-2 shadow-sm">
+      <p className="line-clamp-2 text-[10px] font-bold leading-tight text-[var(--brand-navy)]">{t}</p>
+      <p className="mt-1 truncate text-[9px] text-[var(--ink-faint)]">{a}</p>
+      <div className="mt-2 flex items-center justify-between">
+        <span className="text-[10px] font-extrabold text-[var(--brand-navy)]">{v} US$</span>
+        <span
+          className="flex h-4 w-4 items-center justify-center rounded-full text-[7px] font-bold text-white"
+          style={{ backgroundColor: c }}
+        >
+          {who}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* Pantalla de la app (sidebar + kanban) — se reusa dentro del MacBook. */
+function AppScreen() {
+  return (
+    <div className="flex bg-[#fbfbfd]">
+      {/* sidebar mini (navy) */}
+      <aside className="hidden w-36 shrink-0 flex-col bg-[var(--brand-navy-deep)] p-3 sm:flex">
+        <Image src="/turistea-crm-light.svg" alt="Turistea CRM" width={1677} height={451} className="mb-4 h-5 w-auto" />
+        <div className="space-y-1">
+          {MINI_NAV.map((n) => (
+            <div
+              key={n}
+              className={`rounded-md px-2.5 py-1.5 text-[11px] font-medium ${
+                n === "Oportunidades"
+                  ? "bg-[var(--brand-green)] text-[var(--brand-navy-deep)]"
+                  : "text-white/55"
+              }`}
+            >
+              {n}
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      {/* tablero */}
+      <div className="min-w-0 flex-1 p-3.5 sm:p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="rounded-md bg-[var(--brand-navy)] px-2.5 py-1 text-[10px] font-semibold text-white">Kanban</span>
+            <span className="rounded-md border border-[var(--glass-border)] px-2.5 py-1 text-[10px] text-[var(--ink-soft)]">Tabla</span>
+          </div>
+          <span className="rounded-md bg-[var(--brand-orange)] px-2.5 py-1 text-[10px] font-semibold text-white">+ Nueva</span>
+        </div>
+        <div className="grid grid-cols-5 gap-2">
+          {KANBAN_COLS.map((col) => (
+            <div key={col.name} className="min-w-0">
+              <div className="mb-1 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: col.dot }} />
+                <span className="truncate text-[9px] font-bold uppercase tracking-wide text-[var(--brand-navy)]">{col.name}</span>
+                <span className="ml-auto rounded bg-[var(--brand-navy)]/10 px-1 text-[8px] font-bold text-[var(--brand-navy)]">{col.count}</span>
+              </div>
+              <p className="mb-1.5 text-[8px] font-semibold text-[var(--ink-faint)]">{col.sum} US$</p>
+              <div className="space-y-1.5">
+                {col.cards.map((card) => (
+                  <DealCard key={card.t} {...card} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* MacBook: pantalla con bezel + barra de ventana macOS + base/teclado. */
+function MacBook() {
+  return (
+    <div className="mx-auto w-full max-w-3xl">
+      {/* tapa / pantalla */}
+      <div className="rounded-[18px] border-[10px] border-[#1d1d1f] bg-[#1d1d1f] shadow-2xl">
+        <div className="overflow-hidden rounded-[8px] bg-white">
+          {/* barra de ventana macOS */}
+          <div className="flex items-center gap-2 border-b border-[var(--glass-border)] bg-[#f4f5f9] px-4 py-2.5">
+            <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+            <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+            <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+            <div className="mx-auto hidden max-w-xs flex-1 rounded-md border border-[var(--glass-border)] bg-white px-3 py-1 text-center text-[11px] text-[var(--ink-faint)] sm:block">
+              creativia.turisteacrm.com
+            </div>
+          </div>
+          <AppScreen />
+        </div>
+      </div>
+      {/* base del MacBook */}
+      <div className="relative mx-auto h-3 w-[112%] -translate-x-[5.3%] rounded-b-xl bg-gradient-to-b from-[#d6d9df] to-[#aab0ba]">
+        <div className="absolute left-1/2 top-0 h-1.5 w-24 -translate-x-1/2 rounded-b-lg bg-[#9aa1ac]" />
+      </div>
+    </div>
+  );
+}
+
+/* iPhone: marco con Dynamic Island + pantalla de dashboard móvil. */
+function IPhone() {
+  return (
+    <div className="rounded-[2.6rem] border-[7px] border-[#1d1d1f] bg-[#1d1d1f] shadow-2xl">
+      <div className="relative overflow-hidden rounded-[2.1rem] bg-[#fbfbfd]">
+        {/* Dynamic Island */}
+        <div className="absolute left-1/2 top-2 z-10 h-4 w-16 -translate-x-1/2 rounded-full bg-black" />
+        {/* brand bar */}
+        <div className="flex items-center justify-center bg-[var(--brand-navy-deep)] pb-2 pt-3.5">
+          <Image src="/turistea-crm-light.svg" alt="Turistea CRM" width={1677} height={451} className="h-4 w-auto" />
+        </div>
+        <div className="space-y-2 p-2.5">
+          <p className="text-[10px] font-extrabold text-[var(--brand-navy)]">Buenas noches 👋</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="rounded-lg border border-[var(--glass-border)] bg-white p-2">
+              <p className="text-[6.5px] font-semibold uppercase tracking-wide text-[var(--ink-faint)]">Valor en embudo</p>
+              <p className="text-[12px] font-extrabold text-[var(--brand-navy)]">68.215<span className="text-[7px]"> US$</span></p>
+            </div>
+            <div className="rounded-lg border border-[var(--glass-border)] bg-white p-2">
+              <p className="text-[6.5px] font-semibold uppercase tracking-wide text-[var(--ink-faint)]">Activas</p>
+              <p className="text-[12px] font-extrabold text-[var(--brand-navy)]">15</p>
+            </div>
+          </div>
+          <div className="rounded-lg border border-[var(--glass-border)] bg-white p-2">
+            <p className="mb-1 text-[7px] font-bold uppercase tracking-wide text-[var(--brand-orange)]">Atención hoy</p>
+            {[
+              ["Cancún — Familia Ospina", "Hoy 10:30"],
+              ["Machu Picchu + Valle", "Hoy 14:00"],
+              ["Crucero por el Caribe", "Mañana"],
+            ].map(([t, w]) => (
+              <div key={t} className="flex items-center justify-between border-t border-[var(--glass-border)] py-1 first:border-0">
+                <span className="truncate text-[8px] font-medium text-[var(--brand-navy)]">{t}</span>
+                <span className="ml-1 shrink-0 text-[7px] text-[var(--ink-faint)]">{w}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductShowcase() {
+  return (
+    <div className="relative mx-auto mt-16 max-w-4xl">
+      {/* glow de fondo */}
+      <div
+        aria-hidden
+        className="absolute -inset-x-10 -top-12 bottom-0 -z-10 rounded-[48px] bg-gradient-to-b from-[var(--brand-green)] via-[var(--brand-sky)] to-transparent opacity-20 blur-3xl"
+      />
+      <MacBook />
+      {/* iPhone: flotante sobre el MacBook en desktop, centrado debajo en mobile */}
+      <div className="mx-auto mt-10 w-[170px] lg:absolute lg:-bottom-12 lg:-right-4 lg:mt-0 lg:w-[180px] lg:rotate-2">
+        <IPhone />
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  PAGE                                                               */
 /* ------------------------------------------------------------------ */
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-hidden bg-white text-[var(--brand-navy)]">
       {/* ---------------- NAV ---------------- */}
-      <header className="sticky top-0 z-30 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <Image
-            src="/turistea-crm.svg"
-            alt="Turistea CRM"
-            width={1677}
-            height={451}
-            priority
-            className="h-12 w-auto"
-          />
+      <header className="sticky top-0 z-30 border-b border-[var(--glass-border)] bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
+          <Image src="/turistea-crm.svg" alt="Turistea CRM" width={1677} height={451} priority className="h-10 w-auto" />
           <nav className="hidden items-center gap-8 text-sm font-medium text-[var(--ink-soft)] md:flex">
-            <a href="#beneficios" className="hover:text-[var(--brand-navy)]">Beneficios</a>
-            <a href="#comparativa" className="hover:text-[var(--brand-navy)]">Con vs. sin CRM</a>
-            <a href="#caracteristicas" className="hover:text-[var(--brand-navy)]">Características</a>
-            <a href="#precios" className="hover:text-[var(--brand-navy)]">Precios</a>
+            <a href="#beneficios" className="transition hover:text-[var(--brand-navy)]">Beneficios</a>
+            <a href="#comparativa" className="transition hover:text-[var(--brand-navy)]">Con vs. sin CRM</a>
+            <a href="#caracteristicas" className="transition hover:text-[var(--brand-navy)]">Características</a>
+            <a href="#precios" className="transition hover:text-[var(--brand-navy)]">Precios</a>
           </nav>
           <a
             href="/login"
-            className="rounded-full bg-[var(--brand-navy)] px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[var(--brand-navy-deep)]"
+            className="rounded-full bg-[var(--brand-navy)] px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--brand-navy-deep)]"
           >
             Iniciar sesión
           </a>
@@ -244,52 +436,61 @@ export default function LandingPage() {
       </header>
 
       {/* ---------------- HERO ---------------- */}
-      <section className="relative mx-auto max-w-6xl px-5 pb-20 pt-16 text-center md:pt-24">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-4 py-1.5 text-xs font-semibold text-[var(--brand-navy)]">
-          <Sparkles className="h-3.5 w-3.5 text-[var(--brand-orange)]" />
-          El CRM hecho a medida para agencias de viajes
-        </span>
-
-        <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-extrabold leading-[1.1] tracking-tight text-[var(--brand-navy)] md:text-6xl">
-          Deja de perder ventas entre{" "}
-          <span className="relative whitespace-nowrap">
-            <span className="relative z-10">WhatsApp y Excel</span>
-            <span className="absolute bottom-1 left-0 z-0 h-3 w-full bg-[var(--brand-green)] opacity-50" />
+      <section className="relative overflow-hidden">
+        {/* fondo sutil */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[600px] bg-gradient-to-b from-[#f6f8fc] to-white" />
+        <div className="mx-auto max-w-6xl px-5 pb-28 pt-16 text-center md:pt-24">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-4 py-1.5 text-xs font-semibold text-[var(--brand-navy)] shadow-sm">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--brand-orange)]" />
+            El CRM hecho a medida para agencias de viajes
           </span>
-        </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-[var(--ink-soft)] md:text-xl">
-          Centraliza clientes, cotizaciones, salidas y comisiones en un solo lugar.
-          Tu agencia vende más, da mejor servicio y crece sin caos —{" "}
-          <strong className="text-[var(--brand-navy)]">desde el primer día</strong>.
-        </p>
+          <h1 className="mx-auto mt-7 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight text-[var(--brand-navy)] md:text-[68px]">
+            Deja de perder ventas entre{" "}
+            <span className="relative whitespace-nowrap">
+              <span className="relative z-10">WhatsApp y Excel</span>
+              <span className="absolute bottom-1.5 left-0 z-0 h-3.5 w-full bg-[var(--brand-green)] opacity-60" />
+            </span>
+          </h1>
 
-        <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href="#precios"
-            className="group inline-flex items-center gap-2 rounded-full bg-[var(--brand-navy)] px-7 py-3.5 text-base font-semibold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[var(--brand-navy-deep)]"
-          >
-            Ver planes y precios
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-          </a>
-          <a
-            href="/login"
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-7 py-3.5 text-base font-semibold text-[var(--brand-navy)] transition hover:-translate-y-0.5"
-          >
-            Iniciar sesión
-          </a>
+          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-[var(--ink-soft)] md:text-xl">
+            Centraliza clientes, cotizaciones, salidas y comisiones en un solo lugar.
+            Tu agencia vende más, da mejor servicio y crece sin caos —{" "}
+            <strong className="text-[var(--brand-navy)]">desde el primer día</strong>.
+          </p>
+
+          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a
+              href="#precios"
+              className="group inline-flex items-center gap-2 rounded-full bg-[var(--brand-navy)] px-7 py-3.5 text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[var(--brand-navy-deep)]"
+            >
+              Ver planes y precios
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            </a>
+            <a
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-7 py-3.5 text-base font-semibold text-[var(--brand-navy)] transition hover:-translate-y-0.5 hover:border-[var(--brand-navy)]"
+            >
+              Iniciar sesión
+            </a>
+          </div>
+
+          <p className="mt-5 text-sm text-[var(--ink-faint)]">
+            Sin tarjeta para empezar · Migramos tus datos · Cancela cuando quieras
+          </p>
+
+          {/* Mockup del producto (MacBook + iPhone) */}
+          <ProductShowcase />
         </div>
+      </section>
 
-        <p className="mt-5 text-sm text-[var(--ink-faint)]">
-          Sin tarjeta para empezar · Migramos tus datos · Cancela cuando quieras
-        </p>
-
-        {/* Stats strip */}
-        <div className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-4 md:grid-cols-4">
+      {/* ---------------- STATS ---------------- */}
+      <section className="border-y border-[var(--glass-border)] bg-[#fafafb]">
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-px overflow-hidden px-5 py-4 md:grid-cols-4">
           {STATS.map((s) => (
-            <div key={s.label} className="rounded-2xl bg-white p-5 text-left">
-              <s.icon className="h-6 w-6 text-[var(--brand-green-deep)]" />
-              <div className="mt-3 text-3xl font-extrabold text-[var(--brand-navy)]">{s.value}</div>
+            <div key={s.label} className="px-4 py-6 text-center">
+              <s.icon className="mx-auto h-6 w-6 text-[var(--brand-green-deep)]" />
+              <div className="mt-3 text-3xl font-extrabold text-[var(--brand-navy)] md:text-4xl">{s.value}</div>
               <div className="mt-1 text-xs leading-snug text-[var(--ink-soft)]">{s.label}</div>
             </div>
           ))}
@@ -297,15 +498,18 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------- BENEFITS ---------------- */}
-      <section id="beneficios" className="mx-auto max-w-6xl px-5 py-16">
+      <section id="beneficios" className="mx-auto max-w-6xl px-5 py-24">
         <SectionHeading
           eyebrow="Por qué tu agencia lo va a amar"
           title="Todo lo que ganas con Turistea CRM"
           subtitle="No es una herramienta más: es la que reemplaza a todas las otras."
         />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {BENEFITS.map((b) => (
-            <div key={b.title} className="rounded-2xl bg-white p-6 transition hover:-translate-y-1">
+            <div
+              key={b.title}
+              className="rounded-2xl border border-[var(--glass-border)] bg-white p-6 transition hover:-translate-y-1 hover:shadow-lg"
+            >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--brand-navy)] text-white">
                 <b.icon className="h-5 w-5" />
               </div>
@@ -317,60 +521,65 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------- COMPARATIVA SIN / CON ---------------- */}
-      <section id="comparativa" className="mx-auto max-w-6xl px-5 py-16">
-        <SectionHeading
-          eyebrow="La diferencia es brutal"
-          title="Agencias sin CRM vs. agencias con Turistea"
-          subtitle="Estos son los dolores que escuchamos todos los días… y cómo desaparecen."
-        />
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
-          {/* SIN */}
-          <div className="rounded-3xl border border-[rgba(240,112,138,0.3)] bg-[rgba(240,112,138,0.07)] p-7">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--red-soft)] text-white">
-                <Frown className="h-5 w-5" />
+      <section id="comparativa" className="border-y border-[var(--glass-border)] bg-[#fafafb]">
+        <div className="mx-auto max-w-6xl px-5 py-24">
+          <SectionHeading
+            eyebrow="La diferencia es brutal"
+            title="Agencias sin CRM vs. agencias con Turistea"
+            subtitle="Estos son los dolores que escuchamos todos los días… y cómo desaparecen."
+          />
+          <div className="mt-14 grid gap-6 md:grid-cols-2">
+            {/* SIN */}
+            <div className="rounded-3xl border border-[rgba(240,112,138,0.3)] bg-[rgba(240,112,138,0.07)] p-8">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--red-soft)] text-white">
+                  <Frown className="h-5 w-5" />
+                </div>
+                <h3 className="text-xl font-bold text-[var(--brand-navy)]">Hoy, sin CRM</h3>
               </div>
-              <h3 className="text-xl font-bold text-[var(--brand-navy)]">Hoy, sin CRM</h3>
+              <ul className="space-y-3.5">
+                {PAINS.map((p) => (
+                  <li key={p.sin} className="flex gap-3 text-sm text-[var(--ink-soft)]">
+                    <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--red-soft)]" />
+                    <span>{p.sin}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="space-y-3.5">
-              {PAINS.map((p) => (
-                <li key={p.sin} className="flex gap-3 text-sm text-[var(--ink-soft)]">
-                  <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--red-soft)]" />
-                  <span>{p.sin}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {/* CON */}
-          <div className="card-featured p-7">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-green)] text-[var(--brand-navy)]">
-                <Smile className="h-5 w-5" />
+            {/* CON */}
+            <div className="card-featured p-8">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-green)] text-[var(--brand-navy)]">
+                  <Smile className="h-5 w-5" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Con Turistea CRM</h3>
               </div>
-              <h3 className="text-xl font-bold text-white">Con Turistea CRM</h3>
+              <ul className="space-y-3.5">
+                {PAINS.map((p) => (
+                  <li key={p.con} className="flex gap-3 text-sm text-white/90">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--brand-green)]" />
+                    <span>{p.con}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="space-y-3.5">
-              {PAINS.map((p) => (
-                <li key={p.con} className="flex gap-3 text-sm text-white/90">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--brand-green)]" />
-                  <span>{p.con}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       </section>
 
       {/* ---------------- CARACTERÍSTICAS ---------------- */}
-      <section id="caracteristicas" className="mx-auto max-w-6xl px-5 py-16">
+      <section id="caracteristicas" className="mx-auto max-w-6xl px-5 py-24">
         <SectionHeading
           eyebrow="Hecho para turismo, no genérico"
           title="Características que de verdad usas"
           subtitle="Cada función nació de cómo trabaja realmente una agencia de viajes."
         />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-2xl bg-white p-6 transition hover:-translate-y-1">
+            <div
+              key={f.title}
+              className="rounded-2xl border border-[var(--glass-border)] bg-white p-6 transition hover:-translate-y-1 hover:shadow-lg"
+            >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[rgba(149,222,0,0.15)] text-[var(--brand-green-deep)]">
                 <f.icon className="h-5 w-5" />
               </div>
@@ -382,103 +591,105 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------- PRECIOS ---------------- */}
-      <section id="precios" className="mx-auto max-w-6xl px-5 py-16">
-        <SectionHeading
-          eyebrow="Planes para cada tamaño de agencia"
-          title="Elige el plan que crece contigo"
-          subtitle="Precios en USD / mes. Empieza chico y sube cuando lo necesites. Sin contratos atados."
-        />
+      <section id="precios" className="border-y border-[var(--glass-border)] bg-[#fafafb]">
+        <div className="mx-auto max-w-6xl px-5 py-24">
+          <SectionHeading
+            eyebrow="Planes para cada tamaño de agencia"
+            title="Elige el plan que crece contigo"
+            subtitle="Precios en USD / mes. Empieza chico y sube cuando lo necesites. Sin contratos atados."
+          />
 
-        <div className="mt-12 grid items-start gap-6 lg:grid-cols-3">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.name}
-              className={
-                plan.highlight
-                  ? "card-featured relative p-8 lg:-mt-4 lg:scale-[1.03]"
-                  : `relative rounded-3xl bg-white p-8 ${plan.accent}`
-              }
-            >
-              {plan.badge && (
-                <span
-                  className={
-                    "absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold " +
-                    (plan.highlight
-                      ? "bg-[var(--brand-green)] text-[var(--brand-navy)]"
-                      : "bg-[var(--brand-navy)] text-white")
-                  }
-                >
-                  {plan.badge}
-                </span>
-              )}
-
-              <h3 className={`text-2xl font-extrabold ${plan.highlight ? "text-white" : "text-[var(--brand-navy)]"}`}>
-                {plan.name}
-              </h3>
-              <p className={`mt-1 text-sm ${plan.highlight ? "text-white/80" : "text-[var(--ink-soft)]"}`}>
-                {plan.tagline}
-              </p>
-
-              <div className="mt-6 flex items-end gap-1">
-                <span className={`text-sm font-semibold ${plan.highlight ? "text-white/70" : "text-[var(--ink-faint)]"}`}>$</span>
-                <span className={`text-5xl font-extrabold ${plan.highlight ? "text-white" : "text-[var(--brand-navy)]"}`}>
-                  {plan.price}
-                </span>
-                <span className={`mb-1.5 text-sm ${plan.highlight ? "text-white/70" : "text-[var(--ink-faint)]"}`}>
-                  /mes
-                </span>
-              </div>
-
-              <a
-                href="/login"
+          <div className="mt-14 grid items-start gap-6 lg:grid-cols-3">
+            {PLANS.map((plan) => (
+              <div
+                key={plan.name}
                 className={
-                  "mt-6 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition hover:-translate-y-0.5 " +
-                  (plan.highlight
-                    ? "bg-[var(--brand-green)] text-[var(--brand-navy)] hover:bg-[var(--brand-green-deep)]"
-                    : "bg-[var(--brand-navy)] text-white hover:bg-[var(--brand-navy-deep)]")
+                  plan.highlight
+                    ? "card-featured relative p-8 lg:-mt-4 lg:scale-[1.03]"
+                    : "relative rounded-3xl border border-[var(--glass-border)] bg-white p-8"
                 }
               >
-                {plan.cta}
-                <ArrowRight className="h-4 w-4" />
-              </a>
-
-              <ul className="mt-7 space-y-3">
-                {plan.features.map((feat) => (
-                  <li
-                    key={feat}
-                    className={`flex gap-2.5 text-sm ${plan.highlight ? "text-white/90" : "text-[var(--ink-soft)]"}`}
+                {plan.badge && (
+                  <span
+                    className={
+                      "absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold " +
+                      (plan.highlight
+                        ? "bg-[var(--brand-green)] text-[var(--brand-navy)]"
+                        : "bg-[var(--brand-navy)] text-white")
+                    }
                   >
-                    <CheckCircle2
-                      className={`mt-0.5 h-4 w-4 flex-shrink-0 ${plan.highlight ? "text-[var(--brand-green)]" : "text-[var(--brand-green-deep)]"}`}
-                    />
-                    <span>{feat}</span>
-                  </li>
-                ))}
-                {plan.notIncluded.map((feat) => (
-                  <li key={feat} className="flex gap-2.5 text-sm text-[var(--ink-faint)] line-through">
-                    <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 opacity-60" />
-                    <span>{feat}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+                    {plan.badge}
+                  </span>
+                )}
 
-        <p className="mt-8 text-center text-sm text-[var(--ink-faint)]">
-          ¿Eres una red o mayorista con necesidades especiales?{" "}
-          <a href="#contacto" className="font-semibold text-[var(--brand-navy)] underline">
-            Armamos un plan a tu medida.
-          </a>
-        </p>
+                <h3 className={`text-2xl font-extrabold ${plan.highlight ? "text-white" : "text-[var(--brand-navy)]"}`}>
+                  {plan.name}
+                </h3>
+                <p className={`mt-1 text-sm ${plan.highlight ? "text-white/80" : "text-[var(--ink-soft)]"}`}>
+                  {plan.tagline}
+                </p>
+
+                <div className="mt-6 flex items-end gap-1">
+                  <span className={`text-sm font-semibold ${plan.highlight ? "text-white/70" : "text-[var(--ink-faint)]"}`}>$</span>
+                  <span className={`text-5xl font-extrabold ${plan.highlight ? "text-white" : "text-[var(--brand-navy)]"}`}>
+                    {plan.price}
+                  </span>
+                  <span className={`mb-1.5 text-sm ${plan.highlight ? "text-white/70" : "text-[var(--ink-faint)]"}`}>
+                    /mes
+                  </span>
+                </div>
+
+                <a
+                  href="/login"
+                  className={
+                    "mt-6 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition hover:-translate-y-0.5 " +
+                    (plan.highlight
+                      ? "bg-[var(--brand-green)] text-[var(--brand-navy)] hover:bg-[var(--brand-green-deep)]"
+                      : "bg-[var(--brand-navy)] text-white hover:bg-[var(--brand-navy-deep)]")
+                  }
+                >
+                  {plan.cta}
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+
+                <ul className="mt-7 space-y-3">
+                  {plan.features.map((feat) => (
+                    <li
+                      key={feat}
+                      className={`flex gap-2.5 text-sm ${plan.highlight ? "text-white/90" : "text-[var(--ink-soft)]"}`}
+                    >
+                      <CheckCircle2
+                        className={`mt-0.5 h-4 w-4 flex-shrink-0 ${plan.highlight ? "text-[var(--brand-green)]" : "text-[var(--brand-green-deep)]"}`}
+                      />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                  {plan.notIncluded.map((feat) => (
+                    <li key={feat} className="flex gap-2.5 text-sm text-[var(--ink-faint)] line-through">
+                      <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 opacity-60" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-8 text-center text-sm text-[var(--ink-faint)]">
+            ¿Eres una red o mayorista con necesidades especiales?{" "}
+            <a href="#contacto" className="font-semibold text-[var(--brand-navy)] underline">
+              Armamos un plan a tu medida.
+            </a>
+          </p>
+        </div>
       </section>
 
       {/* ---------------- FAQ ---------------- */}
-      <section className="mx-auto max-w-4xl px-5 py-16">
+      <section className="mx-auto max-w-4xl px-5 py-24">
         <SectionHeading eyebrow="Antes de decidir" title="Preguntas frecuentes" subtitle={null} />
-        <div className="mt-10 space-y-4">
+        <div className="mt-12 space-y-4">
           {FAQS.map((f) => (
-            <div key={f.q} className="rounded-2xl bg-white p-6">
+            <div key={f.q} className="rounded-2xl border border-[var(--glass-border)] bg-white p-6">
               <h3 className="flex items-start gap-2 text-base font-bold text-[var(--brand-navy)]">
                 <Star className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--brand-orange)]" />
                 {f.q}
@@ -490,8 +701,8 @@ export default function LandingPage() {
       </section>
 
       {/* ---------------- FINAL CTA ---------------- */}
-      <section id="contacto" className="mx-auto max-w-6xl px-5 py-16">
-        <div className="card-featured px-6 py-14 text-center md:px-16">
+      <section id="contacto" className="mx-auto max-w-6xl px-5 pb-24">
+        <div className="card-featured px-6 py-16 text-center md:px-16">
           <h2 className="mx-auto max-w-2xl text-3xl font-extrabold leading-tight text-white md:text-4xl">
             Tu próxima venta ya está en tu base de clientes. <br className="hidden md:block" />
             Empieza a aprovecharla hoy.
@@ -555,7 +766,7 @@ function SectionHeading({
       <span className="text-xs font-bold uppercase tracking-wider text-[var(--brand-green-deep)]">
         {eyebrow}
       </span>
-      <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--brand-navy)] md:text-4xl">
+      <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--brand-navy)] md:text-[40px] md:leading-tight">
         {title}
       </h2>
       {subtitle && <p className="mt-4 text-base text-[var(--ink-soft)] md:text-lg">{subtitle}</p>}
