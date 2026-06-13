@@ -208,208 +208,6 @@ const FAQS = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  PRODUCT SHOWCASE — mockup real del producto (MacBook + iPhone)     */
-/* ------------------------------------------------------------------ */
-
-// Datos calcados de una captura real del Kanban en light mode.
-const KANBAN_COLS = [
-  {
-    name: "Interesado", dot: "#85c2f6", count: 3, sum: "9.150",
-    cards: [
-      { t: "Cancún 7 noches — Familia Ospina", a: "Riviera Maya Travel", v: "4.200", who: "JP", c: "#6d5ce0" },
-      { t: "Eje Cafetero 4D/3N — Grupo colegio", a: "Viajes Andinos Tour", v: "1.850", who: "SA", c: "#2bb673" },
-    ],
-  },
-  {
-    name: "Contactado", dot: "#272255", count: 4, sum: "18.180",
-    cards: [
-      { t: "Europa Clásica 12 días — Grupo senior", a: "Euro Destinos Premium", v: "9.800", who: "JP", c: "#6d5ce0" },
-      { t: "Machu Picchu + Valle Sagrado", a: "Cusco Inca Trips", v: "2.650", who: "SA", c: "#2bb673" },
-    ],
-  },
-  {
-    name: "Cotizado", dot: "#7fce00", count: 4, sum: "12.740",
-    cards: [
-      { t: "Bariloche ski semana — Pareja", a: "Patagonia Expediciones", v: "3.750", who: "JP", c: "#6d5ce0" },
-      { t: "San Andrés 5D/4N — Promo octubre", a: "Caribe Sol Operadora", v: "1.490", who: "SA", c: "#2bb673" },
-    ],
-  },
-  {
-    name: "Negociación", dot: "#ff8400", count: 3, sum: "24.195",
-    cards: [
-      { t: "Riviera Maya 6 noches — Familia Vélez", a: "Riviera Maya Travel", v: "4.850", who: "JP", c: "#6d5ce0" },
-      { t: "Tour Europa Mediterránea — 8 pax", a: "Euro Destinos Premium", v: "12.400", who: "SA", c: "#2bb673" },
-    ],
-  },
-  {
-    name: "Cierre", dot: "#94a3b8", count: 1, sum: "3.950",
-    cards: [
-      { t: "Glaciar Perito Moreno + El Calafate", a: "Patagonia Expediciones", v: "3.950", who: "AD", c: "#0e8f6f" },
-    ],
-  },
-];
-
-const MINI_NAV = ["Dashboard", "Empresas", "Contactos", "Oportunidades", "Productos", "Reportes"];
-
-function DealCard({ t, a, v, who, c }: { t: string; a: string; v: string; who: string; c: string }) {
-  return (
-    <div className="rounded-lg border border-[var(--glass-border)] bg-white p-2 shadow-sm">
-      <p className="line-clamp-2 text-[10px] font-bold leading-tight text-[var(--brand-navy)]">{t}</p>
-      <p className="mt-1 truncate text-[9px] text-[var(--ink-faint)]">{a}</p>
-      <div className="mt-2 flex items-center justify-between">
-        <span className="text-[10px] font-extrabold text-[var(--brand-navy)]">{v} US$</span>
-        <span
-          className="flex h-4 w-4 items-center justify-center rounded-full text-[7px] font-bold text-white"
-          style={{ backgroundColor: c }}
-        >
-          {who}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* Pantalla de la app (sidebar + kanban) — se reusa dentro del MacBook. */
-function AppScreen() {
-  return (
-    <div className="flex bg-[#fbfbfd]">
-      {/* sidebar mini (navy) */}
-      <aside className="hidden w-24 shrink-0 flex-col bg-[var(--brand-navy-deep)] p-2 lg:flex xl:w-28 xl:p-3">
-        <Image src="/turistea-crm-light.svg" alt="Turistea CRM" width={1677} height={451} className="mb-4 h-5 w-auto" />
-        <div className="space-y-1">
-          {MINI_NAV.map((n) => (
-            <div
-              key={n}
-              className={`truncate rounded-md px-2 py-1 text-[9px] font-medium xl:text-[10px] ${
-                n === "Oportunidades"
-                  ? "bg-[var(--brand-green)] text-[var(--brand-navy-deep)]"
-                  : "text-white/55"
-              }`}
-            >
-              {n}
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      {/* tablero */}
-      <div className="min-w-0 flex-1 p-3.5 sm:p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="rounded-md bg-[var(--brand-navy)] px-2.5 py-1 text-[10px] font-semibold text-white">Kanban</span>
-            <span className="rounded-md border border-[var(--glass-border)] px-2.5 py-1 text-[10px] text-[var(--ink-soft)]">Tabla</span>
-          </div>
-          <span className="rounded-md bg-[var(--brand-orange)] px-2.5 py-1 text-[10px] font-semibold text-white">+ Nueva</span>
-        </div>
-        <div className="grid grid-cols-5 gap-2">
-          {KANBAN_COLS.map((col) => (
-            <div key={col.name} className="min-w-0">
-              <div className="mb-1 flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: col.dot }} />
-                <span className="truncate text-[9px] font-bold uppercase tracking-wide text-[var(--brand-navy)]">{col.name}</span>
-                <span className="ml-auto rounded bg-[var(--brand-navy)]/10 px-1 text-[8px] font-bold text-[var(--brand-navy)]">{col.count}</span>
-              </div>
-              <p className="mb-1.5 text-[8px] font-semibold text-[var(--ink-faint)]">{col.sum} US$</p>
-              <div className="space-y-1.5">
-                {col.cards.map((card) => (
-                  <DealCard key={card.t} {...card} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* MacBook: pantalla con bezel + barra de ventana macOS + base/teclado. */
-function MacBook() {
-  return (
-    <div className="mx-auto w-full max-w-3xl">
-      {/* tapa / pantalla */}
-      <div className="rounded-[18px] border-[10px] border-[#1d1d1f] bg-[#1d1d1f] shadow-2xl">
-        <div className="overflow-hidden rounded-[8px] bg-white">
-          {/* barra de ventana macOS */}
-          <div className="flex items-center gap-2 border-b border-[var(--glass-border)] bg-[#f4f5f9] px-4 py-2.5">
-            <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-            <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
-            <span className="h-3 w-3 rounded-full bg-[#28c840]" />
-            <div className="mx-auto hidden max-w-xs flex-1 rounded-md border border-[var(--glass-border)] bg-white px-3 py-1 text-center text-[11px] text-[var(--ink-faint)] sm:block">
-              creativia.turisteacrm.com
-            </div>
-          </div>
-          <AppScreen />
-        </div>
-      </div>
-      {/* base del MacBook */}
-      <div className="relative mx-auto h-3 w-[112%] -translate-x-[5.3%] rounded-b-xl bg-gradient-to-b from-[#d6d9df] to-[#aab0ba]">
-        <div className="absolute left-1/2 top-0 h-1.5 w-24 -translate-x-1/2 rounded-b-lg bg-[#9aa1ac]" />
-      </div>
-    </div>
-  );
-}
-
-/* iPhone: marco con Dynamic Island + pantalla de dashboard móvil. */
-function IPhone() {
-  return (
-    <div className="rounded-[2.6rem] border-[7px] border-[#1d1d1f] bg-[#1d1d1f] shadow-2xl">
-      <div className="relative overflow-hidden rounded-[2.1rem] bg-[#fbfbfd]">
-        {/* Dynamic Island */}
-        <div className="absolute left-1/2 top-2 z-10 h-4 w-16 -translate-x-1/2 rounded-full bg-black" />
-        {/* brand bar */}
-        <div className="flex items-center justify-center bg-[var(--brand-navy-deep)] pb-2 pt-3.5">
-          <Image src="/turistea-crm-light.svg" alt="Turistea CRM" width={1677} height={451} className="h-4 w-auto" />
-        </div>
-        <div className="space-y-2 p-2.5">
-          <p className="text-[10px] font-extrabold text-[var(--brand-navy)]">Buenas noches 👋</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            <div className="rounded-lg border border-[var(--glass-border)] bg-white p-2">
-              <p className="text-[6.5px] font-semibold uppercase tracking-wide text-[var(--ink-faint)]">Valor en embudo</p>
-              <p className="text-[12px] font-extrabold text-[var(--brand-navy)]">68.215<span className="text-[7px]"> US$</span></p>
-            </div>
-            <div className="rounded-lg border border-[var(--glass-border)] bg-white p-2">
-              <p className="text-[6.5px] font-semibold uppercase tracking-wide text-[var(--ink-faint)]">Activas</p>
-              <p className="text-[12px] font-extrabold text-[var(--brand-navy)]">15</p>
-            </div>
-          </div>
-          <div className="rounded-lg border border-[var(--glass-border)] bg-white p-2">
-            <p className="mb-1 text-[7px] font-bold uppercase tracking-wide text-[var(--brand-orange)]">Atención hoy</p>
-            {[
-              ["Cancún — Familia Ospina", "Hoy 10:30"],
-              ["Machu Picchu + Valle", "Hoy 14:00"],
-              ["Crucero por el Caribe", "Mañana"],
-            ].map(([t, w]) => (
-              <div key={t} className="flex items-center justify-between border-t border-[var(--glass-border)] py-1 first:border-0">
-                <span className="truncate text-[8px] font-medium text-[var(--brand-navy)]">{t}</span>
-                <span className="ml-1 shrink-0 text-[7px] text-[var(--ink-faint)]">{w}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProductShowcase() {
-  return (
-    <div className="relative mx-auto w-full max-w-xl pb-8 pl-10 lg:mx-0 lg:pb-12 lg:pl-14">
-      {/* glow de fondo */}
-      <div
-        aria-hidden
-        className="absolute -inset-6 -z-10 rounded-[48px] bg-gradient-to-br from-[var(--brand-green)] via-[var(--brand-sky)] to-transparent opacity-25 blur-3xl"
-      />
-      <MacBook />
-      {/* iPhone al frente-izquierda (como el mockup de referencia) */}
-      <div className="absolute -bottom-2 left-0 w-[30%] max-w-[138px] rotate-[-5deg] sm:w-[132px]">
-        <IPhone />
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  PAGE                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -483,7 +281,16 @@ export default function LandingPage() {
           </div>
 
           {/* DERECHA — mockup del producto (MacBook + iPhone) */}
-          <ProductShowcase />
+          <div className="relative lg:-mr-6">
+            <Image
+              src="/hero-mockup.png"
+              alt="Turistea CRM en MacBook y iPhone — tablero de oportunidades"
+              width={1448}
+              height={1086}
+              priority
+              className="h-auto w-full"
+            />
+          </div>
         </div>
       </section>
 
