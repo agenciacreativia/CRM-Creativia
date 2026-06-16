@@ -160,12 +160,15 @@ export function CotizacionBloqueoForm({
       ),
     [habitaciones],
   );
+  // Acomodación en base a PERSONAS (precio_dbl/tpl/sgl son por persona): contamos
+  // adultos según el tipo de habitación que ocupan; los niños van aparte.
   const acom = useMemo(() => {
     const a = { sencilla: 0, doble: 0, triple: 0, nino: 0, otros: acomOtros, otros_valor: acomOtrosValor };
     for (const h of habitaciones) {
-      if (h.tipo === "sgl") a.sencilla++;
-      else if (h.tipo === "dbl") a.doble++;
-      else if (h.tipo === "tpl") a.triple++;
+      const adultos = h.pasajeros.filter((p) => p.tipo === "adulto").length;
+      if (h.tipo === "sgl") a.sencilla += adultos;
+      else if (h.tipo === "dbl") a.doble += adultos;
+      else if (h.tipo === "tpl") a.triple += adultos;
     }
     a.nino = pasajeros.filter((p) => p.tipo === "nino").length;
     return a;

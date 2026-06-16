@@ -236,7 +236,7 @@ export default async function OportunidadDetailPage({ params }: { params: Params
             oportunidadValor={o.valor}
             cotizaciones={cotizaciones}
             defaultMoneda={o.moneda}
-            planesBloqueo={puedeReservar ? planesCatalogo.map((p) => ({ id: p.id, nombre: p.nombre, moneda: p.moneda })) : []}
+            planesBloqueo={usaReservas ? planesCatalogo.map((p) => ({ id: p.id, nombre: p.nombre, moneda: p.moneda })) : []}
             prefillBloqueo={{
               nombre_agente: contacto?.nombre ?? "",
               email_agente: contacto?.email ?? "",
