@@ -2,10 +2,93 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { saveCotizacion, deleteCotizacion, logCambio } from "@/lib/db/mutations";
+import { saveCotizacion, deleteCotizacion, logCambio, marcarCotizacionEnviada } from "@/lib/db/mutations";
 import { getBloqueoParaCotizacion, type BloqueoDetalleExterno } from "@/lib/db/reservas-externo";
+import { getCotizacion } from "@/lib/db/cotizaciones";
+import { renderCotizacionPDF } from "@/lib/cotizacion/pdf";
+import { getTenantFromHeaders } from "@/lib/tenant";
+import { getMyAccessToken } from "@/lib/db/google";
+import { getSessionUser } from "@/lib/auth";
+import { sendGmail } from "@/lib/google/gmail";
+import { env } from "@/lib/env";
+import { cotizacionTotal, calcLiquidacion, fmtMoney } from "@/lib/cotizacion/types";
 
 export type CotizacionResult = { ok: boolean; error?: string; id?: string };
+export type EnviarResult = { ok: boolean; error?: string; needsConnect?: boolean };
+
+/** Envía la cotización al cliente: PDF adjunto + botón "Confirmar cotización" (magic-link). */
+export async function enviarCotizacionAction(cotizacionId: string, oportunidadId: string, to: string): Promise<EnviarResult> {
+  const dest = (to || "").trim();
+  if (!/.+@.+\..+/.test(dest)) return { ok: false, error: "Email destino inválido" };
+
+  const cot = await getCotizacion(cotizacionId);
+  if (!cot) return { ok: false, error: "Cotización no encontrada" };
+
+  const accessToken = await getMyAccessToken();
+  if (!accessToken) return { ok: false, needsConnect: true, error: "Conectá tu Gmail en Ajustes para enviar la cotización." };
+
+  const [user, tenant] = await Promise.all([getSessionUser(), getTenantFromHeaders()]);
+  const agencia = tenant?.nombre_empresa || "Turistea CRM";
+  const fecha = new Date(cot.creado_en).toLocaleDateString("es", { year: "numeric", month: "long", day: "numeric" });
+
+  // PDF
+  let pdfB64: string;
+  try {
+    const buf = await renderCotizacionPDF(cot, { agencia, fecha });
+    pdfB64 = buf.toString("base64");
+  } catch (e) {
+    return { ok: false, error: "No se pudo generar el PDF: " + (e instanceof Error ? e.message : "error") };
+  }
+
+  // Token + marcar enviada
+  let token: string;
+  try {
+    token = await marcarCotizacionEnviada(cotizacionId);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No se pudo preparar el envío" };
+  }
+
+  const proto = env.ROOT_URL.startsWith("https") ? "https" : "http";
+  const sub = tenant?.subdominio ? `${tenant.subdominio}.` : "";
+  const confirmUrl = `${proto}://${sub}${env.BASE_DOMAIN}/cotizaciones/confirmar/${token}`;
+
+  const total = cot.reserva ? calcLiquidacion(cot.reserva).totalAPagar : cotizacionTotal(cot.items, cot.descuento);
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#272255;max-width:560px;margin:0 auto">
+      <h2 style="color:#272255;margin:0 0 4px">${escapeHtml(cot.titulo)}</h2>
+      <p style="color:#6b7280;margin:0 0 16px">${escapeHtml(agencia)} · Cotización de viaje</p>
+      <p>Hola, te compartimos la cotización adjunta en PDF.</p>
+      <p style="font-size:18px;font-weight:bold">Total: ${fmtMoney(total, cot.moneda)}</p>
+      <p>Si estás de acuerdo, confirmá la cotización con el siguiente botón:</p>
+      <p style="text-align:center;margin:24px 0">
+        <a href="${confirmUrl}" style="background:#ff8000;color:#fff;text-decoration:none;padding:12px 28px;border-radius:999px;font-weight:bold;display:inline-block">Confirmar cotización</a>
+      </p>
+      <p style="color:#6b7280;font-size:12px">O copiá este enlace: ${confirmUrl}</p>
+      <p style="color:#6b7280;font-size:12px">Válida por ${cot.validez_dias} días. Sujeta a confirmación de tarifa y disponibilidad.</p>
+    </div>`;
+
+  try {
+    await sendGmail(accessToken, {
+      to: dest,
+      subject: `Cotización: ${cot.titulo}`,
+      html,
+      replyTo: user?.email,
+      attachments: [{ filename: `cotizacion-${cotizacionId.slice(0, 8)}.pdf`, mimeType: "application/pdf", contentBase64: pdfB64 }],
+    });
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No se pudo enviar el correo" };
+  }
+
+  try {
+    await logCambio("oportunidad", oportunidadId, `Envió la cotización "${cot.titulo}" a ${dest}`);
+  } catch { /* no romper por el log */ }
+  revalidatePath(`/oportunidades/${oportunidadId}`);
+  return { ok: true };
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
 
 /** Trae el detalle del bloqueo (itinerario, servicios, salidas con precios) para armar la cotización. */
 export async function getBloqueoCotizacionAction(bloqueoId: string): Promise<BloqueoDetalleExterno | null> {

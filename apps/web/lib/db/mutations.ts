@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
@@ -146,6 +147,37 @@ export async function deleteCotizacion(id: string) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from("cotizacion").delete().eq("id", id);
   if (error) throw new Error(error.message);
+}
+
+/** Marca la cotización como enviada y devuelve un token de confirmación (magic-link). */
+export async function marcarCotizacionEnviada(id: string): Promise<string> {
+  await ensureSession();
+  const supabase = await createServerSupabase();
+  const { data } = await supabase.from("cotizacion").select("confirm_token").eq("id", id).maybeSingle();
+  const token = (data?.confirm_token as string | null) ?? randomUUID().replace(/-/g, "") + randomUUID().replace(/-/g, "");
+  const { error } = await supabase
+    .from("cotizacion")
+    .update({ estado: "enviada", enviada_en: new Date().toISOString(), confirm_token: token })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  return token;
+}
+
+/** Confirma una cotización vía el token del email (público, sin sesión → service role). */
+export async function confirmarCotizacionPorToken(
+  token: string,
+): Promise<{ ok: boolean; titulo?: string; yaConfirmada?: boolean }> {
+  if (!token || token.length < 16) return { ok: false };
+  const admin = createAdminSupabase();
+  const { data } = await admin.from("cotizacion").select("id, titulo, estado").eq("confirm_token", token).maybeSingle();
+  if (!data) return { ok: false };
+  if (data.estado === "confirmada") return { ok: true, titulo: data.titulo as string, yaConfirmada: true };
+  const { error } = await admin
+    .from("cotizacion")
+    .update({ estado: "confirmada", confirmada_en: new Date().toISOString() })
+    .eq("id", data.id);
+  if (error) return { ok: false };
+  return { ok: true, titulo: data.titulo as string };
 }
 
 /* ---------- Productos de la oportunidad (deal products) ---------- */

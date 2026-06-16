@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Printer, FileText, Plane } from "lucide-react";
+import { Plus, Pencil, Trash2, Printer, FileText, Plane, Send, FileDown, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +21,7 @@ import {
   itemSubtotal,
   fmtMoney,
 } from "@/lib/cotizacion/types";
-import { saveCotizacionAction, deleteCotizacionAction } from "./cotizacion-actions";
+import { saveCotizacionAction, deleteCotizacionAction, enviarCotizacionAction } from "./cotizacion-actions";
 import { ItinerarioEditor } from "./itinerario-editor";
 import { CotizacionBloqueoForm, type PlanLite, type ContactoPrefill } from "./cotizacion-bloqueo-form";
 
@@ -57,6 +57,30 @@ export function CotizacionBuilder({
   const [creatingBloqueo, setCreatingBloqueo] = useState(false);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  // Envío al cliente (PDF por email).
+  const [sendFor, setSendFor] = useState<string | null>(null);
+  const [sendEmail, setSendEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendMsg, setSendMsg] = useState<{ id: string; type: "ok" | "err"; text: string } | null>(null);
+
+  function openSend(id: string) {
+    setSendFor(id);
+    setSendEmail(prefill?.email_agente ?? "");
+    setSendMsg(null);
+  }
+  async function doSend(id: string) {
+    setSending(true);
+    const res = await enviarCotizacionAction(id, oportunidadId, sendEmail);
+    setSending(false);
+    if (res.ok) {
+      setSendFor(null);
+      setSendMsg({ id, type: "ok", text: `Enviada a ${sendEmail}` });
+      router.refresh();
+    } else {
+      setSendMsg({ id, type: "err", text: res.error ?? "No se pudo enviar" });
+    }
+  }
 
   function onDelete(id: string) {
     if (!confirm("¿Eliminar esta cotización?")) return;
@@ -124,15 +148,23 @@ export function CotizacionBuilder({
       ) : (
         <ul className="divide-y divide-gray-100">
           {initial.map((c) => (
-            <li key={c.id} className="flex items-center justify-between gap-3 py-2.5">
+            <li key={c.id} className="py-2.5">
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-gray-900">{c.titulo}</p>
                 <p className="text-xs text-gray-500">
                   {c.items.length} ítems · {fmtMoney(cotizacionTotal(c.items, c.descuento), c.moneda)}
+                  {c.confirmada_en ? <span className="ml-1 inline-flex items-center gap-0.5 text-green-700"><CheckCircle2 className="h-3 w-3" /> confirmada</span> : null}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={ESTADO_BADGE[c.estado] ?? "default"}>{c.estado}</Badge>
+                <a href={`/cotizaciones/${c.id}/pdf`} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-brand-primary" title="PDF">
+                  <FileDown className="h-4 w-4" />
+                </a>
+                <button onClick={() => openSend(c.id)} className="text-gray-400 hover:text-brand-primary" title="Enviar al cliente">
+                  <Send className="h-4 w-4" />
+                </button>
                 <Link href={`/cotizaciones/${c.id}`} target="_blank" className="text-gray-400 hover:text-brand-primary" title="Ver / Imprimir">
                   <Printer className="h-4 w-4" />
                 </Link>
@@ -143,6 +175,25 @@ export function CotizacionBuilder({
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
+            </div>
+            {sendFor === c.id && (
+              <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-gray-50 p-2">
+                <input
+                  type="email"
+                  value={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.value)}
+                  placeholder="email@cliente.com"
+                  className="h-9 min-w-[220px] flex-1 rounded-md border border-gray-300 px-2 text-sm"
+                />
+                <Button type="button" size="sm" onClick={() => doSend(c.id)} disabled={sending} className="inline-flex items-center gap-1.5">
+                  <Send className="h-4 w-4" /> {sending ? "Enviando…" : "Enviar PDF"}
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setSendFor(null)} disabled={sending}>Cancelar</Button>
+              </div>
+            )}
+            {sendMsg?.id === c.id && (
+              <p className={`mt-1 text-xs ${sendMsg.type === "ok" ? "text-green-700" : "text-status-danger"}`}>{sendMsg.text}</p>
+            )}
             </li>
           ))}
         </ul>

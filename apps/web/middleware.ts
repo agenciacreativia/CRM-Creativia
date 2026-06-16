@@ -19,7 +19,7 @@ const PUBLIC_PATHS = new Set<string>([
   "/landing",
 ]);
 
-const STATIC_PREFIXES = ["/_next", "/api/health", "/api/auth", "/api/google", "/api/leads", "/api/track", "/api/public", "/api/v1", "/nps", "/favicon.ico"];
+const STATIC_PREFIXES = ["/_next", "/api/health", "/api/auth", "/api/google", "/api/leads", "/api/track", "/api/public", "/api/v1", "/nps", "/cotizaciones/confirmar", "/favicon.ico"];
 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true;
