@@ -83,7 +83,7 @@ export async function logCambio(
 }
 
 /* ---------- Cotizaciones ---------- */
-import type { CotizacionItem, ItinerarioDia } from "@/lib/cotizacion/types";
+import type { CotizacionItem, ItinerarioDia, ReservaCotizacion, CotizacionEstado } from "@/lib/cotizacion/types";
 
 export type CotizacionInput = {
   oportunidad_id: string;
@@ -92,31 +92,39 @@ export type CotizacionInput = {
   descuento: number;
   notas: string | null;
   validez_dias: number;
-  estado: "borrador" | "enviada" | "aceptada" | "rechazada";
+  estado: CotizacionEstado;
   items: CotizacionItem[];
   itinerario?: ItinerarioDia[];
+  // Cotización armada desde un bloqueo del sitio (opcional). Persisten en las
+  // columnas de la migración 0045.
+  bloqueo_id?: string | null;
+  fecha_id?: string | null;
+  reserva_data?: ReservaCotizacion | null;
 };
+
+// Columnas que sólo existen tras correr migraciones recientes (0036 itinerario,
+// 0045 bloqueo). Si alguna falta, las quitamos del payload y reintentamos para
+// que el save no se rompa antes de aplicar la migración.
+const COLS_OPCIONALES = ["itinerario", "bloqueo_id", "fecha_id", "reserva_data"] as const;
+const isMissingOptionalColumn = (msg: string | undefined): boolean =>
+  !!msg && new RegExp(`column.*(${COLS_OPCIONALES.join("|")}).*does not exist`, "i").test(msg);
+function stripOpcionales<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  const out = { ...obj };
+  for (const k of COLS_OPCIONALES) delete out[k];
+  return out;
+}
 
 export async function saveCotizacion(id: string | null, input: CotizacionInput): Promise<string> {
   const user = await ensureSession();
   if (!user.tenantId) throw new Error("Tenant ausente");
   const supabase = await createServerSupabase();
 
-  // Si la migración 0036 (que agrega la columna itinerario) todavía no se corrió
-  // en este proyecto, retiramos el campo del payload y avisamos por log para
-  // que el dato no se pierda silenciosamente — el resto del save sigue
-  // funcionando con normalidad.
-  const isMissingItinerarioColumn = (msg: string | undefined): boolean =>
-    !!msg && /column.*itinerario.*does not exist/i.test(msg);
-
   if (id) {
     const payload = { ...input, actualizado_en: new Date().toISOString() };
     let { error } = await supabase.from("cotizacion").update(payload).eq("id", id);
-    if (error && isMissingItinerarioColumn(error.message)) {
-      console.warn("[saveCotizacion] columna 'itinerario' no existe; correr migración 0036. Guardando sin itinerario.");
-      const { itinerario: _itin, ...sinItin } = payload;
-      void _itin;
-      ({ error } = await supabase.from("cotizacion").update(sinItin).eq("id", id));
+    if (error && isMissingOptionalColumn(error.message)) {
+      console.warn("[saveCotizacion] faltan columnas opcionales (correr migraciones 0036/0045). Guardando sin ellas.");
+      ({ error } = await supabase.from("cotizacion").update(stripOpcionales(payload)).eq("id", id));
     }
     if (error) throw new Error(error.message);
     return id;
@@ -124,11 +132,9 @@ export async function saveCotizacion(id: string | null, input: CotizacionInput):
 
   const insert = { ...input, tenant_id: user.tenantId, creado_por: user.id };
   let { data, error } = await supabase.from("cotizacion").insert(insert).select("id").single();
-  if (error && isMissingItinerarioColumn(error.message)) {
-    console.warn("[saveCotizacion] columna 'itinerario' no existe; correr migración 0036. Insertando sin itinerario.");
-    const { itinerario: _itin, ...sinItin } = insert;
-    void _itin;
-    ({ data, error } = await supabase.from("cotizacion").insert(sinItin).select("id").single());
+  if (error && isMissingOptionalColumn(error.message)) {
+    console.warn("[saveCotizacion] faltan columnas opcionales (correr migraciones 0036/0045). Insertando sin ellas.");
+    ({ data, error } = await supabase.from("cotizacion").insert(stripOpcionales(insert)).select("id").single());
   }
   if (error) throw new Error(error.message);
   if (!data?.id) throw new Error("No se pudo guardar la cotización");
