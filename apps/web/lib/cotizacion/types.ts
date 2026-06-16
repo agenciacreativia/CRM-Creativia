@@ -120,6 +120,25 @@ export type LiquidacionCalc = {
   totalAPagar: number;
 };
 
+// Plan de pagos según tipo de reserva (mismos hitos que el sitio).
+export type PagoPlazo = { plazo: string; pct: number; fechaMax: string; valor: number };
+export function calcPlanPagos(r: ReservaCotizacion, total: number): PagoPlazo[] {
+  const salida = r.plan.fecha_salida;
+  if (!salida || total <= 0) return [];
+  const esGrupo = (r.config.tipo_reserva || "").startsWith("grupo");
+  const hitos = esGrupo
+    ? [{ pct: 5, d: 135 }, { pct: 30, d: 130 }, { pct: 60, d: 95 }, { pct: 100, d: 45 }]
+    : [{ pct: 20, d: 160 }, { pct: 60, d: 95 }, { pct: 100, d: 45 }];
+  let prev = 0;
+  return hitos.map((h, i) => {
+    const inc = ((h.pct - prev) / 100) * total;
+    prev = h.pct;
+    const dt = new Date(salida + "T00:00:00");
+    dt.setDate(dt.getDate() - h.d);
+    return { plazo: `Depósito ${i + 1} (${h.pct}%)`, pct: h.pct, fechaMax: dt.toISOString().slice(0, 10), valor: inc };
+  });
+}
+
 export function calcLiquidacion(r: ReservaCotizacion): LiquidacionCalc {
   const { precios, acom, extras, liquidacion: liq } = r;
   const totalAcom =
