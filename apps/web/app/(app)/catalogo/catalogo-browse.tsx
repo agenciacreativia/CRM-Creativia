@@ -96,7 +96,7 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
     setBusy(p.id);
     const res = await copiarProductoAction(
       {
-        nombre: p.nombre, categoria: p.categoria, destino: p.destino, duracion: p.duracion,
+        id: p.id, nombre: p.nombre, categoria: p.categoria, destino: p.destino, duracion: p.duracion,
         proveedor: p.proveedor, descripcion: p.descripcion, incluye: p.incluye, no_incluye: p.no_incluye,
         precio_neto: p.precio_neto, moneda: p.moneda,
       },
@@ -129,7 +129,7 @@ export function CatalogoBrowse({ productos, puedeCopiar }: { productos: Producto
     const items = productos
       .filter((p) => selected.has(p.id))
       .map((p) => ({
-        nombre: p.nombre, categoria: p.categoria, destino: p.destino, duracion: p.duracion,
+        id: p.id, nombre: p.nombre, categoria: p.categoria, destino: p.destino, duracion: p.duracion,
         proveedor: p.proveedor, descripcion: p.descripcion, incluye: p.incluye, no_incluye: p.no_incluye,
         precio_neto: p.precio_neto, moneda: p.moneda,
       }));

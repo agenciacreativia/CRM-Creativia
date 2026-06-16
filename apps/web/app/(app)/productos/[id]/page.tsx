@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Package, MapPin, Plane, Briefcase, Lock } from "lucide-react";
+import { Package, MapPin, Plane, Briefcase, Lock, CalendarRange } from "lucide-react";
 import { getProducto, listOportunidadesPorProducto } from "@/lib/db/productos";
 import { Badge } from "@/components/ui/badge";
 import { ProductoMediaUpload } from "./media-upload";
@@ -9,6 +9,10 @@ type Params = Promise<{ id: string }>;
 
 function money(v: number | null, m: string) {
   return v == null ? "—" : new Intl.NumberFormat("es", { style: "currency", currency: m, maximumFractionDigits: 0 }).format(v);
+}
+
+function stripHtml(s: string | null | undefined): string {
+  return (s ?? "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 }
 
 export default async function ProductoDetailPage({ params }: { params: Params }) {
@@ -91,6 +95,28 @@ export default async function ProductoDetailPage({ params }: { params: Params })
               </div>
             </div>
           </div>
+
+          {/* Itinerario día por día */}
+          {p.itinerario.length > 0 && (
+            <section className="rounded-lg border border-gray-200 bg-white p-5">
+              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500">
+                <CalendarRange className="h-4 w-4" /> Itinerario
+                <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-700">{p.itinerario.length} días</span>
+              </h2>
+              <ol className="mt-4 space-y-3">
+                {p.itinerario.map((d, i) => (
+                  <li key={i} className="border-l-2 border-brand-green pl-3">
+                    <p className="text-sm font-semibold text-gray-900">
+                      Día {d.dia}
+                      {d.titulo ? ` — ${d.titulo}` : ""}
+                      {d.ciudad ? <span className="font-normal text-gray-500"> · {d.ciudad}</span> : null}
+                    </p>
+                    {d.descripcion ? <p className="mt-0.5 text-sm leading-relaxed text-gray-600">{stripHtml(d.descripcion)}</p> : null}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
           {/* Adjuntos / imagen — solo para propios */}
           <section className="rounded-lg border border-gray-200 bg-white p-5">

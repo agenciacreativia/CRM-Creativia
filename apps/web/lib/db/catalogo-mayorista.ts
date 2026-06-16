@@ -4,6 +4,15 @@ import { createAdminSupabase } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/auth";
 import { escapeLike } from "@/lib/db/filtros";
 import { isPlatformAdmin } from "@/lib/db/planes";
+import { getBloqueoItinerarioExterno } from "@/lib/db/reservas-externo";
+import type { ItinerarioDia } from "@/lib/cotizacion/types";
+
+/** Mapea el itinerario externo (bloqueo_itinerario) al shape del producto del CRM. */
+async function itinerarioDeBloqueo(bloqueoId: string | undefined): Promise<ItinerarioDia[]> {
+  if (!bloqueoId) return [];
+  const ext = await getBloqueoItinerarioExterno(bloqueoId);
+  return ext.map((i) => ({ dia: i.dia, titulo: i.titulo, ciudad: i.ciudad, descripcion: i.descripcion }));
+}
 
 export type ProductoMayorista = {
   id: string;
@@ -106,7 +115,7 @@ export async function deleteCatalogoItem(id: string): Promise<void> {
 
 export type ProductoCopiable = Pick<
   ProductoMayorista,
-  "nombre" | "categoria" | "destino" | "duracion" | "proveedor" | "descripcion" | "incluye" | "no_incluye" | "precio_neto" | "moneda"
+  "id" | "nombre" | "categoria" | "destino" | "duracion" | "proveedor" | "descripcion" | "incluye" | "no_incluye" | "precio_neto" | "moneda"
 >;
 
 /**
@@ -120,6 +129,7 @@ export async function copiarAMisProductos(item: ProductoCopiable, markupPct: num
   const supabase = await createServerSupabase();
   const neto = item.precio_neto ?? 0;
   const precioVenta = Math.round(neto * (1 + (Number(markupPct) || 0) / 100) * 100) / 100;
+  const itinerario = await itinerarioDeBloqueo(item.id);
   const { data, error } = await supabase
     .from("producto")
     .insert({
@@ -134,6 +144,7 @@ export async function copiarAMisProductos(item: ProductoCopiable, markupPct: num
       no_incluye: item.no_incluye,
       precio_desde: precioVenta,
       moneda: item.moneda,
+      itinerario,
       activo: true,
       creado_por: user.id,
       origen: "turistea",
@@ -152,7 +163,8 @@ export async function copiarMultiplesAMisProductos(items: ProductoCopiable[], ma
   if (!items.length) return 0;
   const supabase = await createServerSupabase();
   const factor = 1 + (Number(markupPct) || 0) / 100;
-  const rows = items.map((item) => ({
+  const itinerarios = await Promise.all(items.map((it) => itinerarioDeBloqueo(it.id)));
+  const rows = items.map((item, i) => ({
     tenant_id: user.tenantId,
     nombre: item.nombre,
     categoria: item.categoria,
@@ -164,6 +176,7 @@ export async function copiarMultiplesAMisProductos(items: ProductoCopiable[], ma
     no_incluye: item.no_incluye,
     precio_desde: Math.round((item.precio_neto ?? 0) * factor * 100) / 100,
     moneda: item.moneda,
+    itinerario: itinerarios[i],
     activo: true,
     creado_por: user.id,
     origen: "turistea",

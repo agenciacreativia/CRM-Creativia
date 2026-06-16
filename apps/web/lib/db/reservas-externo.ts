@@ -92,6 +92,24 @@ export type BloqueoDetalleExterno = {
   fechas: SalidaExterna[];
 };
 
+/** Sólo el itinerario día-a-día de un bloqueo (para copiar a productos propios). */
+export async function getBloqueoItinerarioExterno(bloqueoId: string): Promise<ItinerarioExterno[]> {
+  const supabase = createCuposSupabase();
+  if (!supabase) return [];
+  try {
+    const { data } = await supabase
+      .from("bloqueo_itinerario")
+      .select("dia, titulo, descripcion, ciudad, orden")
+      .eq("bloqueo_id", bloqueoId)
+      .order("orden", { ascending: true });
+    return ((data ?? []) as ItinerarioExterno[])
+      .map((i) => ({ dia: Number(i.dia) || 0, titulo: i.titulo ?? "", descripcion: i.descripcion ?? null, ciudad: i.ciudad ?? null, orden: Number(i.orden) || 0 }))
+      .sort((a, b) => a.orden - b.orden || a.dia - b.dia);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Trae TODO lo necesario para armar una cotización desde un bloqueo del sitio:
  * datos del plan, itinerario día-a-día, servicios (incluye/no incluye) y las
