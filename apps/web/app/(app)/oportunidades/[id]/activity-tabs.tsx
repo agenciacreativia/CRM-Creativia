@@ -8,6 +8,7 @@ import { DocumentosPanel } from "@/components/documentos/documentos-panel";
 import { EmailCompose } from "@/components/oportunidad/email-compose";
 import { EventCompose } from "@/components/oportunidad/event-compose";
 import { CotizacionBuilder } from "./cotizacion-builder";
+import type { PlanLite, ContactoPrefill } from "./cotizacion-bloqueo-form";
 import { OportunidadProductos } from "./oportunidad-productos";
 import type { Cotizacion } from "@/lib/cotizacion/types";
 import type { Actividad } from "@/lib/db/actividades";
@@ -57,6 +58,8 @@ export function ActivityTabs({
   oportunidadValor,
   cotizaciones,
   defaultMoneda,
+  planesBloqueo,
+  prefillBloqueo,
   tools,
 }: {
   oportunidadId: string;
@@ -77,6 +80,8 @@ export function ActivityTabs({
   oportunidadValor: number | null;
   cotizaciones: Cotizacion[];
   defaultMoneda: string;
+  planesBloqueo?: PlanLite[];
+  prefillBloqueo?: ContactoPrefill;
   tools: PlanTools;
 }) {
   const TABS = ALL_TABS.filter((t) => !t.tool || tools[t.tool]);
@@ -151,6 +156,8 @@ export function ActivityTabs({
             productos={productos}
             initial={cotizaciones}
             defaultMoneda={defaultMoneda}
+            planes={planesBloqueo}
+            prefill={prefillBloqueo}
           />
         )}
         {tab === "documentos" && (

@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { saveCotizacion, deleteCotizacion, logCambio } from "@/lib/db/mutations";
+import { getBloqueoParaCotizacion, type BloqueoDetalleExterno } from "@/lib/db/reservas-externo";
 
 export type CotizacionResult = { ok: boolean; error?: string; id?: string };
+
+/** Trae el detalle del bloqueo (itinerario, servicios, salidas con precios) para armar la cotización. */
+export async function getBloqueoCotizacionAction(bloqueoId: string): Promise<BloqueoDetalleExterno | null> {
+  if (!bloqueoId) return null;
+  return getBloqueoParaCotizacion(bloqueoId);
+}
 
 const itemSchema = z.object({
   producto_id: z.string().uuid().nullable().optional().default(null),

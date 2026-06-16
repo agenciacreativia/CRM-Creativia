@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Printer, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, Printer, FileText, Plane } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,12 +23,14 @@ import {
 } from "@/lib/cotizacion/types";
 import { saveCotizacionAction, deleteCotizacionAction } from "./cotizacion-actions";
 import { ItinerarioEditor } from "./itinerario-editor";
+import { CotizacionBloqueoForm, type PlanLite, type ContactoPrefill } from "./cotizacion-bloqueo-form";
 
 const MONEDAS = ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"];
 const ESTADO_BADGE: Record<string, "info" | "success" | "warn" | "danger" | "default"> = {
   borrador: "default",
   enviada: "info",
   aceptada: "success",
+  confirmada: "success",
   rechazada: "danger",
 };
 
@@ -39,15 +41,20 @@ export function CotizacionBuilder({
   productos,
   initial,
   defaultMoneda,
+  planes = [],
+  prefill,
 }: {
   oportunidadId: string;
   productos: Producto[];
   initial: Cotizacion[];
   defaultMoneda: string;
+  planes?: PlanLite[];
+  prefill?: ContactoPrefill;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Cotizacion | null>(null);
   const [creating, setCreating] = useState(false);
+  const [creatingBloqueo, setCreatingBloqueo] = useState(false);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +65,21 @@ export function CotizacionBuilder({
       if (!res.ok) setError(res.error ?? "Error");
       else router.refresh();
     });
+  }
+
+  if (creatingBloqueo) {
+    return (
+      <CotizacionBloqueoForm
+        oportunidadId={oportunidadId}
+        planes={planes}
+        prefill={prefill ?? { nombre_agente: "", email_agente: "", telefono_agente: null, agencia_nombre: null }}
+        onDone={() => {
+          setCreatingBloqueo(false);
+          router.refresh();
+        }}
+        onCancel={() => setCreatingBloqueo(false)}
+      />
+    );
   }
 
   if (creating || editing) {
@@ -83,11 +105,18 @@ export function CotizacionBuilder({
   return (
     <div className="space-y-3">
       {error && <div role="alert" className="rounded border border-red-200 bg-red-50 p-3 text-sm text-status-danger">{error}</div>}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-bold uppercase text-gray-500">Cotizaciones</h2>
-        <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
-          <Plus className="h-4 w-4" /> Nueva cotización
-        </Button>
+        <div className="flex items-center gap-2">
+          {planes.length > 0 && (
+            <Button type="button" size="sm" variant="ghost" onClick={() => setCreatingBloqueo(true)} className="inline-flex items-center gap-1.5">
+              <Plane className="h-4 w-4" /> Desde plan Turistea
+            </Button>
+          )}
+          <Button type="button" size="sm" onClick={() => setCreating(true)} className="inline-flex items-center gap-1.5">
+            <Plus className="h-4 w-4" /> Nueva cotización
+          </Button>
+        </div>
       </div>
 
       {initial.length === 0 ? (
