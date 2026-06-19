@@ -34,44 +34,35 @@ jobs:
           supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" \
             --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
 
-      - name: Diff local vs remoto + repair de las que falten
+      - name: Estado remoto (informativo)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase migration list --password "${{ secrets.SUPABASE_DB_PASSWORD }}" || true
+
+      - name: Repair (ya-registrada cuenta como éxito)
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           DB_PASS: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          local_v=$(ls supabase/migrations/ | grep -E '^[0-9]+_' | sed -E 's/_.*//' | sort -u)
-          # `migration list` imprime una tabla; la columna "Remote" trae la
-          # versión registrada en supabase_migrations.schema_migrations. Las
-          # filas con Remote vacío son las que faltan registrar.
-          list_out=$(supabase migration list --password "$DB_PASS" 2>&1)
-          echo "$list_out"
-          remote_v=$(echo "$list_out" | awk -F'│' 'NR>2 && $3 ~ /[0-9]/ { gsub(/ /,"",$3); if($3!="") print $3 }' | sort -u)
-
-          echo
-          echo "Local : $(echo "$local_v" | wc -l) versiones"
-          echo "Remoto: $(echo "$remote_v" | wc -l) versiones"
-
-          missing=$(comm -23 <(echo "$local_v") <(echo "$remote_v"))
-          if [ -z "$missing" ]; then
-            echo
-            echo "✓ Nada que reparar: historial remoto ya tiene todas las versiones locales."
-            exit 0
+          versions=$(ls supabase/migrations/ | grep -E '^[0-9]+_' | sed -E 's/_.*//' | sort -u)
+          if [ -z "$versions" ]; then
+            echo "Sin migraciones en supabase/migrations/"; exit 0
           fi
-
-          echo
-          echo "Versiones a marcar como applied:"
-          echo "$missing" | sed 's/^/  - /'
-          echo
-          fail=0
-          for v in $missing; do
-            echo "→ repair $v"
-            if ! supabase migration repair --status applied "$v" --password "$DB_PASS"; then
-              echo "✗ falló $v"
+          ok=0; already=0; fail=0
+          for v in $versions; do
+            out=$(supabase migration repair --status applied "$v" --password "$DB_PASS" 2>&1)
+            code=$?
+            if [ $code -eq 0 ]; then
+              echo "✓ $v (registrada)"; ok=$((ok+1))
+            elif echo "$out" | grep -q "duplicate key"; then
+              echo "✓ $v (ya estaba)"; already=$((already+1))
+            else
+              echo "✗ $v"
+              echo "$out" | sed 's/^/    /'
               fail=$((fail+1))
             fi
           done
-          if [ $fail -gt 0 ]; then
-            echo "Repair terminó con $fail fallos."
-            exit 1
-          fi
-          echo "✓ Todas las versiones faltantes marcadas como applied."
+          echo
+          echo "Resumen: $ok nuevas, $already ya estaban, $fail fallos."
+          [ $fail -eq 0 ]
