@@ -1,0 +1,61 @@
+name: Supabase migration repair (one-off)
+
+# Sincroniza el historial de migraciones de Supabase Cloud con el repo, marcando
+# como "applied" las migraciones que ya corriste a mano. Después de correrlo,
+# `supabase db push` ya no intentará re-aplicarlas y el deploy normal funciona.
+#
+# Cuándo correrlo:
+#   - La PRIMERA vez (porque venías aplicando migraciones a mano).
+#   - Cada vez que agregues una migración a mano por fuera del CI.
+#
+# Solo se dispara a mano: Actions → Supabase migration repair → Run workflow.
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: supabase-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    name: Marcar migraciones como aplicadas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" \
+            --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+
+      - name: Repair (todas las versiones del repo → applied)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Cada archivo es NNNN_nombre.sql. Extraemos el NNNN como versión.
+          versions=$(ls supabase/migrations/ | grep -E '^[0-9]+_' | sed -E 's/_.*//' | sort -u)
+          if [ -z "$versions" ]; then
+            echo "Sin migraciones en supabase/migrations/"; exit 0
+          fi
+          echo "Versiones a marcar como applied:"
+          echo "$versions" | sed 's/^/  - /'
+          echo
+          # supabase migration repair acepta múltiples versiones en una sola
+          # invocación. No re-ejecuta SQL, solo escribe en
+          # supabase_migrations.schema_migrations.
+          # shellcheck disable=SC2046
+          supabase migration repair --status applied $(echo "$versions" | tr '\n' ' ') \
+            --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+
+      - name: Verificar — list debe mostrar todo aplicado
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase migration list --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
