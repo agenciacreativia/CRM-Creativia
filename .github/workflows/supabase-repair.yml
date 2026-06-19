@@ -34,12 +34,12 @@ jobs:
           supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" \
             --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
 
-      - name: Repair (todas las versiones del repo → applied)
+      - name: Repair (cada versión del repo → applied)
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DB_PASS: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          set -euo pipefail
-          # Cada archivo es NNNN_nombre.sql. Extraemos el NNNN como versión.
+          # Cada archivo es NNNN_nombre.sql → versión = NNNN.
           versions=$(ls supabase/migrations/ | grep -E '^[0-9]+_' | sed -E 's/_.*//' | sort -u)
           if [ -z "$versions" ]; then
             echo "Sin migraciones en supabase/migrations/"; exit 0
@@ -47,12 +47,19 @@ jobs:
           echo "Versiones a marcar como applied:"
           echo "$versions" | sed 's/^/  - /'
           echo
-          # supabase migration repair acepta múltiples versiones en una sola
-          # invocación. No re-ejecuta SQL, solo escribe en
-          # supabase_migrations.schema_migrations.
-          # shellcheck disable=SC2046
-          supabase migration repair --status applied $(echo "$versions" | tr '\n' ' ') \
-            --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          fail=0
+          for v in $versions; do
+            echo "→ repair $v"
+            if ! supabase migration repair --status applied "$v" --password "$DB_PASS"; then
+              echo "✗ falló $v"
+              fail=$((fail+1))
+            fi
+          done
+          if [ $fail -gt 0 ]; then
+            echo "Repair terminó con $fail fallos."
+            exit 1
+          fi
+          echo "✓ Todas las versiones marcadas como applied."
 
       - name: Verificar — list debe mostrar todo aplicado
         env:
