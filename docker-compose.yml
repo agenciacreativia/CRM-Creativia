@@ -1,0 +1,28 @@
+# CRM Turistea — corre la MISMA imagen en local y en prod (paridad de entorno).
+#
+#   cp .env.docker.example .env   &&  editar .env con las claves reales
+#   docker compose up -d --build
+#
+# Compose lee el archivo `.env` (raíz) para interpolar los build args y, vía
+# env_file, inyecta TODAS las variables al contenedor en runtime.
+
+services:
+  crm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Públicas → se hornean en el bundle en build-time.
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_BASE_DOMAIN: ${NEXT_PUBLIC_BASE_DOMAIN}
+        NEXT_PUBLIC_ROOT_URL: ${NEXT_PUBLIC_ROOT_URL}
+        NEXT_PUBLIC_DEFAULT_LOCALE: ${NEXT_PUBLIC_DEFAULT_LOCALE:-es}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
+    image: turistea-crm:latest
+    container_name: turistea-crm
+    restart: unless-stopped
+    env_file:
+      - .env # secretos de runtime (SERVICE_ROLE, OAuth, CUPOS, etc.)
+    ports:
+      - "3000:3000"

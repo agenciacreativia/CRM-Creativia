@@ -1,0 +1,61 @@
+name: Deploy a producción
+
+# Auto-sync: cada push a main aplica migraciones de Supabase y redepliega el
+# servidor (Docker). Requiere los Secrets del repo listados abajo.
+#
+# Secrets necesarios (Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN   token personal de Supabase (https://supabase.com/dashboard/account/tokens)
+#   SUPABASE_PROJECT_REF    ref del proyecto (xxxx en xxxx.supabase.co)
+#   SUPABASE_DB_PASSWORD    password de la base (Project settings → Database)
+#   LIGHTSAIL_HOST          IP o host del servidor
+#   LIGHTSAIL_USER          usuario SSH (ej. ubuntu)
+#   LIGHTSAIL_SSH_KEY       clave PRIVADA SSH con acceso al servidor
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {} # permite dispararlo a mano desde la pestaña Actions
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Migraciones Supabase
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}" \
+            --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+
+  deploy:
+    name: Redeploy servidor (Docker)
+    runs-on: ubuntu-latest
+    needs: migrate
+    # Mientras el server no tenga Docker instalado, deploy se dispara SOLO a
+    # mano desde Actions → Run workflow. Cuando esté listo, borrar este `if`.
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: SSH → deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd ~/CRM-Creativia
+            git fetch origin
+            git reset --hard origin/main
+            docker compose up -d --build
+            docker image prune -f
+            docker compose ps

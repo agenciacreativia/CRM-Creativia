@@ -1,8 +1,19 @@
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: false,
   transpilePackages: ["@crm/shared", "@crm/i18n"],
+
+  // Salida "standalone" para Docker: empaqueta server.js + solo las deps usadas.
+  // En monorepo hay que apuntar el tracing a la raíz para incluir los workspaces
+  // (@crm/shared, @crm/i18n) y el node_modules del root.
+  output: "standalone",
+  outputFileTracingRoot: join(__dirname, "../../"),
 
   // El logo de marca (turistea-crm.svg) se sirve vía next/image. Next bloquea
   // la optimización de SVG por defecto; lo habilitamos pero servimos el SVG en
