@@ -1,0 +1,22 @@
+# Override OPCIONAL para buildear local (no se usa en prod).
+# Combinarlo con el compose principal cuando quieras probar cambios sin
+# pasar por CI/GHCR:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# Las NEXT_PUBLIC_* se leen del `.env` de la raíz.
+
+services:
+  crm:
+    image: turistea-crm:local
+    pull_policy: never # con override, queremos el build local, no el pull
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_BASE_DOMAIN: ${NEXT_PUBLIC_BASE_DOMAIN}
+        NEXT_PUBLIC_ROOT_URL: ${NEXT_PUBLIC_ROOT_URL}
+        NEXT_PUBLIC_DEFAULT_LOCALE: ${NEXT_PUBLIC_DEFAULT_LOCALE:-es}
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}

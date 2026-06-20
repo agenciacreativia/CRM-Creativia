@@ -23,13 +23,42 @@ export default async function CapturaPage() {
   <button type="submit">Enviar</button>
 </form>
 <script>
+  // 1) Captura UTMs al cargar la página y los persiste 30 días, para que si el
+  //    usuario vuelve por otra ruta (orgánica, directa) mantengamos la fuente
+  //    original. Reemplazable por GTM si ya lo usás.
+  (function () {
+    const KEYS = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid','msclkid','ttclid'];
+    const q = new URLSearchParams(window.location.search);
+    const fresh = {}; let hasNew = false;
+    for (const k of KEYS) { const v = q.get(k); if (v) { fresh[k] = v; hasNew = true; } }
+    if (hasNew) localStorage.setItem('crm_utms', JSON.stringify({ utms: fresh, at: Date.now() }));
+    if (!localStorage.getItem('crm_landing')) localStorage.setItem('crm_landing', window.location.href);
+  })();
+
+  // 2) Submit: une los datos del form + tracking + UTMs persistidos.
   document.getElementById('crm-lead-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target));
+    let utms = null;
+    try {
+      const raw = localStorage.getItem('crm_utms');
+      if (raw) {
+        const p = JSON.parse(raw);
+        // Expirá UTMs viejos (30 días) — "último clic dentro de la ventana" gana.
+        if (Date.now() - (p.at || 0) < 30 * 24 * 60 * 60 * 1000) utms = p.utms;
+      }
+    } catch {}
+    const payload = {
+      ...data,
+      utms,
+      origen_url: window.location.href,
+      referrer: document.referrer || null,
+      landing: localStorage.getItem('crm_landing') || null,
+    };
     const res = await fetch('${endpoint}', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     if (res.ok) { e.target.reset(); alert('¡Gracias! Te contactaremos pronto.'); }
     else { alert('No se pudo enviar. Intentá de nuevo.'); }

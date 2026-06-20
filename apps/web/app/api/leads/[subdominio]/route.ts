@@ -1,11 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { crearLeadPublico } from "@/lib/db/leads";
+import { crearLeadPublico, type LeadUtms } from "@/lib/db/leads";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
+
+// Claves de tracking que aceptamos. Cualquier otra se ignora — evita que el
+// emisor envíe basura arbitraria al jsonb.
+const UTM_KEYS: (keyof LeadUtms)[] = [
+  "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+  "gclid", "fbclid", "msclkid", "ttclid",
+];
+
+function pickUtms(body: Record<string, unknown>): LeadUtms | null {
+  const out: LeadUtms = {};
+  // Aceptamos tanto utms.utm_source como utm_source en raíz, para que el sitio
+  // pueda mandar como objeto anidado o aplanado.
+  const nested = (body.utms && typeof body.utms === "object" ? body.utms : {}) as Record<string, unknown>;
+  for (const k of UTM_KEYS) {
+    const v = (nested[k] ?? body[k]);
+    if (v != null && String(v).trim()) out[k] = String(v).slice(0, 200);
+  }
+  return Object.keys(out).length ? out : null;
+}
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
@@ -50,6 +69,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sub
     telefono: str(body.telefono).slice(0, 40) || null,
     empresa: str(body.empresa).slice(0, 200) || null,
     mensaje: str(body.mensaje).slice(0, 5000) || null,
+    utms: pickUtms(body),
+    origen_url: str(body.origen_url).slice(0, 500) || null,
+    referrer: str(body.referrer).slice(0, 500) || null,
+    landing: str(body.landing).slice(0, 500) || null,
   });
 
   return NextResponse.json(res, { status: res.ok ? 200 : 400, headers: CORS });

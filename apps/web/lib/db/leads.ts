@@ -1,20 +1,41 @@
 import "server-only";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
+export type LeadUtms = {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  // Identificadores de clic de plataformas publicitarias.
+  gclid?: string;
+  fbclid?: string;
+  msclkid?: string;
+  ttclid?: string;
+};
+
 export type LeadInput = {
   nombre: string;
   email: string;
   telefono?: string | null;
   empresa?: string | null;
   mensaje?: string | null;
+  // Trazabilidad de origen (opcional). Si vienen, se guardan en la oportunidad
+  // para reportes por fuente/campaña/canal.
+  utms?: LeadUtms | null;
+  origen_url?: string | null; // window.location.href donde se llenó el form
+  referrer?: string | null;   // document.referrer
+  landing?: string | null;    // primera URL visitada (cookie del sitio)
 };
+
+export type LeadResult = { ok: boolean; error?: string; oportunidad_id?: string; contacto_id?: string };
 
 /**
  * Create a lead from a public web form (no auth). Resolves the tenant by
  * subdomain, finds/creates the company, then creates a contact + opportunity.
  * The plan-cap trigger applies automatically (over-cap rows go to the waitlist).
  */
-export async function crearLeadPublico(subdominio: string, input: LeadInput): Promise<{ ok: boolean; error?: string }> {
+export async function crearLeadPublico(subdominio: string, input: LeadInput): Promise<LeadResult> {
   const admin = createAdminSupabase();
 
   const { data: tenant } = await admin
@@ -51,23 +72,35 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
   if (cErr) return { ok: false, error: cErr.message };
 
   // Opportunity in the tenant's first pipeline / first stage.
+  let oportunidadId: string | undefined;
   const { data: pipe } = await admin.from("pipeline").select("id").eq("tenant_id", tid).order("creado_en", { ascending: true }).limit(1).maybeSingle();
   if (pipe) {
     const { data: etapa } = await admin.from("etapa_pipeline").select("id").eq("pipeline_id", pipe.id).order("orden", { ascending: true }).limit(1).maybeSingle();
     if (etapa) {
-      await admin.from("oportunidad").insert({
-        tenant_id: tid,
-        nombre: `Lead web: ${input.nombre}`,
-        empresa_id: empresaId,
-        contacto_id: cont.id,
-        pipeline_id: pipe.id,
-        etapa_id: etapa.id,
-        estado: "activo",
-        moneda: "USD",
-        descripcion: input.mensaje ?? null,
-      });
+      // Solo guardamos utms si vino al menos uno (json vacío contamina reportes).
+      const utmsObj = input.utms && Object.values(input.utms).some((v) => v) ? input.utms : null;
+      const { data: op } = await admin
+        .from("oportunidad")
+        .insert({
+          tenant_id: tid,
+          nombre: `Lead web: ${input.nombre}`,
+          empresa_id: empresaId,
+          contacto_id: cont.id,
+          pipeline_id: pipe.id,
+          etapa_id: etapa.id,
+          estado: "activo",
+          moneda: "USD",
+          descripcion: input.mensaje ?? null,
+          utms: utmsObj,
+          origen_url: input.origen_url ?? null,
+          referrer: input.referrer ?? null,
+          landing: input.landing ?? null,
+        })
+        .select("id")
+        .single();
+      oportunidadId = op?.id;
     }
   }
 
-  return { ok: true };
+  return { ok: true, oportunidad_id: oportunidadId, contacto_id: cont.id };
 }
