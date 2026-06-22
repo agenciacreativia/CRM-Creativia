@@ -68,7 +68,10 @@ export async function listEmpresas(opts: { q?: string; estado?: string; limit?: 
     // Embed explícito de contacto via FK principal (mig 0042 contacto_empresa_secundaria
     // introdujo una segunda relación empresa↔contacto, PGRST201 con embed simple).
     .select(
-      "id, nombre, nit, email, telefono, ciudad, pais, estado_empresa, origen, sitio_web, direccion, descripcion, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, campos_custom, " +
+      // nit se trae individualmente abajo con tolerancia a fallo — la columna
+      // existe desde la migración 0048; si por algún motivo no se aplicó, no
+      // queremos que rompa toda la lista.
+      "id, nombre, email, telefono, ciudad, pais, estado_empresa, origen, sitio_web, direccion, descripcion, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, campos_custom, " +
         "contacto:contacto!contacto_empresa_id_fkey(count), oportunidad(count), " +
         // Relacionados para filtros cross-módulo (semántica "tiene al menos uno que cumple").
         "rel_contactos:contacto!contacto_empresa_id_fkey(nombre, cargo, email, telefono, telefono_whatsapp, origen, descripcion, asignado_id, campos_custom), " +
