@@ -102,6 +102,24 @@ export default async function OportunidadDetailPage({ params }: { params: Params
     listHabitaciones(id),
   ]);
   const puedeReservar = usaReservas && !esPlataforma;
+
+  // Acomodaciones para pre-llenar el form de cotización desde bloqueo: tomamos
+  // las habitaciones de la oportunidad y agrupamos sus pasajeros (FK habitacion_id).
+  // Si la oportunidad no tiene habitaciones cargadas, dejamos null → el form
+  // arranca con su default (una doble vacía).
+  const acomodaciones = habitaciones.length
+    ? habitaciones.map((h) => ({
+        tipo: h.tipo,
+        pasajeros: pasajeros
+          .filter((p) => p.habitacion_id === h.id)
+          .map((p) => ({
+            tipo: p.tipo,
+            nombre: p.nombre,
+            documento: p.documento,
+            fecha_nacimiento: p.fecha_nacimiento,
+          })),
+      }))
+    : null;
   const merge = buildMergeVars({ opp: o, contacto, empresa, campos });
 
   // Plan ceiling for the activity tabs (null = no ceiling → all enabled).
@@ -245,6 +263,7 @@ export default async function OportunidadDetailPage({ params }: { params: Params
               telefono_agente: contacto?.telefono ?? null,
               agencia_nombre: empresa?.nombre ?? null,
             }}
+            acomodaciones={acomodaciones}
             tools={planTools}
           />
 

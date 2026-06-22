@@ -8,6 +8,7 @@ import { DocumentosPanel } from "@/components/documentos/documentos-panel";
 import { EmailCompose } from "@/components/oportunidad/email-compose";
 import { EventCompose } from "@/components/oportunidad/event-compose";
 import { CotizacionBuilder } from "./cotizacion-builder";
+import type { AcomodacionPrefill } from "./cotizacion-bloqueo-form";
 import type { PlanLite, ContactoPrefill } from "./cotizacion-bloqueo-form";
 import { OportunidadProductos } from "./oportunidad-productos";
 import type { Cotizacion } from "@/lib/cotizacion/types";
@@ -60,6 +61,7 @@ export function ActivityTabs({
   defaultMoneda,
   planesBloqueo,
   prefillBloqueo,
+  acomodaciones,
   tools,
 }: {
   oportunidadId: string;
@@ -82,6 +84,9 @@ export function ActivityTabs({
   defaultMoneda: string;
   planesBloqueo?: PlanLite[];
   prefillBloqueo?: ContactoPrefill;
+  /** Habitaciones + pasajeros guardados en la oportunidad (vienen del webhook
+   *  del sitio). Pre-llenan el form de cotización desde bloqueo. */
+  acomodaciones?: AcomodacionPrefill[] | null;
   tools: PlanTools;
 }) {
   const TABS = ALL_TABS.filter((t) => !t.tool || tools[t.tool]);
@@ -158,6 +163,7 @@ export function ActivityTabs({
             defaultMoneda={defaultMoneda}
             planes={planesBloqueo}
             prefill={prefillBloqueo}
+            acomodaciones={acomodaciones}
           />
         )}
         {tab === "documentos" && (

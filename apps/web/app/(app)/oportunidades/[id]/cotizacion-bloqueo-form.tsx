@@ -35,11 +35,48 @@ const HAB_CAP: Record<TipoHabitacion, number> = { sgl: 1, dbl: 2, tpl: 3 };
 const HAB_LABEL: Record<TipoHabitacion, string> = { sgl: "Sencilla (1)", dbl: "Doble (2)", tpl: "Triple (3)" };
 const PAX_LABEL: Record<TipoPax, string> = { adulto: "Adulto", nino: "Niño", bebe: "Infante" };
 
+// Mapeo del modelo de BD (nombres largos en español) al modelo del form (3 letras).
+const HAB_FROM_DB: Record<string, TipoHabitacion> = { sencilla: "sgl", doble: "dbl", triple: "tpl" };
+
+/** Datos de habitaciones+pasajeros ya guardados en la oportunidad. */
+export type AcomodacionPrefill = {
+  tipo: "sencilla" | "doble" | "triple";
+  pasajeros: {
+    tipo: TipoPax;
+    nombre: string;
+    documento?: string | null;
+    fecha_nacimiento?: string | null;
+  }[];
+};
+
 function paxVacio(tipo: TipoPax): Pax {
   return { tipo, nombre: "", documento: "", fecha_nacimiento: "" };
 }
 function habVacia(tipo: TipoHabitacion): Habitacion {
   return { tipo, pasajeros: Array.from({ length: HAB_CAP[tipo] }, () => paxVacio("adulto")) };
+}
+
+/** Construye el state inicial de habitaciones desde los datos guardados en la
+ * oportunidad. Si no hay datos, arranca con una doble vacía como antes. */
+function habitacionesIniciales(prefill?: AcomodacionPrefill[] | null): Habitacion[] {
+  if (!prefill?.length) return [habVacia("dbl")];
+  return prefill.map((h) => {
+    const tipo = HAB_FROM_DB[h.tipo] ?? "dbl";
+    const cap = HAB_CAP[tipo];
+    return {
+      tipo,
+      pasajeros: Array.from({ length: cap }, (_, i) => {
+        const p = h.pasajeros[i];
+        if (!p) return paxVacio("adulto");
+        return {
+          tipo: p.tipo,
+          nombre: p.nombre ?? "",
+          documento: p.documento ?? "",
+          fecha_nacimiento: p.fecha_nacimiento ?? "",
+        };
+      }),
+    };
+  });
 }
 const n = (v: unknown) => Number(v) || 0;
 
@@ -47,12 +84,16 @@ export function CotizacionBloqueoForm({
   oportunidadId,
   planes,
   prefill,
+  prefillAcomodaciones,
   onDone,
   onCancel,
 }: {
   oportunidadId: string;
   planes: PlanLite[];
   prefill: ContactoPrefill;
+  /** Habitaciones+pasajeros de la oportunidad (vienen del webhook del sitio).
+   *  Si están presentes, pre-llenan el cuadro de acomodaciones. */
+  prefillAcomodaciones?: AcomodacionPrefill[] | null;
   onDone: () => void;
   onCancel: () => void;
 }) {
@@ -61,7 +102,9 @@ export function CotizacionBloqueoForm({
   const [fechaId, setFechaId] = useState("");
   const [loadingDetalle, startLoad] = useTransition();
 
-  const [habitaciones, setHabitaciones] = useState<Habitacion[]>([habVacia("dbl")]);
+  const [habitaciones, setHabitaciones] = useState<Habitacion[]>(() =>
+    habitacionesIniciales(prefillAcomodaciones),
+  );
   const [nombreAgente, setNombreAgente] = useState(prefill.nombre_agente);
   const [emailAgente, setEmailAgente] = useState(prefill.email_agente);
   const [telefonoAgente, setTelefonoAgente] = useState(prefill.telefono_agente ?? "");

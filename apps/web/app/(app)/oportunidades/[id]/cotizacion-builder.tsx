@@ -23,7 +23,7 @@ import {
 } from "@/lib/cotizacion/types";
 import { saveCotizacionAction, deleteCotizacionAction, enviarCotizacionAction } from "./cotizacion-actions";
 import { ItinerarioEditor } from "./itinerario-editor";
-import { CotizacionBloqueoForm, type PlanLite, type ContactoPrefill } from "./cotizacion-bloqueo-form";
+import { CotizacionBloqueoForm, type PlanLite, type ContactoPrefill, type AcomodacionPrefill } from "./cotizacion-bloqueo-form";
 
 const MONEDAS = ["USD", "ARS", "EUR", "MXN", "COP", "CLP", "PEN", "BRL"];
 const ESTADO_BADGE: Record<string, "info" | "success" | "warn" | "danger" | "default"> = {
@@ -43,6 +43,7 @@ export function CotizacionBuilder({
   defaultMoneda,
   planes = [],
   prefill,
+  acomodaciones,
 }: {
   oportunidadId: string;
   productos: Producto[];
@@ -50,6 +51,9 @@ export function CotizacionBuilder({
   defaultMoneda: string;
   planes?: PlanLite[];
   prefill?: ContactoPrefill;
+  /** Habitaciones+pasajeros ya cargados en la oportunidad. Pre-llena el form
+   *  de cotización desde bloqueo si están presentes. */
+  acomodaciones?: AcomodacionPrefill[] | null;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Cotizacion | null>(null);
@@ -97,6 +101,7 @@ export function CotizacionBuilder({
         oportunidadId={oportunidadId}
         planes={planes}
         prefill={prefill ?? { nombre_agente: "", email_agente: "", telefono_agente: null, agencia_nombre: null }}
+        prefillAcomodaciones={acomodaciones}
         onDone={() => {
           setCreatingBloqueo(false);
           router.refresh();
