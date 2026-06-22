@@ -5,6 +5,7 @@ import { escapeLike } from "@/lib/db/filtros";
 export type EmpresaListItem = {
   id: string;
   nombre: string;
+  nit: string | null;
   email: string | null;
   telefono: string | null;
   ciudad: string | null;
@@ -33,6 +34,7 @@ export type EmpresaDetail = EmpresaListItem;
 type RawEmpresaRow = {
   id: string;
   nombre: string;
+  nit: string | null;
   email: string | null;
   telefono: string | null;
   ciudad: string | null;
@@ -66,7 +68,7 @@ export async function listEmpresas(opts: { q?: string; estado?: string; limit?: 
     // Embed explícito de contacto via FK principal (mig 0042 contacto_empresa_secundaria
     // introdujo una segunda relación empresa↔contacto, PGRST201 con embed simple).
     .select(
-      "id, nombre, email, telefono, ciudad, pais, estado_empresa, origen, sitio_web, direccion, descripcion, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, campos_custom, " +
+      "id, nombre, nit, email, telefono, ciudad, pais, estado_empresa, origen, sitio_web, direccion, descripcion, asignado_id, asignado:usuario!empresa_asignado_id_fkey(nombre), creado_en, campos_custom, " +
         "contacto:contacto!contacto_empresa_id_fkey(count), oportunidad(count), " +
         // Relacionados para filtros cross-módulo (semántica "tiene al menos uno que cumple").
         "rel_contactos:contacto!contacto_empresa_id_fkey(nombre, cargo, email, telefono, telefono_whatsapp, origen, descripcion, asignado_id, campos_custom), " +
@@ -90,6 +92,7 @@ export async function listEmpresas(opts: { q?: string; estado?: string; limit?: 
   return ((data ?? []) as unknown as RawEmpresaRow[]).map((row) => ({
     id: row.id,
     nombre: row.nombre,
+    nit: row.nit ?? null,
     email: row.email,
     telefono: row.telefono,
     ciudad: row.ciudad,
@@ -125,6 +128,7 @@ export async function getEmpresa(id: string): Promise<EmpresaDetail | null> {
   return {
     id: data.id,
     nombre: data.nombre,
+    nit: data.nit ?? null,
     email: data.email,
     telefono: data.telefono,
     ciudad: data.ciudad,

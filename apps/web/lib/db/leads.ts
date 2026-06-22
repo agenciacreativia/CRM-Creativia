@@ -21,13 +21,32 @@ export type LeadUtms = {
  * no pertenezcan al tenant del subdominio quedan en null (silencioso) —
  * el endpoint es público y no queremos filtrar info cross-tenant.
  */
+export type LeadPasajero = {
+  tipo?: "adulto" | "nino" | "bebe" | string;
+  nombre: string;
+  documento?: string | null;
+  fecha_nacimiento?: string | null; // YYYY-MM-DD
+  email?: string | null;
+  telefono?: string | null;
+};
+
+export type LeadHabitacion = {
+  tipo: "sencilla" | "doble" | "triple" | string;
+  pasajeros?: LeadPasajero[];
+};
+
 export type LeadInput = {
   // Identidad del lead
   nombre: string;
   email: string;
   telefono?: string | null;
   empresa?: string | null;
+  nit?: string | null;
   mensaje?: string | null;
+
+  // Habitaciones (con pasajeros asociados) y/o pasajeros sueltos
+  habitaciones?: LeadHabitacion[] | null;
+  pasajeros?: LeadPasajero[] | null;
 
   // Routing (ID o nombre, cualquiera funciona)
   pipeline?: string | null;     // nombre del pipeline o UUID
@@ -222,14 +241,22 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
   const tid = tenant.id as string;
 
   // Company: reuse if matching, else create (default bucket "Leads web").
+  // Si viene `nit`, lo guardamos al crear; en empresas existentes lo updateamos
+  // sólo si estaba vacío (no pisamos valor manual del CRM).
   const empName = input.empresa?.trim() || "Leads web";
+  const nit = input.nit?.trim().slice(0, 60) || null;
   let empresaId: string | null = null;
-  const { data: emp } = await admin.from("empresa").select("id").eq("tenant_id", tid).ilike("nombre", empName).maybeSingle();
-  if (emp) empresaId = emp.id as string;
-  else {
+  const { data: emp } = await admin
+    .from("empresa").select("id, nit").eq("tenant_id", tid).ilike("nombre", empName).maybeSingle();
+  if (emp) {
+    empresaId = emp.id as string;
+    if (nit && !emp.nit) {
+      await admin.from("empresa").update({ nit }).eq("id", empresaId);
+    }
+  } else {
     const { data: created, error } = await admin
       .from("empresa")
-      .insert({ tenant_id: tid, nombre: empName, estado_empresa: "prospecto", origen: "web" })
+      .insert({ tenant_id: tid, nombre: empName, nit, estado_empresa: "prospecto", origen: "web" })
       .select("id")
       .single();
     if (error) return { ok: false, error: error.message };
@@ -328,9 +355,57 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
     .single();
   if (oErr) return { ok: false, error: oErr.message, contacto_id: cont.id };
 
+  // Habitaciones + pasajeros. Si el sitio mandó `habitaciones[]`, cada una se
+  // crea con sus pasajeros vinculados (FK habitacion_id). Pasajeros sueltos
+  // (input.pasajeros) se crean sin habitacion.
+  const oportunidadId = op?.id as string | undefined;
+  const TIPOS_HAB = new Set(["sencilla", "doble", "triple"]);
+  const TIPOS_PAX = new Set(["adulto", "nino", "bebe"]);
+  const normalizaPax = (p: LeadPasajero) => {
+    const tipoRaw = (p.tipo ?? "adulto").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const tipo = TIPOS_PAX.has(tipoRaw) ? tipoRaw : tipoRaw === "niño" || tipoRaw === "menor" ? "nino" : tipoRaw === "infante" ? "bebe" : "adulto";
+    return {
+      tenant_id: tid,
+      oportunidad_id: oportunidadId,
+      nombre: String(p.nombre || "").trim().slice(0, 200),
+      documento: p.documento?.toString().slice(0, 60) || null,
+      fecha_nacimiento: p.fecha_nacimiento && FECHA_ISO.test(p.fecha_nacimiento) ? p.fecha_nacimiento : null,
+      tipo,
+      email: p.email?.toString().slice(0, 200) || null,
+      telefono: p.telefono?.toString().slice(0, 40) || null,
+    };
+  };
+
+  if (oportunidadId && Array.isArray(input.habitaciones) && input.habitaciones.length) {
+    for (let i = 0; i < input.habitaciones.length; i++) {
+      const h = input.habitaciones[i];
+      const tipoHab = TIPOS_HAB.has(String(h.tipo).toLowerCase()) ? String(h.tipo).toLowerCase() : "doble";
+      const { data: hab } = await admin
+        .from("habitacion")
+        .insert({ tenant_id: tid, oportunidad_id: oportunidadId, tipo: tipoHab, orden: i + 1 })
+        .select("id")
+        .single();
+      const habId = hab?.id as string | undefined;
+      const pax = (h.pasajeros ?? []).filter((p) => p?.nombre?.toString().trim());
+      if (habId && pax.length) {
+        const rows = pax.map((p) => ({ ...normalizaPax(p), habitacion_id: habId }));
+        const { error: paxErr } = await admin.from("pasajero").insert(rows);
+        if (paxErr) warnings.push(`pasajeros de habitación ${i + 1}: ${paxErr.message}`);
+      }
+    }
+  }
+  // Pasajeros sueltos (sin habitación)
+  if (oportunidadId && Array.isArray(input.pasajeros) && input.pasajeros.length) {
+    const rows = input.pasajeros.filter((p) => p?.nombre?.toString().trim()).map(normalizaPax);
+    if (rows.length) {
+      const { error: paxErr } = await admin.from("pasajero").insert(rows);
+      if (paxErr) warnings.push(`pasajeros sueltos: ${paxErr.message}`);
+    }
+  }
+
   return {
     ok: true,
-    oportunidad_id: op?.id,
+    oportunidad_id: oportunidadId,
     contacto_id: cont.id,
     warnings: warnings.length ? warnings : undefined,
   };

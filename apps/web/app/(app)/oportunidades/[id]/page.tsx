@@ -303,6 +303,7 @@ export default async function OportunidadDetailPage({ params }: { params: Params
               empresa={{
                 id: empresa.id,
                 nombre: empresa.nombre,
+                nit: empresa.nit ?? null,
                 email: empresa.email,
                 telefono: empresa.telefono,
                 ciudad: empresa.ciudad,

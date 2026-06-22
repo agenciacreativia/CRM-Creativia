@@ -36,6 +36,7 @@ export type AsideContacto = {
 export type AsideEmpresa = {
   id: string;
   nombre: string;
+  nit: string | null;
   email: string | null;
   telefono: string | null;
   ciudad: string | null;
@@ -192,37 +193,27 @@ export function DetailAside({
         })}
       </Card>
 
-      {/* Contacto */}
+      {/* Contacto — card resumida; campos completos en /contactos/[id] */}
       <Card title="Contacto">
         <InlineEditField label="Nombre" value={contacto.nombre} editable={canEdit}
           onSave={(v) => saveContactoField(contacto.id, "nombre", v)} />
-        <InlineEditField label="Cargo" value={contacto.cargo ?? ""} editable={canEdit}
-          onSave={(v) => saveContactoField(contacto.id, "cargo", v)} />
-        <InlineEditField label="Email" value={contacto.email} editable={canEdit}
-          onSave={(v) => saveContactoField(contacto.id, "email", v)} />
         <InlineEditField label="Teléfono" value={contacto.telefono ?? ""} editable={canEdit}
           onSave={(v) => saveContactoField(contacto.id, "telefono", v)} />
-        <InlineEditField label="WhatsApp" value={contacto.telefono_whatsapp ?? ""} editable={canEdit}
-          onSave={(v) => saveContactoField(contacto.id, "telefono_whatsapp", v)} />
+        <InlineEditField label="Correo" value={contacto.email} editable={canEdit}
+          onSave={(v) => saveContactoField(contacto.id, "email", v)} />
         <Link href={`/contactos/${contacto.id}`} className="mt-2 inline-block text-xs text-brand-primary hover:underline">
           Ver contacto →
         </Link>
       </Card>
 
-      {/* Empresa */}
+      {/* Empresa — card resumida; campos completos en /empresas/[id] */}
       <Card title="Empresa">
         <InlineEditField label="Nombre" value={empresa.nombre} editable={canEdit}
           onSave={(v) => saveEmpresaField(empresa.id, "nombre", v)} />
-        <InlineEditField label="Email" value={empresa.email ?? ""} editable={canEdit}
-          onSave={(v) => saveEmpresaField(empresa.id, "email", v)} />
-        <InlineEditField label="Teléfono" value={empresa.telefono ?? ""} editable={canEdit}
-          onSave={(v) => saveEmpresaField(empresa.id, "telefono", v)} />
+        <InlineEditField label="NIT" value={empresa.nit ?? ""} editable={canEdit}
+          onSave={(v) => saveEmpresaField(empresa.id, "nit", v)} />
         <InlineEditField label="Ciudad" value={empresa.ciudad ?? ""} editable={canEdit}
           onSave={(v) => saveEmpresaField(empresa.id, "ciudad", v)} />
-        <InlineEditField label="País" value={empresa.pais ?? ""} editable={canEdit}
-          onSave={(v) => saveEmpresaField(empresa.id, "pais", v)} />
-        <InlineEditField label="Sitio web" value={empresa.sitio_web ?? ""} editable={canEdit}
-          onSave={(v) => saveEmpresaField(empresa.id, "sitio_web", v)} />
         <Link href={`/empresas/${empresa.id}`} className="mt-2 inline-block text-xs text-brand-primary hover:underline">
           Ver empresa →
         </Link>

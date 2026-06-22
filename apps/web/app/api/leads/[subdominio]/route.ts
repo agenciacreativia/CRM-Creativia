@@ -77,13 +77,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sub
     body.campos_custom && typeof body.campos_custom === "object" && !Array.isArray(body.campos_custom)
       ? (body.campos_custom as Record<string, unknown>)
       : null;
+  const habitaciones = Array.isArray(body.habitaciones) ? (body.habitaciones as Record<string, unknown>[]) : null;
+  const pasajeros = Array.isArray(body.pasajeros) ? (body.pasajeros as Record<string, unknown>[]) : null;
 
   const res = await crearLeadPublico(subdominio, {
     nombre,
     email,
     telefono: str(body.telefono).slice(0, 40) || null,
     empresa: str(body.empresa).slice(0, 200) || null,
+    nit: str(body.nit).slice(0, 60) || null,
     mensaje: str(body.mensaje).slice(0, 5000) || null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    habitaciones: habitaciones as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    pasajeros: pasajeros as any,
 
     // Routing — aceptan UUID o nombre
     pipeline: pickStr(body.pipeline, body.pipeline_id, body.embudo).slice(0, 100) || null,
