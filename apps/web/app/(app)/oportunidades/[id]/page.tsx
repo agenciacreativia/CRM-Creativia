@@ -102,7 +102,6 @@ export default async function OportunidadDetailPage({ params }: { params: Params
     listHabitaciones(id),
   ]);
   const puedeReservar = usaReservas && !esPlataforma;
-  const hayAcomodaciones = pasajeros.length > 0 || habitaciones.length > 0;
   const merge = buildMergeVars({ opp: o, contacto, empresa, campos });
 
   // Plan ceiling for the activity tabs (null = no ceiling → all enabled).
@@ -249,17 +248,14 @@ export default async function OportunidadDetailPage({ params }: { params: Params
             tools={planTools}
           />
 
-          {(puedeReservar || hayAcomodaciones) && (
-            <>
-              <PasajerosSection oportunidadId={id} initial={pasajeros} canEdit={canEdit} />
-              <HabitacionesSection
-                oportunidadId={id}
-                habitaciones={habitaciones}
-                pasajeros={pasajeros.map((p) => ({ id: p.id, nombre: p.nombre, tipo: p.tipo, habitacion_id: p.habitacion_id }))}
-                canEdit={canEdit}
-              />
-            </>
-          )}
+          {/* Pasajeros + Habitaciones — siempre visibles. Empty state propio si están vacíos. */}
+          <PasajerosSection oportunidadId={id} initial={pasajeros} canEdit={canEdit} />
+          <HabitacionesSection
+            oportunidadId={id}
+            habitaciones={habitaciones}
+            pasajeros={pasajeros.map((p) => ({ id: p.id, nombre: p.nombre, tipo: p.tipo, habitacion_id: p.habitacion_id }))}
+            canEdit={canEdit}
+          />
           {puedeReservar && (
             <>
               <CorreosTracking correos={correosTracking} />
