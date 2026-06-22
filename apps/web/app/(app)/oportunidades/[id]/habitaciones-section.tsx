@@ -103,10 +103,11 @@ export function HabitacionesSection({
         </div>
       )}
 
-      {/* Habitaciones con ocupantes */}
+      {/* Habitaciones con ocupantes. Numeración consecutiva por posición
+       *  (idx+1) para que si se elimina la 1, la siguiente pase a ser 1. */}
       {habitaciones.length > 0 && (
         <div className="mb-4 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-          {habitaciones.map((h) => {
+          {habitaciones.map((h, idx) => {
             const ocupantes = pax.filter((p) => p.habitacion_id === h.id);
             const cap = HABITACION_CAP[h.tipo];
             const over = ocupantes.length > cap;
@@ -114,7 +115,7 @@ export function HabitacionesSection({
             return (
               <div key={h.id} className={`rounded-lg border p-3 ${over || sinAdulto ? "border-amber-300 bg-amber-50/40" : "border-gray-200"}`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900">Hab {h.orden} · {HABITACION_LABEL[h.tipo]}</span>
+                  <span className="text-sm font-medium text-gray-900">Hab {idx + 1} · {HABITACION_LABEL[h.tipo]}</span>
                   <span className="flex items-center gap-2">
                     <span className={`text-xs ${over ? "font-semibold text-amber-700" : "text-gray-400"}`}>{ocupantes.length}/{cap}</span>
                     {canEdit && <button onClick={() => quitar(h.id)} className="text-gray-400 hover:text-status-danger"><Trash2 className="h-3.5 w-3.5" /></button>}
@@ -135,7 +136,9 @@ export function HabitacionesSection({
         </div>
       )}
 
-      {/* Asignación por pasajero */}
+      {/* Asignación por pasajero — dropdown solo muestra habitaciones con
+       *  cupo disponible (ocupantes < cap), más la habitación actual del
+       *  pasajero (para que no desaparezca de su propio select). */}
       <div className="overflow-hidden rounded-lg border border-gray-200">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
@@ -146,24 +149,37 @@ export function HabitacionesSection({
             </tr>
           </thead>
           <tbody>
-            {pax.map((p) => (
-              <tr key={p.id} className="border-t border-gray-100">
-                <td className="px-3 py-2 font-medium text-gray-900">{p.nombre}</td>
-                <td className="px-3 py-2 text-gray-600">{p.tipo === "adulto" ? "Adulto" : p.tipo === "nino" ? "Niño" : "Bebé"}</td>
-                <td className="px-3 py-2">
-                  <Select
-                    aria-label={`Habitación asignada a ${p.nombre}`}
-                    title={`Habitación asignada a ${p.nombre}`}
-                    value={p.habitacion_id ?? ""}
-                    onChange={(e) => asignar(p.id, e.target.value || null)}
-                    disabled={!canEdit || habitaciones.length === 0}
-                  >
-                    <option value="">— Sin asignar —</option>
-                    {habitaciones.map((h) => <option key={h.id} value={h.id}>Hab {h.orden} · {HABITACION_LABEL[h.tipo]}</option>)}
-                  </Select>
-                </td>
-              </tr>
-            ))}
+            {pax.map((p) => {
+              const opciones = habitaciones
+                .map((h, idx) => {
+                  const ocup = pax.filter((x) => x.habitacion_id === h.id).length;
+                  const cap = HABITACION_CAP[h.tipo];
+                  const conCupo = ocup < cap;
+                  const esActual = p.habitacion_id === h.id;
+                  return { h, idx, conCupo, esActual };
+                })
+                .filter(({ conCupo, esActual }) => conCupo || esActual);
+              return (
+                <tr key={p.id} className="border-t border-gray-100">
+                  <td className="px-3 py-2 font-medium text-gray-900">{p.nombre}</td>
+                  <td className="px-3 py-2 text-gray-600">{p.tipo === "adulto" ? "Adulto" : p.tipo === "nino" ? "Niño" : "Bebé"}</td>
+                  <td className="px-3 py-2">
+                    <Select
+                      aria-label={`Habitación asignada a ${p.nombre}`}
+                      title={`Habitación asignada a ${p.nombre}`}
+                      value={p.habitacion_id ?? ""}
+                      onChange={(e) => asignar(p.id, e.target.value || null)}
+                      disabled={!canEdit || habitaciones.length === 0}
+                    >
+                      <option value="">— Sin asignar —</option>
+                      {opciones.map(({ h, idx }) => (
+                        <option key={h.id} value={h.id}>Hab {idx + 1} · {HABITACION_LABEL[h.tipo]}</option>
+                      ))}
+                    </Select>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
