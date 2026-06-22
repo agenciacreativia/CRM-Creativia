@@ -49,10 +49,32 @@ const fmtCurrency = (v: number | null, moneda: string) =>
 const fmtDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString("es", { year: "numeric", month: "short", day: "numeric" }) : "—";
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({
+  title,
+  href,
+  children,
+}: {
+  title: string;
+  href?: string;
+  children: React.ReactNode;
+}) {
+  // Si recibimos href, el título es el ENLACE al detalle del registro
+  // (contacto o empresa). Visualmente más pesado que el label genérico, pero
+  // ahorra el botón "Ver X →" al pie de cada card.
+  const header = href ? (
+    <Link
+      href={href}
+      className="mb-2 block truncate text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline"
+      title={title}
+    >
+      {title}
+    </Link>
+  ) : (
+    <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</h2>
+  );
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
-      <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</h2>
+      {header}
       <div className="divide-y divide-gray-50">{children}</div>
     </section>
   );
@@ -83,6 +105,7 @@ export function DetailAside({
 }) {
   const o = oportunidad;
   const [campos_custom, setCampos] = useState<Record<string, unknown>>(o.campos_custom ?? {});
+  const [verMas, setVerMas] = useState(false);
 
   const asignadoOptions = [
     { value: "", label: "Sin asignar" },
@@ -110,9 +133,18 @@ export function DetailAside({
     return res;
   }
 
+  // Detecta si hay datos "secundarios" para mostrar el toggle Ver más.
+  const hayMas =
+    !!o.estrategia ||
+    !!(o.descripcion && o.descripcion.trim()) ||
+    campos.some((c) => {
+      const v = campos_custom[c.clave];
+      return v != null && v !== "";
+    });
+
   return (
     <div className="space-y-4">
-      {/* Oportunidad */}
+      {/* Oportunidad — vista compacta + toggle "Ver más" */}
       <Card title="Datos de la oportunidad">
         <InlineEditField
           label="Valor"
@@ -147,76 +179,81 @@ export function DetailAside({
           editable={canEdit}
           onSave={(v) => saveOportunidadField(o.id, "asignado_id", v)}
         />
-        <InlineEditField
-          label="Estrategia"
-          type="select"
-          options={[{ value: "", label: "—" }, ...ESTRATEGIAS.map((s) => ({ value: s.key, label: s.label }))]}
-          value={o.estrategia ?? ""}
-          display={o.estrategia ? (ESTRATEGIA_LABEL[o.estrategia] ?? o.estrategia) : "Sin estrategia"}
-          editable={canEdit}
-          onSave={(v) => saveOportunidadField(o.id, "estrategia", v)}
-        />
-        <InlineEditField
-          label="Descripción"
-          type="textarea"
-          value={o.descripcion ?? ""}
-          editable={canEdit}
-          onSave={(v) => saveOportunidadField(o.id, "descripcion", v)}
-        />
 
-        {campos.map((c) => {
-          const raw = campos_custom[c.clave];
-          const valueStr = raw == null ? "" : String(raw);
-          const display =
-            c.tipo === "checkbox" ? (raw ? "Sí" : "No") : valueStr === "" ? "—" : valueStr;
-          const options =
-            c.tipo === "checkbox"
-              ? [
-                  { value: "true", label: "Sí" },
-                  { value: "false", label: "No" },
-                ]
-              : c.tipo === "seleccion"
-                ? [{ value: "", label: "—" }, ...(c.opciones ?? []).map((o2) => ({ value: o2, label: o2 }))]
-                : undefined;
-          return (
+        {(verMas || !hayMas) && (
+          <>
             <InlineEditField
-              key={c.id}
-              label={c.etiqueta}
-              type={campoType(c.tipo)}
-              options={options}
-              value={c.tipo === "checkbox" ? (raw ? "true" : "false") : valueStr}
-              display={display}
+              label="Estrategia"
+              type="select"
+              options={[{ value: "", label: "—" }, ...ESTRATEGIAS.map((s) => ({ value: s.key, label: s.label }))]}
+              value={o.estrategia ?? ""}
+              display={o.estrategia ? (ESTRATEGIA_LABEL[o.estrategia] ?? o.estrategia) : "Sin estrategia"}
               editable={canEdit}
-              onSave={(v) => saveCampo(c, v)}
+              onSave={(v) => saveOportunidadField(o.id, "estrategia", v)}
             />
-          );
-        })}
+            <InlineEditField
+              label="Descripción"
+              type="textarea"
+              value={o.descripcion ?? ""}
+              editable={canEdit}
+              onSave={(v) => saveOportunidadField(o.id, "descripcion", v)}
+            />
+
+            {campos.map((c) => {
+              const raw = campos_custom[c.clave];
+              const valueStr = raw == null ? "" : String(raw);
+              const display =
+                c.tipo === "checkbox" ? (raw ? "Sí" : "No") : valueStr === "" ? "—" : valueStr;
+              const options =
+                c.tipo === "checkbox"
+                  ? [
+                      { value: "true", label: "Sí" },
+                      { value: "false", label: "No" },
+                    ]
+                  : c.tipo === "seleccion"
+                    ? [{ value: "", label: "—" }, ...(c.opciones ?? []).map((o2) => ({ value: o2, label: o2 }))]
+                    : undefined;
+              return (
+                <InlineEditField
+                  key={c.id}
+                  label={c.etiqueta}
+                  type={campoType(c.tipo)}
+                  options={options}
+                  value={c.tipo === "checkbox" ? (raw ? "true" : "false") : valueStr}
+                  display={display}
+                  editable={canEdit}
+                  onSave={(v) => saveCampo(c, v)}
+                />
+              );
+            })}
+          </>
+        )}
+
+        {hayMas && (
+          <button
+            type="button"
+            onClick={() => setVerMas((x) => !x)}
+            className="mt-2 inline-block text-xs font-medium text-brand-primary hover:underline"
+          >
+            {verMas ? "Ver menos ↑" : "Ver más ↓"}
+          </button>
+        )}
       </Card>
 
-      {/* Contacto — card resumida; campos completos en /contactos/[id] */}
-      <Card title="Contacto">
-        <InlineEditField label="Nombre" value={contacto.nombre} editable={canEdit}
-          onSave={(v) => saveContactoField(contacto.id, "nombre", v)} />
+      {/* Contacto — título = nombre del contacto (link al detalle) */}
+      <Card title={contacto.nombre || "Contacto"} href={`/contactos/${contacto.id}`}>
         <InlineEditField label="Teléfono" value={contacto.telefono ?? ""} editable={canEdit}
           onSave={(v) => saveContactoField(contacto.id, "telefono", v)} />
         <InlineEditField label="Correo" value={contacto.email} editable={canEdit}
           onSave={(v) => saveContactoField(contacto.id, "email", v)} />
-        <Link href={`/contactos/${contacto.id}`} className="mt-2 inline-block text-xs text-brand-primary hover:underline">
-          Ver contacto →
-        </Link>
       </Card>
 
-      {/* Empresa — card resumida; campos completos en /empresas/[id] */}
-      <Card title="Empresa">
-        <InlineEditField label="Nombre" value={empresa.nombre} editable={canEdit}
-          onSave={(v) => saveEmpresaField(empresa.id, "nombre", v)} />
+      {/* Empresa — título = nombre de la empresa (link al detalle) */}
+      <Card title={empresa.nombre || "Empresa"} href={`/empresas/${empresa.id}`}>
         <InlineEditField label="NIT" value={empresa.nit ?? ""} editable={canEdit}
           onSave={(v) => saveEmpresaField(empresa.id, "nit", v)} />
         <InlineEditField label="Ciudad" value={empresa.ciudad ?? ""} editable={canEdit}
           onSave={(v) => saveEmpresaField(empresa.id, "ciudad", v)} />
-        <Link href={`/empresas/${empresa.id}`} className="mt-2 inline-block text-xs text-brand-primary hover:underline">
-          Ver empresa →
-        </Link>
       </Card>
     </div>
   );
