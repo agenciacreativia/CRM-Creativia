@@ -63,15 +63,40 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sub
     return NextResponse.json({ ok: false, error: "email inválido" }, { status: 400, headers: CORS });
   }
 
+  // pipeline / etapa / asesor aceptan UUID o nombre. Aliases para comodidad
+  // del integrador: pipeline=embudo, asesor=asignado=owner.
+  const pickStr = (...vals: unknown[]) => {
+    for (const v of vals) { const s = str(v); if (s) return s; }
+    return "";
+  };
+  const pickNum = (v: unknown): number | null => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const camposCustom =
+    body.campos_custom && typeof body.campos_custom === "object" && !Array.isArray(body.campos_custom)
+      ? (body.campos_custom as Record<string, unknown>)
+      : null;
+
   const res = await crearLeadPublico(subdominio, {
     nombre,
     email,
     telefono: str(body.telefono).slice(0, 40) || null,
     empresa: str(body.empresa).slice(0, 200) || null,
     mensaje: str(body.mensaje).slice(0, 5000) || null,
-    // Routing por embudo: nombre del pipeline destino (ej. "Reservas").
-    // Aceptamos `pipeline` o `embudo` como alias.
-    pipeline: (str(body.pipeline) || str(body.embudo)).slice(0, 100) || null,
+
+    // Routing — aceptan UUID o nombre
+    pipeline: pickStr(body.pipeline, body.pipeline_id, body.embudo).slice(0, 100) || null,
+    etapa: pickStr(body.etapa, body.etapa_id, body.stage).slice(0, 100) || null,
+    asesor: pickStr(body.asesor, body.asignado, body.owner, body.asignado_id).slice(0, 200) || null,
+
+    // Comerciales
+    valor: pickNum(body.valor ?? body.value),
+    moneda: str(body.moneda ?? body.currency).slice(0, 8) || null,
+    probabilidad: pickNum(body.probabilidad ?? body.probability),
+    fecha_cierre: str(body.fecha_cierre ?? body.expected_close_date).slice(0, 10) || null,
+
+    campos_custom: camposCustom,
     formulario: str(body.formulario).slice(0, 80) || null,
     utms: pickUtms(body),
     origen_url: str(body.origen_url).slice(0, 500) || null,
