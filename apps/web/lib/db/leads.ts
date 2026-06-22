@@ -20,6 +20,13 @@ export type LeadInput = {
   telefono?: string | null;
   empresa?: string | null;
   mensaje?: string | null;
+  // Routing del lead: nombre exacto del pipeline al que va la oportunidad
+  // (busca case-insensitive). Si no se encuentra → es_default → primer
+  // pipeline. El sitio puede mandar, p.ej., "Reservas" o "Cotizaciones".
+  pipeline?: string | null;
+  // Slug del formulario de origen (libre, lo define el sitio). Útil para
+  // analytics: "solicitud_bloqueo", "contacto_general", "newsletter", etc.
+  formulario?: string | null;
   // Trazabilidad de origen (opcional). Si vienen, se guardan en la oportunidad
   // para reportes por fuente/campaña/canal.
   utms?: LeadUtms | null;
@@ -71,9 +78,29 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
     .single();
   if (cErr) return { ok: false, error: cErr.message };
 
-  // Opportunity in the tenant's first pipeline / first stage.
+  // Resolver pipeline destino. Orden de preferencia:
+  //   1) Match por nombre del payload (case-insensitive)
+  //   2) es_default = true
+  //   3) Primero por creado_en
+  let pipe: { id: string } | null = null;
+  const pedido = (input.pipeline ?? "").trim();
+  if (pedido) {
+    const { data } = await admin
+      .from("pipeline").select("id").eq("tenant_id", tid).ilike("nombre", pedido).maybeSingle();
+    if (data) pipe = data as { id: string };
+  }
+  if (!pipe) {
+    const { data } = await admin
+      .from("pipeline").select("id").eq("tenant_id", tid).eq("es_default", true).maybeSingle();
+    if (data) pipe = data as { id: string };
+  }
+  if (!pipe) {
+    const { data } = await admin
+      .from("pipeline").select("id").eq("tenant_id", tid).order("creado_en", { ascending: true }).limit(1).maybeSingle();
+    if (data) pipe = data as { id: string };
+  }
+
   let oportunidadId: string | undefined;
-  const { data: pipe } = await admin.from("pipeline").select("id").eq("tenant_id", tid).order("creado_en", { ascending: true }).limit(1).maybeSingle();
   if (pipe) {
     const { data: etapa } = await admin.from("etapa_pipeline").select("id").eq("pipeline_id", pipe.id).order("orden", { ascending: true }).limit(1).maybeSingle();
     if (etapa) {
@@ -95,6 +122,7 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
           origen_url: input.origen_url ?? null,
           referrer: input.referrer ?? null,
           landing: input.landing ?? null,
+          formulario: input.formulario?.trim() || null,
         })
         .select("id")
         .single();

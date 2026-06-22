@@ -69,6 +69,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sub
     telefono: str(body.telefono).slice(0, 40) || null,
     empresa: str(body.empresa).slice(0, 200) || null,
     mensaje: str(body.mensaje).slice(0, 5000) || null,
+    // Routing por embudo: nombre del pipeline destino (ej. "Reservas").
+    // Aceptamos `pipeline` o `embudo` como alias.
+    pipeline: (str(body.pipeline) || str(body.embudo)).slice(0, 100) || null,
+    formulario: str(body.formulario).slice(0, 80) || null,
     utms: pickUtms(body),
     origen_url: str(body.origen_url).slice(0, 500) || null,
     referrer: str(body.referrer).slice(0, 500) || null,
