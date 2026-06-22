@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { User, Building2 } from "lucide-react";
 import { InlineEditField, type InlineEditType } from "@/components/ui/inline-edit";
 import type { CampoPersonalizado } from "@/lib/db/campos";
 import { ESTRATEGIAS, ESTRATEGIA_LABEL } from "@/lib/estrategias-types";
@@ -52,22 +53,24 @@ const fmtDate = (iso: string | null) =>
 function Card({
   title,
   href,
+  icon,
   children,
 }: {
   title: string;
   href?: string;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
   // Si recibimos href, el título es el ENLACE al detalle del registro
-  // (contacto o empresa). Visualmente más pesado que el label genérico, pero
-  // ahorra el botón "Ver X →" al pie de cada card.
+  // (contacto o empresa). El icon a la izquierda diferencia persona vs empresa.
   const header = href ? (
     <Link
       href={href}
-      className="mb-2 block truncate text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline"
+      className="mb-2 flex items-center gap-2 text-sm font-bold text-gray-900 hover:text-brand-primary hover:underline"
       title={title}
     >
-      {title}
+      {icon ? <span className="flex h-5 w-5 shrink-0 items-center justify-center text-gray-400">{icon}</span> : null}
+      <span className="truncate">{title}</span>
     </Link>
   ) : (
     <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{title}</h2>
@@ -240,19 +243,27 @@ export function DetailAside({
         )}
       </Card>
 
-      {/* Contacto — título = nombre del contacto (link al detalle) */}
-      <Card title={contacto.nombre || "Contacto"} href={`/contactos/${contacto.id}`}>
-        <InlineEditField label="Teléfono" value={contacto.telefono ?? ""} editable={canEdit}
+      {/* Contacto — icono persona + nombre clickeable. Sin labels: solo valores. */}
+      <Card
+        title={contacto.nombre || "Contacto"}
+        href={`/contactos/${contacto.id}`}
+        icon={<User className="h-4 w-4" />}
+      >
+        <InlineEditField label="" value={contacto.telefono ?? ""} editable={canEdit}
           onSave={(v) => saveContactoField(contacto.id, "telefono", v)} />
-        <InlineEditField label="Correo" value={contacto.email} editable={canEdit}
+        <InlineEditField label="" value={contacto.email} editable={canEdit}
           onSave={(v) => saveContactoField(contacto.id, "email", v)} />
       </Card>
 
-      {/* Empresa — título = nombre de la empresa (link al detalle) */}
-      <Card title={empresa.nombre || "Empresa"} href={`/empresas/${empresa.id}`}>
-        <InlineEditField label="NIT" value={empresa.nit ?? ""} editable={canEdit}
+      {/* Empresa — icono edificio + nombre clickeable. Sin labels: solo valores. */}
+      <Card
+        title={empresa.nombre || "Empresa"}
+        href={`/empresas/${empresa.id}`}
+        icon={<Building2 className="h-4 w-4" />}
+      >
+        <InlineEditField label="" value={empresa.nit ?? ""} editable={canEdit}
           onSave={(v) => saveEmpresaField(empresa.id, "nit", v)} />
-        <InlineEditField label="Ciudad" value={empresa.ciudad ?? ""} editable={canEdit}
+        <InlineEditField label="" value={empresa.ciudad ?? ""} editable={canEdit}
           onSave={(v) => saveEmpresaField(empresa.id, "ciudad", v)} />
       </Card>
     </div>
