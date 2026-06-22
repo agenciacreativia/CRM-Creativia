@@ -260,7 +260,32 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
   const asesor = await resolveAsesor(admin, tid, input.asesor);
   if (input.asesor && !asesor) warnings.push(`asesor "${input.asesor}" no se pudo resolver`);
 
-  const camposCustom = await resolveCamposCustom(admin, tid, input.campos_custom, warnings);
+  // Espejar UTMs como campos_custom para que aparezcan en la UI de oportunidad
+  // sin necesidad de tocar el sitio. El sitio sigue enviando `utms: {...}` (no
+  // cambia). Si el tenant creó campos con estas claves canónicas, se llenan
+  // automáticamente. Si no, el utms jsonb sigue guardado en oportunidad.utms.
+  const utmsAsCustom: Record<string, unknown> = {};
+  if (input.utms) {
+    const map: Record<keyof LeadUtms, string> = {
+      utm_source: "fuente",
+      utm_medium: "medio",
+      utm_campaign: "campania",
+      utm_term: "termino",
+      utm_content: "contenido",
+      gclid: "id_lead_ad",
+      fbclid: "id_lead_ad",
+      msclkid: "id_lead_ad",
+      ttclid: "id_lead_ad",
+    };
+    for (const [utmKey, customKey] of Object.entries(map) as [keyof LeadUtms, string][]) {
+      const v = input.utms[utmKey];
+      if (v && !utmsAsCustom[customKey]) utmsAsCustom[customKey] = v;
+    }
+  }
+  // El campos_custom explícito del payload tiene prioridad sobre el espejo
+  // de UTMs (por si el integrador quiere setear "fuente" manualmente).
+  const camposCustomInput = { ...utmsAsCustom, ...(input.campos_custom ?? {}) };
+  const camposCustom = await resolveCamposCustom(admin, tid, camposCustomInput, warnings);
 
   // Validación de campos comerciales
   const moneda = input.moneda && MONEDAS.has(input.moneda.toUpperCase()) ? input.moneda.toUpperCase() : "USD";
