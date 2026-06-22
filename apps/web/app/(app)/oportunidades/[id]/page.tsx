@@ -91,15 +91,18 @@ export default async function OportunidadDetailPage({ params }: { params: Params
   ]);
 
   // Reservas B2B contra Turistea (solo si la integración está configurada y no es la plataforma).
+  // Pasajeros y habitaciones se traen SIEMPRE: pueden venir del webhook de leads
+  // del sitio web aunque el tenant no tenga reservas activas.
   const usaReservas = cuposConfigurado();
   const [reservas, planesCatalogo, esPlataforma, pasajeros, habitaciones] = await Promise.all([
     usaReservas ? listReservasDeOportunidad(id) : Promise.resolve([]),
     usaReservas ? listCatalogoExterno() : Promise.resolve([]),
     isPlatformAdmin(),
-    usaReservas ? listPasajeros(id) : Promise.resolve([]),
-    usaReservas ? listHabitaciones(id) : Promise.resolve([]),
+    listPasajeros(id),
+    listHabitaciones(id),
   ]);
   const puedeReservar = usaReservas && !esPlataforma;
+  const hayAcomodaciones = pasajeros.length > 0 || habitaciones.length > 0;
   const merge = buildMergeVars({ opp: o, contacto, empresa, campos });
 
   // Plan ceiling for the activity tabs (null = no ceiling → all enabled).
@@ -246,7 +249,7 @@ export default async function OportunidadDetailPage({ params }: { params: Params
             tools={planTools}
           />
 
-          {puedeReservar && (
+          {(puedeReservar || hayAcomodaciones) && (
             <>
               <PasajerosSection oportunidadId={id} initial={pasajeros} canEdit={canEdit} />
               <HabitacionesSection
@@ -255,6 +258,10 @@ export default async function OportunidadDetailPage({ params }: { params: Params
                 pasajeros={pasajeros.map((p) => ({ id: p.id, nombre: p.nombre, tipo: p.tipo, habitacion_id: p.habitacion_id }))}
                 canEdit={canEdit}
               />
+            </>
+          )}
+          {puedeReservar && (
+            <>
               <CorreosTracking correos={correosTracking} />
               <ReservaPanel
                 oportunidadId={id}
