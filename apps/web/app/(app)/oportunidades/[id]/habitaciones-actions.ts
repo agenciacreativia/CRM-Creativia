@@ -6,13 +6,16 @@ import { crearHabitacion, eliminarHabitacion, asignarPasajeroHabitacion } from "
 
 const tipo = z.enum(["sencilla", "doble", "triple"]);
 
-export async function crearHabitacionAction(oportunidadId: string, t: string): Promise<{ ok: boolean; error?: string }> {
+export async function crearHabitacionAction(
+  oportunidadId: string,
+  t: string,
+): Promise<{ ok: boolean; error?: string; id?: string }> {
   const parsed = tipo.safeParse(t);
   if (!parsed.success) return { ok: false, error: "Tipo inválido" };
   try {
-    await crearHabitacion(oportunidadId, parsed.data);
+    const id = await crearHabitacion(oportunidadId, parsed.data);
     revalidatePath(`/oportunidades/${oportunidadId}`);
-    return { ok: true };
+    return { ok: true, id };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error" };
   }

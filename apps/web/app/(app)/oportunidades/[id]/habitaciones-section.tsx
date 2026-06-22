@@ -30,28 +30,56 @@ export function HabitacionesSection({
   canEdit: boolean;
 }) {
   const router = useRouter();
+  // State LOCAL para UI optimista: agregar/eliminar/asignar se refleja al
+  // instante; el backend corre en background. router.refresh() era pesado
+  // porque re-render del page completo (actividades, notas, cotizaciones…).
   const [pax, setPax] = useState<PaxLite[]>(pasajeros);
-  // Re-sync cuando el server re-renderiza con nuevos pasajeros (post router.refresh).
+  const [hab, setHab] = useState<HabLite[]>(habitaciones);
   useEffect(() => { setPax(pasajeros); }, [pasajeros]);
+  useEffect(() => { setHab(habitaciones); }, [habitaciones]);
   const [nuevoTipo, setNuevoTipo] = useState<TipoHabitacion>("doble");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const validacion = validarHabitaciones(habitaciones, pax);
+  const validacion = validarHabitaciones(hab, pax);
 
   async function agregar() {
-    setError(null); setBusy(true);
+    setError(null);
+    // Optimista: agregamos una habitación con id temporal.
+    const tempId = `tmp-${Math.random().toString(36).slice(2)}`;
+    const orden = (hab[hab.length - 1]?.orden ?? 0) + 1;
+    setHab((arr) => [...arr, { id: tempId, tipo: nuevoTipo, orden }]);
+    setBusy(true);
     const res = await crearHabitacionAction(oportunidadId, nuevoTipo);
     setBusy(false);
-    if (!res.ok) setError(res.error ?? "Error"); else router.refresh();
+    if (!res.ok) {
+      // Revertimos.
+      setHab((arr) => arr.filter((h) => h.id !== tempId));
+      setError(res.error ?? "Error");
+      return;
+    }
+    // Reemplazamos el id temporal por el real (para que la asignación de
+    // pasajeros funcione contra la BD si el usuario asigna antes del refresh).
+    if (res.id) setHab((arr) => arr.map((h) => (h.id === tempId ? { ...h, id: res.id! } : h)));
   }
   async function quitar(id: string) {
     setError(null);
+    // Optimista: sacamos la habitación + desasignamos pasajeros que estaban ahí.
+    const snapshotHab = hab;
+    const snapshotPax = pax;
+    setHab((arr) => arr.filter((h) => h.id !== id));
+    setPax((arr) => arr.map((p) => (p.habitacion_id === id ? { ...p, habitacion_id: null } : p)));
+    // Si era un id temporal (todavía no se persistió), no llamamos al backend.
+    if (id.startsWith("tmp-")) return;
     const res = await eliminarHabitacionAction(id, oportunidadId);
-    if (!res.ok) setError(res.error ?? "Error"); else router.refresh();
+    if (!res.ok) {
+      setHab(snapshotHab); setPax(snapshotPax);
+      setError(res.error ?? "Error");
+    }
   }
   async function asignar(pasajeroId: string, habitacionId: string | null) {
     setPax((arr) => arr.map((p) => (p.id === pasajeroId ? { ...p, habitacion_id: habitacionId } : p)));
+    if (habitacionId?.startsWith("tmp-")) return; // hab aún no persistida
     const res = await asignarPasajeroAction(pasajeroId, habitacionId, oportunidadId);
     if (!res.ok) { setError(res.error ?? "Error"); router.refresh(); }
   }
@@ -92,7 +120,7 @@ export function HabitacionesSection({
       {/* Validación */}
       {validacion.ok ? (
         <div className="mb-3 flex items-center gap-2 rounded border border-green-200 bg-green-50 p-2.5 text-sm text-green-800">
-          <Check className="h-4 w-4" /> Distribución válida ({habitaciones.length} habitación(es) · {pax.length} pasajeros).
+          <Check className="h-4 w-4" /> Distribución válida ({hab.length} habitación(es) · {pax.length} pasajeros).
         </div>
       ) : (
         <div className="mb-3 rounded border border-amber-200 bg-amber-50 p-2.5 text-sm text-amber-800">
@@ -105,9 +133,9 @@ export function HabitacionesSection({
 
       {/* Habitaciones con ocupantes. Numeración consecutiva por posición
        *  (idx+1) para que si se elimina la 1, la siguiente pase a ser 1. */}
-      {habitaciones.length > 0 && (
+      {hab.length > 0 && (
         <div className="mb-4 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-          {habitaciones.map((h, idx) => {
+          {hab.map((h, idx) => {
             const ocupantes = pax.filter((p) => p.habitacion_id === h.id);
             const cap = HABITACION_CAP[h.tipo];
             const over = ocupantes.length > cap;
@@ -150,7 +178,7 @@ export function HabitacionesSection({
           </thead>
           <tbody>
             {pax.map((p) => {
-              const opciones = habitaciones
+              const opciones = hab
                 .map((h, idx) => {
                   const ocup = pax.filter((x) => x.habitacion_id === h.id).length;
                   const cap = HABITACION_CAP[h.tipo];
@@ -169,7 +197,7 @@ export function HabitacionesSection({
                       title={`Habitación asignada a ${p.nombre}`}
                       value={p.habitacion_id ?? ""}
                       onChange={(e) => asignar(p.id, e.target.value || null)}
-                      disabled={!canEdit || habitaciones.length === 0}
+                      disabled={!canEdit || hab.length === 0}
                     >
                       <option value="">— Sin asignar —</option>
                       {opciones.map(({ h, idx }) => (
