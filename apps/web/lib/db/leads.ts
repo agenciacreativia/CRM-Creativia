@@ -69,110 +69,50 @@ const isUuid = (s: string) => UUID_RE.test(s);
 
 // ── Resolvers ──────────────────────────────────────────────────────────────
 
-/**
- * Resolver dinámico de etapa+pipeline.
- *
- * El integrador puede pasar CUALQUIERA de estas combinaciones:
- *   • solo `etapa` (UUID)              → deducimos el pipeline desde la etapa
- *   • solo `etapa` (nombre único)      → buscamos en TODOS los pipelines del tenant
- *   • solo `etapa` (nombre ambiguo)    → usamos el match en el pipeline default
- *   • `pipeline` + `etapa`             → scope explícito, máxima precisión
- *   • solo `pipeline` (o nada)         → fallback al default + primera etapa
- *
- * Devolvemos { pipelineId, etapaId, warnings }.
- */
-async function resolvePipelineEtapa(
+async function resolvePipeline(
   admin: ReturnType<typeof createAdminSupabase>,
   tid: string,
-  pipelineRaw: string | null | undefined,
-  etapaRaw: string | null | undefined,
-): Promise<{ pipelineId: string | null; etapaId: string | null; warnings: string[] }> {
-  const warnings: string[] = [];
-  const p = (pipelineRaw ?? "").trim();
-  const e = (etapaRaw ?? "").trim();
-
-  // Caso 1: solo etapa por UUID → la etapa ya tiene pipeline_id en la BD.
-  if (e && isUuid(e)) {
-    const { data: et } = await admin
-      .from("etapa_pipeline").select("id, pipeline_id, pipeline:pipeline_id(tenant_id)")
-      .eq("id", e).maybeSingle();
-    // PostgREST devuelve la relación como array; tomamos el primero.
-    const etRow = et as { id: string; pipeline_id: string; pipeline: { tenant_id: string }[] | { tenant_id: string } | null } | null;
-    const pipeRel = Array.isArray(etRow?.pipeline) ? etRow?.pipeline[0] : etRow?.pipeline;
-    if (etRow && pipeRel?.tenant_id === tid) {
-      return { pipelineId: etRow.pipeline_id, etapaId: etRow.id, warnings };
+  raw: string | null | undefined,
+): Promise<{ id: string } | null> {
+  const s = (raw ?? "").trim();
+  if (s) {
+    if (isUuid(s)) {
+      const { data } = await admin.from("pipeline").select("id").eq("id", s).eq("tenant_id", tid).maybeSingle();
+      if (data) return data as { id: string };
+    } else {
+      const { data } = await admin.from("pipeline").select("id").eq("tenant_id", tid).ilike("nombre", s).maybeSingle();
+      if (data) return data as { id: string };
     }
-    warnings.push(`etapa_id "${e}" no pertenece al tenant`);
   }
+  // Fallback: es_default → primero por creado_en
+  const { data: def } = await admin.from("pipeline").select("id").eq("tenant_id", tid).eq("es_default", true).maybeSingle();
+  if (def) return def as { id: string };
+  const { data: first } = await admin
+    .from("pipeline").select("id").eq("tenant_id", tid).order("creado_en", { ascending: true }).limit(1).maybeSingle();
+  return (first as { id: string } | null) ?? null;
+}
 
-  // Resolver pipeline (lo necesitamos para los demás casos).
-  let pipelineId: string | null = null;
-  if (p) {
-    if (isUuid(p)) {
+async function resolveEtapa(
+  admin: ReturnType<typeof createAdminSupabase>,
+  pipelineId: string,
+  raw: string | null | undefined,
+): Promise<{ id: string } | null> {
+  const s = (raw ?? "").trim();
+  if (s) {
+    if (isUuid(s)) {
       const { data } = await admin
-        .from("pipeline").select("id").eq("id", p).eq("tenant_id", tid).maybeSingle();
-      if (data) pipelineId = data.id as string;
-      else warnings.push(`pipeline_id "${p}" no encontrado en el tenant`);
+        .from("etapa_pipeline").select("id").eq("id", s).eq("pipeline_id", pipelineId).maybeSingle();
+      if (data) return data as { id: string };
     } else {
       const { data } = await admin
-        .from("pipeline").select("id").eq("tenant_id", tid).ilike("nombre", p).maybeSingle();
-      if (data) pipelineId = data.id as string;
-      else warnings.push(`pipeline "${p}" no encontrado`);
+        .from("etapa_pipeline").select("id").eq("pipeline_id", pipelineId).ilike("nombre", s).maybeSingle();
+      if (data) return data as { id: string };
     }
   }
-
-  // Caso 2: etapa por NOMBRE sin pipeline → buscar en TODOS los pipelines del tenant.
-  if (e && !isUuid(e) && !pipelineId) {
-    const { data: matches } = await admin
-      .from("etapa_pipeline")
-      .select("id, pipeline_id, pipeline:pipeline_id!inner(tenant_id, es_default)")
-      .ilike("nombre", e)
-      .eq("pipeline.tenant_id", tid);
-    type Row = { id: string; pipeline_id: string; pipeline: { es_default: boolean }[] | { es_default: boolean } | null };
-    const rows = ((matches ?? []) as Row[]).map((r) => ({
-      id: r.id,
-      pipeline_id: r.pipeline_id,
-      es_default: (Array.isArray(r.pipeline) ? r.pipeline[0]?.es_default : r.pipeline?.es_default) ?? false,
-    }));
-    if (rows.length === 1) {
-      return { pipelineId: rows[0].pipeline_id, etapaId: rows[0].id, warnings };
-    }
-    if (rows.length > 1) {
-      const pick = rows.find((r) => r.es_default) ?? rows[0];
-      warnings.push(`etapa "${e}" existe en ${rows.length} pipelines; se usó el del pipeline default`);
-      return { pipelineId: pick.pipeline_id, etapaId: pick.id, warnings };
-    }
-    warnings.push(`etapa "${e}" no encontrada en ningún pipeline`);
-  }
-
-  // Fallback de pipeline si todavía no se resolvió.
-  if (!pipelineId) {
-    const { data: def } = await admin.from("pipeline").select("id").eq("tenant_id", tid).eq("es_default", true).maybeSingle();
-    if (def) pipelineId = def.id as string;
-    else {
-      const { data: first } = await admin
-        .from("pipeline").select("id").eq("tenant_id", tid).order("creado_en", { ascending: true }).limit(1).maybeSingle();
-      if (first) pipelineId = first.id as string;
-    }
-  }
-  if (!pipelineId) return { pipelineId: null, etapaId: null, warnings };
-
-  // Caso 3: con pipeline conocido, resolver la etapa específica dentro de él.
-  let etapaId: string | null = null;
-  if (e) {
-    const col = isUuid(e) ? "id" : "nombre";
-    const q = admin.from("etapa_pipeline").select("id").eq("pipeline_id", pipelineId);
-    const { data } = await (isUuid(e) ? q.eq(col, e) : q.ilike(col, e)).maybeSingle();
-    if (data) etapaId = data.id as string;
-    else warnings.push(`etapa "${e}" no encontrada en el pipeline; se usó la primera`);
-  }
-  // Fallback: primera etapa del pipeline.
-  if (!etapaId) {
-    const { data } = await admin
-      .from("etapa_pipeline").select("id").eq("pipeline_id", pipelineId).order("orden", { ascending: true }).limit(1).maybeSingle();
-    if (data) etapaId = data.id as string;
-  }
-  return { pipelineId, etapaId, warnings };
+  // Fallback: primera etapa del pipeline
+  const { data } = await admin
+    .from("etapa_pipeline").select("id").eq("pipeline_id", pipelineId).order("orden", { ascending: true }).limit(1).maybeSingle();
+  return (data as { id: string } | null) ?? null;
 }
 
 async function resolveAsesor(
@@ -304,15 +244,18 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
     .single();
   if (cErr) return { ok: false, error: cErr.message };
 
-  // Routing dinámico — etapa puede traer su propio pipeline.
-  const routing = await resolvePipelineEtapa(admin, tid, input.pipeline, input.etapa);
-  warnings.push(...routing.warnings);
-  if (!routing.pipelineId) {
-    return { ok: true, contacto_id: cont.id, warnings: [...warnings, "tenant sin pipelines configurados, oportunidad no creada"] };
+  // Routing
+  const pipe = await resolvePipeline(admin, tid, input.pipeline);
+  if (!pipe) {
+    return { ok: true, contacto_id: cont.id, warnings: ["tenant sin pipelines configurados, oportunidad no creada"] };
   }
-  if (!routing.etapaId) {
-    return { ok: true, contacto_id: cont.id, warnings: [...warnings, "pipeline sin etapas, oportunidad no creada"] };
+  if (input.pipeline && (input.pipeline ?? "").trim()) {
+    // Si el usuario pidió un pipeline específico y no se encontró, avisamos.
+    // (no podemos detectar fallback sin re-query — barato dejar al cliente
+    // confiar en pipeline_id de la respuesta).
   }
+  const etapa = await resolveEtapa(admin, pipe.id, input.etapa);
+  if (!etapa) return { ok: true, contacto_id: cont.id, warnings: ["pipeline sin etapas, oportunidad no creada"] };
 
   const asesor = await resolveAsesor(admin, tid, input.asesor);
   if (input.asesor && !asesor) warnings.push(`asesor "${input.asesor}" no se pudo resolver`);
@@ -340,8 +283,8 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
       nombre: `Lead web: ${input.nombre}`,
       empresa_id: empresaId,
       contacto_id: cont.id,
-      pipeline_id: routing.pipelineId,
-      etapa_id: routing.etapaId,
+      pipeline_id: pipe.id,
+      etapa_id: etapa.id,
       asignado_id: asesor?.id ?? null,
       estado: "activo",
       moneda,
