@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listOportunidades, countOportunidades } from "@/lib/db/oportunidades";
+import { listOportunidades, countOportunidades, sumValorActivosOportunidades } from "@/lib/db/oportunidades";
 import { getSessionUser } from "@/lib/auth";
 import { listEtiquetas, etiquetasPorEntidad } from "@/lib/db/etiquetas";
 import { listVistas } from "@/lib/db/vistas";
@@ -63,9 +63,10 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
     valor_min: Number.isFinite(valorMin as number) ? valorMin : undefined,
     valor_max: Number.isFinite(valorMax as number) ? valorMax : undefined,
   };
-  const [rowsRaw, totalCount, filterModules] = await Promise.all([
+  const [rowsRaw, totalCount, sumTotalValor, filterModules] = await Promise.all([
     listOportunidades({ ...filtros, limit: hasAdvanced ? 2000 : INITIAL_PAGE }),
     countOportunidades(filtros),
+    sumValorActivosOportunidades(filtros),
     getListFilterConfig("oportunidad"),
   ]);
   // Campos del módulo ancla (oportunidad) para ordenar/ListOrder; el mapa por
@@ -78,9 +79,8 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
     hasAdvanced && spec ? rowsRaw.filter((r) => rowMatches(r, spec, fbm, "oportunidad")) : rowsRaw;
   const rows = sortRows(filtered, params.orden, filterFields);
 
-  const totalValor = rows
-    .filter((r) => r.estado === "activo")
-    .reduce((s, r) => s + (r.valor ?? 0), 0);
+  // sumTotalValor ya viene calculado en server con los mismos filtros (no
+  // depende del batch cargado en el cliente).
   const monedaPrincipal = rows[0]?.moneda ?? "USD";
 
   const [etiquetas, etiquetasMap, vistas, perms] = await Promise.all([
@@ -116,17 +116,7 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="whitespace-nowrap text-xs text-gray-500">
-            {/* Total absoluto del query (count exact), no del batch cargado.
-             *  Si hay filtros avanzados client-side, el conteo final puede ser
-             *  menor: por eso mostramos el applied/total en ese caso. */}
-            {hasAdvanced && rows.length !== rowsRaw.length
-              ? `${rows.length} de ${totalCount} resultados`
-              : `${totalCount} resultados`}
-            {" · "}
-            {formatCurrency(totalValor, monedaPrincipal)} activos
-            {!hasAdvanced && rows.length < totalCount && (
-              <span className="text-gray-400"> (suma sobre {rows.length} cargados)</span>
-            )}
+            {totalCount} resultados · {formatCurrency(sumTotalValor, monedaPrincipal)} activos
           </p>
           <ListOrder fields={filterFields} />
           <ColumnPicker visibleCols={visibleCols} />

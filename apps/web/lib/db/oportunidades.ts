@@ -349,6 +349,36 @@ export async function countOportunidades(opts: {
   return count ?? 0;
 }
 
+/**
+ * Suma el valor de oportunidades ACTIVAS que matchean los filtros. Trae solo
+ * la columna `valor` (no joins ni embeds) y suma en server — para 400 leads
+ * son ~400 floats: rapidísimo. Hasta volúmenes grandes (~100k) sigue siendo
+ * aceptable; si crece más, conviene mover a una RPC con SUM.
+ */
+export async function sumValorActivosOportunidades(opts: {
+  pipeline_id?: string;
+  asignado_id?: string;
+  cierre_desde?: string;
+  cierre_hasta?: string;
+  valor_min?: number;
+  valor_max?: number;
+} = {}): Promise<number> {
+  const supabase = await createServerSupabase();
+  let query = supabase.from("oportunidad").select("valor").eq("estado", "activo");
+  if (opts.pipeline_id) query = query.eq("pipeline_id", opts.pipeline_id);
+  if (opts.asignado_id) {
+    if (opts.asignado_id === "_unassigned") query = query.is("asignado_id", null);
+    else query = query.eq("asignado_id", opts.asignado_id);
+  }
+  if (opts.cierre_desde) query = query.gte("fecha_esperada_cierre", opts.cierre_desde);
+  if (opts.cierre_hasta) query = query.lte("fecha_esperada_cierre", opts.cierre_hasta);
+  if (opts.valor_min != null && Number.isFinite(opts.valor_min)) query = query.gte("valor", opts.valor_min);
+  if (opts.valor_max != null && Number.isFinite(opts.valor_max)) query = query.lte("valor", opts.valor_max);
+  const { data, error } = await query;
+  if (error) return 0;
+  return (data ?? []).reduce((s, r) => s + (Number(r.valor) || 0), 0);
+}
+
 export async function listOportunidades(opts: {
   q?: string;
   estado?: string;

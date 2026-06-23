@@ -101,6 +101,9 @@ jobs:
             git fetch origin
             git reset --hard origin/main
             docker compose pull
-            docker compose up -d
+            # --wait: docker compose espera a que el container quede healthy
+            # antes de cortar el reemplazo. --wait-timeout 90s da margen al
+            # build de Next; --remove-orphans limpia restos viejos.
+            docker compose up -d --wait --wait-timeout 90 --remove-orphans
             docker image prune -f
             docker compose ps

@@ -14,3 +14,11 @@ services:
     ports:
       - "3000:3000"
     pull_policy: always
+    # Healthcheck para que docker compose --wait sepa cuándo declarar
+    # "healthy" durante el deploy (reduce el gap de 502 al swappear imagen).
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
