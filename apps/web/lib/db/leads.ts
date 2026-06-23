@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminSupabase } from "@/lib/supabase/admin";
+import { siguienteAsesorRR } from "@/lib/db/pipeline-asesores";
 
 export type LeadUtms = {
   utm_source?: string;
@@ -284,8 +285,15 @@ export async function crearLeadPublico(subdominio: string, input: LeadInput): Pr
   const etapa = await resolveEtapa(admin, pipe.id, input.etapa);
   if (!etapa) return { ok: true, contacto_id: cont.id, warnings: ["pipeline sin etapas, oportunidad no creada"] };
 
-  const asesor = await resolveAsesor(admin, tid, input.asesor);
+  let asesor = await resolveAsesor(admin, tid, input.asesor);
   if (input.asesor && !asesor) warnings.push(`asesor "${input.asesor}" no se pudo resolver`);
+  // Round-robin: si el payload no trae asesor explícito, pedimos al pipeline
+  // su siguiente asesor según la distribución por pesos. Si el pipeline no
+  // tiene asesores configurados, queda sin asignar (igual que antes).
+  if (!asesor && !input.asesor) {
+    const rrId = await siguienteAsesorRR(pipe.id);
+    if (rrId) asesor = { id: rrId };
+  }
 
   // Espejar UTMs como campos_custom para que aparezcan en la UI de oportunidad
   // sin necesidad de tocar el sitio. El sitio sigue enviando `utms: {...}` (no
