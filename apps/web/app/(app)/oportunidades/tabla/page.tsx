@@ -48,6 +48,11 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
   const spec = decodeFilterSpec(params.filtros);
   const hasAdvanced = specHasConditions(spec);
 
+  // Página inicial: con filtros avanzados client-side, traemos hasta 2000
+  // de un saque (el rowMatches necesita el set completo). Sin filtros avanzados,
+  // arrancamos con 100 y dejamos que el infinite scroll del cliente vaya
+  // pidiendo más con `cargarMasOportunidadesAction`.
+  const INITIAL_PAGE = 100;
   const [rowsRaw, filterModules] = await Promise.all([
     listOportunidades({
       estado: params.estado,
@@ -57,7 +62,7 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
       cierre_hasta: params.cierre_hasta,
       valor_min: Number.isFinite(valorMin as number) ? valorMin : undefined,
       valor_max: Number.isFinite(valorMax as number) ? valorMax : undefined,
-      limit: hasAdvanced ? 2000 : 200,
+      limit: hasAdvanced ? 2000 : INITIAL_PAGE,
     }),
     getListFilterConfig("oportunidad"),
   ]);
@@ -121,6 +126,24 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
         rows={rows}
         etiquetasMap={etiquetasMap}
         visibleCols={visibleCols}
+        paginate={
+          hasAdvanced
+            ? undefined
+            : {
+                initialCount: rowsRaw.length,
+                hasMore: rowsRaw.length === INITIAL_PAGE,
+                params: {
+                  estado: params.estado,
+                  pipeline: params.pipeline,
+                  asignado: params.asignado,
+                  cierre_desde: params.cierre_desde,
+                  cierre_hasta: params.cierre_hasta,
+                  valor_min: params.valor_min,
+                  valor_max: params.valor_max,
+                  mine: params.mine,
+                },
+              }
+        }
       />
     </div>
   );

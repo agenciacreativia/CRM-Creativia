@@ -320,6 +320,7 @@ export async function listOportunidades(opts: {
   valor_min?: number;
   valor_max?: number;
   limit?: number;
+  offset?: number;
   ids?: string[];
 } = {}): Promise<OportunidadListItem[]> {
   const supabase = await createServerSupabase();
@@ -339,6 +340,11 @@ export async function listOportunidades(opts: {
     .order("cambiado_en", { ascending: false, foreignTable: "historial_etapa" })
     .limit(1, { foreignTable: "historial_etapa" })
     .limit(opts.ids?.length ? opts.ids.length : opts.limit ?? 200);
+  // Paginación: si vienen offset+limit, aplicamos range (offset, offset+limit-1).
+  // Útil para infinite scroll en la vista tabla.
+  if (typeof opts.offset === "number" && typeof opts.limit === "number") {
+    query = query.range(opts.offset, opts.offset + opts.limit - 1);
+  }
 
   if (opts.ids?.length) query = query.in("id", opts.ids);
   if (opts.q) {

@@ -1,23 +1,71 @@
 "use client";
 
+import { useEffect, useRef, useState, useTransition } from "react";
 import { etiquetaClasses } from "@/lib/etiqueta-colors";
 import type { Etiqueta } from "@/lib/db/etiquetas";
 import type { OportunidadListItem } from "@/lib/db/oportunidades";
 import { OPP_COLUMNS } from "./columns";
 import { BulkRowCheckbox, BulkSelectAllCheckbox } from "@/components/bulk/selection-store";
+import { cargarMasOportunidadesAction, type PaginateParams } from "./paginate-action";
 
 export function OportunidadesTable({
-  rows,
-  etiquetasMap,
+  rows: initialRows,
+  etiquetasMap: initialEtiquetasMap,
   visibleCols,
+  paginate,
 }: {
   rows: OportunidadListItem[];
   etiquetasMap: Record<string, Etiqueta[]>;
   visibleCols: string[];
+  /** Si está presente, el infinite scroll dispara y trae más páginas con
+   *  estos params (sólo se setea cuando NO hay filtro avanzado client-side,
+   *  porque la paginación servidor no sabe aplicar rowMatches). */
+  paginate?: { initialCount: number; hasMore: boolean; params: PaginateParams };
 }) {
-  // Columnas a renderizar, en el orden del catálogo, filtradas por la selección.
   const cols = OPP_COLUMNS.filter((c) => visibleCols.includes(c.key));
   const colCount = cols.length + 1; // +1 por la columna de checkbox
+
+  const [rows, setRows] = useState(initialRows);
+  const [etiquetasMap, setEtiquetasMap] = useState(initialEtiquetasMap);
+  const [hasMore, setHasMore] = useState(paginate?.hasMore ?? false);
+  const [, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
+  const sentinelRef = useRef<HTMLTableRowElement | null>(null);
+
+  // Cuando el server side cambia (filtros, orden), re-sync.
+  useEffect(() => {
+    setRows(initialRows);
+    setEtiquetasMap(initialEtiquetasMap);
+    setHasMore(paginate?.hasMore ?? false);
+  }, [initialRows, initialEtiquetasMap, paginate?.hasMore]);
+
+  // IntersectionObserver: cuando el sentinel entra en viewport, pedimos la
+  // siguiente página. Sólo se monta si la paginación está habilitada.
+  useEffect(() => {
+    if (!paginate || !hasMore || !sentinelRef.current) return;
+    const el = sentinelRef.current;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        if (loading) return;
+        setLoading(true);
+        startTransition(async () => {
+          const res = await cargarMasOportunidadesAction(rows.length, paginate.params);
+          setRows((prev) => {
+            const known = new Set(prev.map((r) => r.id));
+            return [...prev, ...res.rows.filter((r) => !known.has(r.id))];
+          });
+          setEtiquetasMap((prev) => ({ ...prev, ...res.etiquetasMap }));
+          setHasMore(res.hasMore);
+          setLoading(false);
+        });
+      },
+      { rootMargin: "400px" }, // empezamos a pedir cuando faltan ~400px para llegar al final
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [paginate, hasMore, loading, rows.length]);
+
   const pageIds = rows.map((r) => r.id);
 
   return (
@@ -60,6 +108,13 @@ export function OportunidadesTable({
               </tr>
             );
           })}
+          {paginate && (hasMore || loading) && (
+            <tr ref={sentinelRef}>
+              <td colSpan={colCount} className="py-4 text-center text-xs text-gray-400">
+                {loading ? "Cargando más…" : "↓"}
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
