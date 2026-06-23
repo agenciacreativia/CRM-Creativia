@@ -310,6 +310,45 @@ export async function listPipelinesForPicker() {
   return data ?? [];
 }
 
+/**
+ * Cuenta el total de oportunidades que matchean los mismos filtros que
+ * listOportunidades (sin limit/offset). Lo usamos en el header de la tabla
+ * para mostrar el "total real" cuando hay infinite scroll y solo se cargó
+ * un batch parcial en cliente. Usa { count: 'exact', head: true } → es una
+ * sola query rápida que NO trae filas.
+ */
+export async function countOportunidades(opts: {
+  estado?: string;
+  pipeline_id?: string;
+  asignado_id?: string;
+  cierre_desde?: string;
+  cierre_hasta?: string;
+  valor_min?: number;
+  valor_max?: number;
+  q?: string;
+} = {}): Promise<number> {
+  const supabase = await createServerSupabase();
+  let query = supabase.from("oportunidad").select("id", { count: "exact", head: true });
+  if (opts.q) query = query.ilike("nombre", `%${opts.q}%`);
+  if (opts.estado && opts.estado !== "todos") {
+    query = query.eq("estado", opts.estado);
+  } else {
+    query = query.neq("estado", "eliminado");
+  }
+  if (opts.pipeline_id) query = query.eq("pipeline_id", opts.pipeline_id);
+  if (opts.asignado_id) {
+    if (opts.asignado_id === "_unassigned") query = query.is("asignado_id", null);
+    else query = query.eq("asignado_id", opts.asignado_id);
+  }
+  if (opts.cierre_desde) query = query.gte("fecha_esperada_cierre", opts.cierre_desde);
+  if (opts.cierre_hasta) query = query.lte("fecha_esperada_cierre", opts.cierre_hasta);
+  if (opts.valor_min != null && Number.isFinite(opts.valor_min)) query = query.gte("valor", opts.valor_min);
+  if (opts.valor_max != null && Number.isFinite(opts.valor_max)) query = query.lte("valor", opts.valor_max);
+  const { count, error } = await query;
+  if (error) return 0;
+  return count ?? 0;
+}
+
 export async function listOportunidades(opts: {
   q?: string;
   estado?: string;

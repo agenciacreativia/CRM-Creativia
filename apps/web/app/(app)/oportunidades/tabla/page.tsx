@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listOportunidades } from "@/lib/db/oportunidades";
+import { listOportunidades, countOportunidades } from "@/lib/db/oportunidades";
 import { getSessionUser } from "@/lib/auth";
 import { listEtiquetas, etiquetasPorEntidad } from "@/lib/db/etiquetas";
 import { listVistas } from "@/lib/db/vistas";
@@ -53,17 +53,19 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
   // arrancamos con 100 y dejamos que el infinite scroll del cliente vaya
   // pidiendo más con `cargarMasOportunidadesAction`.
   const INITIAL_PAGE = 100;
-  const [rowsRaw, filterModules] = await Promise.all([
-    listOportunidades({
-      estado: params.estado,
-      pipeline_id: params.pipeline,
-      asignado_id: asignado,
-      cierre_desde: params.cierre_desde,
-      cierre_hasta: params.cierre_hasta,
-      valor_min: Number.isFinite(valorMin as number) ? valorMin : undefined,
-      valor_max: Number.isFinite(valorMax as number) ? valorMax : undefined,
-      limit: hasAdvanced ? 2000 : INITIAL_PAGE,
-    }),
+  // Filtros aplicados a la query (los mismos en listado y en count).
+  const filtros = {
+    estado: params.estado,
+    pipeline_id: params.pipeline,
+    asignado_id: asignado,
+    cierre_desde: params.cierre_desde,
+    cierre_hasta: params.cierre_hasta,
+    valor_min: Number.isFinite(valorMin as number) ? valorMin : undefined,
+    valor_max: Number.isFinite(valorMax as number) ? valorMax : undefined,
+  };
+  const [rowsRaw, totalCount, filterModules] = await Promise.all([
+    listOportunidades({ ...filtros, limit: hasAdvanced ? 2000 : INITIAL_PAGE }),
+    countOportunidades(filtros),
     getListFilterConfig("oportunidad"),
   ]);
   // Campos del módulo ancla (oportunidad) para ordenar/ListOrder; el mapa por
@@ -114,7 +116,17 @@ export default async function OportunidadesPage({ searchParams }: { searchParams
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="whitespace-nowrap text-xs text-gray-500">
-            {rows.length} resultados · {formatCurrency(totalValor, monedaPrincipal)} activos
+            {/* Total absoluto del query (count exact), no del batch cargado.
+             *  Si hay filtros avanzados client-side, el conteo final puede ser
+             *  menor: por eso mostramos el applied/total en ese caso. */}
+            {hasAdvanced && rows.length !== rowsRaw.length
+              ? `${rows.length} de ${totalCount} resultados`
+              : `${totalCount} resultados`}
+            {" · "}
+            {formatCurrency(totalValor, monedaPrincipal)} activos
+            {!hasAdvanced && rows.length < totalCount && (
+              <span className="text-gray-400"> (suma sobre {rows.length} cargados)</span>
+            )}
           </p>
           <ListOrder fields={filterFields} />
           <ColumnPicker visibleCols={visibleCols} />
