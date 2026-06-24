@@ -283,7 +283,7 @@ export default function LandingPage() {
           {/* DERECHA — mockup del producto (MacBook + iPhone) */}
           <div className="relative lg:-mr-6">
             <Image
-              src="/hero-mockup.png"
+              src="/landing/images/mockup-laptop-phone.png"
               alt="Turistea CRM en MacBook y iPhone — tablero de oportunidades"
               width={1448}
               height={1086}
