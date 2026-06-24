@@ -10,6 +10,12 @@ export const metadata: Metadata = {
     "Centraliza clientes, cotizaciones, salidas y comisiones en un solo lugar. Vende más, pierde menos oportunidades y haz crecer tu agencia de viajes con Turistea CRM.",
 };
 
+// Importante: dynamic porque la decisión "landing vs redirect" depende
+// del tenant detectado desde headers (subdominio). Sin esto Next.js puede
+// pre-renderizar la rama equivocada como SSG.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function RootPage() {
   const tenant = await getTenantFromHeaders();
 

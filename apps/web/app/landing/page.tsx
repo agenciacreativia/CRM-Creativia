@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // /landing renderiza la misma landing que / para evitar redirect loops
 // durante deploys parciales. La URL canonical via metadata sigue siendo /
 // así que SEO no penaliza el contenido duplicado.
