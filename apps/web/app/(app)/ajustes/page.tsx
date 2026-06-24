@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   ChevronRight, Package2, Building2, Zap, ListOrdered, Globe, Store, CreditCard, Gem, MapPinned,
   Plug, ClipboardList, GitMerge, Percent, MessageCircle, UserCog, Mail, Settings as SettingsIcon,
-  Upload, Download, GitBranch, Tags, XCircle,
+  Upload, Download, GitBranch, Tags, XCircle, Gauge,
 } from "lucide-react";
 import { getCuentaGoogle } from "@/lib/db/google";
 import { listPlantillas } from "@/lib/db/plantillas";
@@ -148,6 +148,7 @@ export default async function AjustesPage({ searchParams }: { searchParams: Sear
             <Card href="/ajustes/agencias" icon={Building2} title="Agencias" sub="Alta, plan y prueba gratuita" accent />
             <Card href="/ajustes/planes" icon={Package2} title="Planes y licencias" sub="Módulos, acciones y herramientas" accent />
             <Card href="/ajustes/facturacion" icon={CreditCard} title="Facturación" sub="Suscripciones · Stripe" accent />
+            <Card href="/ajustes/limites" icon={Gauge} title="Límites y capacidad" sub="Tier actual, uso, salud y recomendación de upgrade" accent />
           </div>
         </>
       )}
