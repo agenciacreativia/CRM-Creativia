@@ -1,8 +1,16 @@
-import { permanentRedirect } from "next/navigation";
+import type { Metadata } from "next";
+import LandingContent from "@/components/landing/landing-content";
 
-// La landing ahora vive en la raíz "/".
-// Esta ruta queda como 308 permanent redirect para preservar SEO y
-// links viejos que aún apunten a /landing.
-export default function LegacyLanding() {
-  permanentRedirect("/");
+export const metadata: Metadata = {
+  title: "Turistea CRM — El CRM hecho para agencias de viajes",
+  description:
+    "Centraliza clientes, cotizaciones, salidas y comisiones en un solo lugar. Vende más, pierde menos oportunidades y haz crecer tu agencia de viajes con Turistea CRM.",
+  alternates: { canonical: "/" },
+};
+
+// /landing renderiza la misma landing que / para evitar redirect loops
+// durante deploys parciales. La URL canonical via metadata sigue siendo /
+// así que SEO no penaliza el contenido duplicado.
+export default function LandingPage() {
+  return <LandingContent />;
 }
