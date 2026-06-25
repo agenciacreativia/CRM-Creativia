@@ -2,9 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  BarChart3,
-  Building2,
-  CalendarClock,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -13,15 +10,12 @@ import {
   Linkedin,
   Mail,
   MapPin,
-  PiggyBank,
   Plane,
-  ShieldCheck,
-  Target,
-  Users,
-  Workflow,
   X,
 } from "lucide-react";
 import { Hero } from "./hero";
+import { FeaturesGrid } from "./features-grid";
+import { Pricing } from "./pricing";
 
 /* ---------------- DATA ---------------- */
 
@@ -39,79 +33,11 @@ const DESPUES = [
   { title: "Seguimiento ordenado", text: "Actividades, notas y comunicaciones en contexto." },
 ];
 
-const FEATURES = [
-  { icon: Workflow, title: "Pipeline visual", text: "Gestioná oportunidades en un embudo claro con hitos y alertas." },
-  { icon: Users, title: "Clientes 360°", text: "Historial completo de contacto, viajes, pagos y preferencias." },
-  { icon: CalendarClock, title: "Salidas automáticas", text: "Creá salidas con cupos, precios y estados en segundos." },
-  { icon: Plane, title: "Maestros turismo", text: "Catálogo de destinos, proveedores y productos siempre actualizado." },
-  { icon: PiggyBank, title: "Comisiones", text: "Calculá y liquidá comisiones de vendedores y aliados fácilmente." },
-  { icon: Target, title: "Segmentación RFM", text: "Clasificá clientes por Recencia, Frecuencia y Monto." },
-  { icon: BarChart3, title: "Dashboards", text: "Indicadores y gráficos en tiempo real para decidir mejor." },
-  { icon: Building2, title: "Multi-sucursal", text: "Operá varias oficinas y equipos desde una sola cuenta." },
-  { icon: ShieldCheck, title: "Datos seguros", text: "Información respaldada y protegida con altos estándares." },
-];
-
 const OPERATION_BULLETS = [
   "Pipeline por etapas con alertas",
   "KPIs de ventas y cotizaciones",
   "Top destinos y productos",
   "Actividades y tareas del equipo",
-];
-
-const PLANS = [
-  {
-    name: "Free",
-    tagline: "Para empezar a organizarte",
-    price: "$0",
-    priceUnit: "COP/mes",
-    priceNote: "Siempre gratis",
-    cta: "Comenzar gratis",
-    ctaStyle: "outline" as const,
-    highlight: false,
-    features: [
-      "Hasta 2 usuarios",
-      "Hasta 100 contactos",
-      "Pipeline básico",
-      "Cotizaciones ilimitadas",
-      "Soporte por email",
-    ],
-  },
-  {
-    name: "Pro",
-    tagline: "Para agencias en crecimiento",
-    badge: "Más popular",
-    price: "$159.000",
-    priceUnit: "COP/mes",
-    priceNote: "por usuario",
-    cta: "Probar gratis 14 días",
-    ctaStyle: "lime" as const,
-    highlight: true,
-    features: [
-      "Usuarios ilimitados",
-      "Contactos ilimitados",
-      "Pipeline avanzado con alertas",
-      "Salidas, maestros y comisiones",
-      "Dashboards y reportes",
-      "Soporte prioritario",
-    ],
-  },
-  {
-    name: "Enterprise",
-    tagline: "Para agencias consolidadas",
-    price: "A medida",
-    priceUnit: "",
-    priceNote: "Hablemos de tu operación",
-    cta: "Contactar ventas",
-    ctaStyle: "outline" as const,
-    highlight: false,
-    features: [
-      "Todo lo del plan Pro",
-      "Multi-sucursal y roles avanzados",
-      "Integraciones y API",
-      "Onboarding dedicado",
-      "Soporte dedicado",
-    ],
-  },
 ];
 
 const FAQS = [
@@ -225,33 +151,6 @@ function BeforeAfter() {
   );
 }
 
-function FeaturesGrid() {
-  return (
-    <section className="bg-white py-20">
-      <div className="mx-auto max-w-6xl px-5">
-        <h2 className="text-center text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl">
-          Todo lo que tu agencia necesita, en un solo lugar
-        </h2>
-
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-2xl border border-black/5 bg-white p-6 transition hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(31,50,67,0.08)]"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#272255]/5 text-[#272255]">
-                <f.icon className="h-5 w-5" strokeWidth={1.75} />
-              </div>
-              <h3 className="mt-4 text-base font-bold text-[#120b40]">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#47464f]">{f.text}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function OperationSection() {
   return (
     <section className="bg-[#f7f9ff] py-20">
@@ -281,87 +180,6 @@ function OperationSection() {
             height={908}
             className="h-auto w-full"
           />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Pricing() {
-  return (
-    <section id="precios" className="bg-white py-20">
-      <div className="mx-auto max-w-6xl px-5">
-        <h2 className="text-center text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl">
-          Planes simples para agencias que quieren crecer
-        </h2>
-
-        <div className="mt-14 grid items-start gap-6 lg:grid-cols-3">
-          {PLANS.map((p) => (
-            <div
-              key={p.name}
-              className={
-                p.highlight
-                  ? "relative rounded-3xl bg-[#272255] p-8 text-white shadow-[0_24px_64px_rgba(39,34,85,0.25)] lg:-mt-4 lg:scale-[1.03]"
-                  : "relative rounded-3xl border border-black/8 bg-white p-8"
-              }
-            >
-              {p.badge && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#aaf52b] px-4 py-1 text-xs font-bold text-[#120b40]">
-                  {p.badge}
-                </span>
-              )}
-
-              <h3 className={`text-xl font-bold ${p.highlight ? "text-white" : "text-[#120b40]"}`}>
-                {p.name}
-              </h3>
-              <p className={`mt-1 text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
-                {p.tagline}
-              </p>
-
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className={`text-4xl font-extrabold ${p.highlight ? "text-white" : "text-[#120b40]"}`}>
-                  {p.price}
-                </span>
-                {p.priceUnit && (
-                  <span className={`text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
-                    {p.priceUnit}
-                  </span>
-                )}
-              </div>
-              <p className={`mt-1 text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
-                {p.priceNote}
-              </p>
-
-              <ul className="mt-7 space-y-3">
-                {p.features.map((feat) => (
-                  <li
-                    key={feat}
-                    className={`flex gap-2.5 text-sm ${p.highlight ? "text-white/90" : "text-[#47464f]"}`}
-                  >
-                    <Check
-                      className={`mt-0.5 h-4 w-4 flex-shrink-0 ${p.highlight ? "text-[#aaf52b]" : "text-[#446900]"}`}
-                      strokeWidth={3}
-                    />
-                    <span>{feat}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href={p.ctaStyle === "outline" ? "/login" : "/login"}
-                className={
-                  "mt-8 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition hover:-translate-y-0.5 " +
-                  (p.ctaStyle === "lime"
-                    ? "bg-[#aaf52b] text-[#120b40] hover:bg-[#9be022]"
-                    : p.highlight
-                    ? "border border-white/40 text-white hover:bg-white/10"
-                    : "border border-[#272255]/20 text-[#272255] hover:border-[#272255]")
-                }
-              >
-                {p.cta}
-              </Link>
-            </div>
-          ))}
         </div>
       </div>
     </section>
