@@ -18,6 +18,7 @@ import {
 import type { KanbanColumn, KanbanCard } from "@/lib/db/oportunidades";
 import { moveOportunidadAction } from "./actions";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 
 // Left-edge stripe colors. Driven by `dias_en_etapa` vs `dias_maximo_alerta`
 // (see lib/db/oportunidades.ts): red = overdue, yellow = approaching the
@@ -58,7 +59,7 @@ export function KanbanBoard({
   const [board, setBoard] = useState(initialBoard);
   const [activeCard, setActiveCard] = useState<KanbanCard | null>(null);
   const [, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
   // El término de búsqueda vive ahora en la URL (?q=) — escrito por el QuickSearch
   // del header de la página. Eliminamos el input local y leemos de useSearchParams
   // para reaccionar al cambio sin necesidad de prop drilling.
@@ -107,7 +108,7 @@ export function KanbanBoard({
     // y fallaría con error de FK.
     const targetExists = board.some((col) => col.etapas.some((s) => s.id === newStageId));
     if (!targetExists) {
-      setError("Esa etapa no pertenece al embudo actual");
+      toast.warning("Esa etapa no pertenece al embudo actual");
       return;
     }
 
@@ -135,7 +136,7 @@ export function KanbanBoard({
     startTransition(async () => {
       const res = await moveOportunidadAction({ oportunidad_id: cardId, etapa_id: newStageId });
       if (!res.ok) {
-        setError(res.error);
+        toast.error("No se pudo mover la oportunidad", res.error ?? undefined);
         setBoard(snapshot);
       }
     });
@@ -168,12 +169,6 @@ export function KanbanBoard({
 
   return (
     <>
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-status-danger mb-4">
-          {error}
-        </div>
-      )}
-
       {/* El input de búsqueda vive en el header de la page (QuickSearch).
           Acá solo mostramos el contador de matches cuando hay query activa. */}
       {q && (
@@ -192,8 +187,21 @@ export function KanbanBoard({
             <Column key={stage.id} stage={stage} colorIndex={idx} />
           ))}
         </div>
-        <DragOverlay>
-          {activeCard ? <Card card={activeCard} isDragging /> : null}
+        {/* dropAnimation con duración cero y zIndex alto evita el snap-back
+            visible cuando el handler ya empezó la transición optimista. La
+            "física" del drag (rotate + scale) se aplica al wrapper motion
+            sobre el clon que renderiza el overlay. */}
+        <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.21, 0.47, 0.32, 0.98)" }}>
+          {activeCard ? (
+            <motion.div
+              initial={{ scale: 1, rotate: 0 }}
+              animate={{ scale: 1.03, rotate: 1.5 }}
+              transition={{ type: "spring", stiffness: 420, damping: 24, mass: 0.5 }}
+              style={{ cursor: "grabbing" }}
+            >
+              <Card card={activeCard} isDragging />
+            </motion.div>
+          ) : null}
         </DragOverlay>
       </DndContext>
     </>

@@ -168,27 +168,31 @@ export function AppShell({ user, tenant, permisos, esAdmin, tools, notificacione
 
   return (
     <div className="flex min-h-screen">
-      {/* Backdrop del drawer móvil — solo visible bajo md, cubre la pantalla. */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden
-        />
-      )}
+      {/* Backdrop del drawer móvil — fade-in suave + tap para cerrar. */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/50 transition-opacity [transition-duration:240ms] md:hidden",
+          mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+        )}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden
+      />
 
       {/* ---------------- LEFT SIDEBAR ----------------
           - md+: sticky lateral (60px collapsed, 240px expanded)
-          - <md: drawer overlay slide-in desde la izquierda, abre/cierra con
-            el hamburguesa del topbar. Ancho fijo más cómodo en celu. */}
+          - <md: drawer overlay slide-in desde la izquierda. La transición
+            usa cubic-bezier suave (motion EASE) en lugar del default linear
+            para que el drawer se sienta natural al abrir/cerrar. */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-screen shrink-0 flex-col surface-sidebar transition-all duration-200",
-          "md:sticky md:top-0 md:translate-x-0 md:transition-[width]",
+          "fixed inset-y-0 left-0 z-50 flex h-screen shrink-0 flex-col surface-sidebar",
+          "transition-[transform,width] [transition-duration:240ms] motion-reduce:transition-none",
+          "md:sticky md:top-0 md:translate-x-0",
           collapsed ? "md:w-16" : "md:w-60",
           // Mobile width + slide
           mobileOpen ? "w-64 translate-x-0 shadow-2xl" : "w-64 -translate-x-full md:translate-x-0",
         )}
+        style={{ transitionTimingFunction: "cubic-bezier(0.21, 0.47, 0.32, 0.98)" }}
       >
         {/* Brand + collapse toggle */}
         <div
