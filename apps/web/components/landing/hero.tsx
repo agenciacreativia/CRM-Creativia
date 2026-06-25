@@ -120,30 +120,52 @@ export function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative isolate overflow-hidden bg-[#f5f6f8] pb-32 pt-12 lg:pb-40"
+      className="relative isolate overflow-hidden bg-[#f0f1f2] pb-32 pt-12 lg:pb-40"
     >
-      {/* Imagen de fondo a la derecha — fade hacia la izquierda con mask */}
+      {/* Imagen como FONDO del hero: ocupa la mitad derecha y se difumina
+          hacia la izquierda con un gradient overlay sólido (más confiable
+          que mask-image cross-browser). Sin rounded, sin shadow → no parece
+          un recuadro, parece pintada en la pared del hero. */}
       <motion.div
         aria-hidden
         variants={bgIn}
         initial="hidden"
         animate="show"
-        style={{
-          y: photoY,
-          maskImage:
-            "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 18%, rgba(0,0,0,0.85) 38%, black 55%)",
-          WebkitMaskImage:
-            "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 18%, rgba(0,0,0,0.85) 38%, black 55%)",
-        }}
-        className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[78%] sm:w-[72%] lg:w-[66%]"
+        style={{ y: photoY }}
+        className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[88%] sm:w-[78%] lg:w-[72%]"
       >
         <Image
           src="/landing-v2/images/hero-person.png"
           alt=""
           fill
           priority
-          sizes="(max-width: 1024px) 72vw, 66vw"
-          className="object-cover object-left-bottom"
+          sizes="(max-width: 1024px) 78vw, 72vw"
+          className="object-cover object-right-bottom"
+        />
+        {/* Overlay gradient: cubre el lado izquierdo de la imagen con el mismo
+            color del hero, para fundirla con el fondo sin borde visible. */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to right, #f0f1f2 0%, #f0f1f2 22%, rgba(240,241,242,0.92) 32%, rgba(240,241,242,0.55) 44%, rgba(240,241,242,0) 60%)",
+          }}
+        />
+        {/* Overlay vertical en el borde superior para fundir con la sticky
+            navbar y el borde inferior para fundir con la siguiente sección */}
+        <div
+          className="absolute inset-x-0 top-0 h-24"
+          style={{
+            background:
+              "linear-gradient(to bottom, #f0f1f2 0%, rgba(240,241,242,0) 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-24"
+          style={{
+            background:
+              "linear-gradient(to top, #f0f1f2 0%, rgba(240,241,242,0) 100%)",
+          }}
         />
       </motion.div>
 
