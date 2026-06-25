@@ -3,13 +3,10 @@ import Link from "next/link";
 import {
   ChevronDown,
   Facebook,
-  HeadphonesIcon,
   Instagram,
   Linkedin,
   Mail,
   MapPin,
-  RefreshCw,
-  Trophy,
   Twitter,
   Youtube,
 } from "lucide-react";
@@ -17,8 +14,15 @@ import { Hero } from "./hero";
 import { BeforeAfter } from "./before-after";
 import { FeaturesGrid } from "./features-grid";
 import { OperationSection } from "./operation-section";
+import { Testimonials } from "./testimonials";
 import { Pricing } from "./pricing";
 import { FinalCTA } from "./final-cta";
+
+/* =========================================================================
+   FLAGS DE PLACEHOLDERS (datos ficticios pendientes de respaldar).
+   Cuando tengas data real → cambiar a false para ocultar el bloque.
+   ========================================================================= */
+const SHOW_PLACEHOLDER_TRUSTBAR_STATS = true; // "300+ agencias", "$2.4M", "99% satisfacción"
 
 /* ------------------- DATA ------------------- */
 
@@ -88,30 +92,45 @@ function NavBar() {
 
 /* ------------------- TRUST BAR ------------------- */
 /*
-  Versión honesta: sólo lo que podemos respaldar hoy. Quitamos
-  "300+ agencias / $2.4M / 99% satisfacción" hasta tener data verificable.
+  Cuando SHOW_PLACEHOLDER_TRUSTBAR_STATS = true mostramos 6 stats (incluye
+  placeholders "300+ agencias", "$2.4M", "99% satisfacción"). Cuando = false
+  caemos a la versión honesta con sólo 3 items verificables.
 */
 function TrustBar() {
-  const ITEMS = [
-    { icon: Trophy, title: "CRM hecho", sub: "para agencias de viajes" },
-    { icon: RefreshCw, title: "Actualizaciones", sub: "constantes" },
-    { icon: HeadphonesIcon, title: "Soporte en español", sub: "24/7" },
+  const VERIFICABLES = [
+    { title: "CRM hecho", sub: "para agencias de viajes" },
+    { title: "Actualizaciones", sub: "constantes" },
+    { title: "Soporte en español", sub: "24/7" },
   ];
+  const PLACEHOLDERS = [
+    { title: "300+", sub: "agencias ya confían en Turistea", placeholder: true },
+    { title: "$2.4M+", sub: "dólares en ventas gestionadas cada mes", placeholder: true },
+    { title: "99%", sub: "satisfacción del cliente", placeholder: true },
+    { title: "#1", sub: "CRM para agencias de viajes" },
+    { title: "Actualizaciones", sub: "constantes" },
+    { title: "Soporte", sub: "en español 24/7" },
+  ];
+  const ITEMS = SHOW_PLACEHOLDER_TRUSTBAR_STATS ? PLACEHOLDERS : VERIFICABLES;
+  const cols = SHOW_PLACEHOLDER_TRUSTBAR_STATS ? "sm:grid-cols-3 lg:grid-cols-6" : "sm:grid-cols-3";
+
   return (
     <section className="border-y border-black/5 bg-white py-8">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-5 sm:grid-cols-3">
+      <div className={`mx-auto grid max-w-6xl grid-cols-2 gap-6 px-5 ${cols}`}>
         {ITEMS.map((it) => (
-          <div key={it.title} className="flex items-center justify-center gap-3 text-center sm:text-left">
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#aaf52b]/20 text-[#446900]">
-              <it.icon className="h-5 w-5" />
-            </span>
+          <div key={`${it.title}-${it.sub}`} className="flex items-center justify-center gap-2 text-center sm:gap-3">
+            <span className="hidden h-2 w-2 flex-shrink-0 rounded-full bg-[#aaf52b] sm:inline-block" aria-hidden />
             <div>
-              <p className="text-sm font-bold text-[#120b40]">{it.title}</p>
-              <p className="text-xs text-[#47464f]">{it.sub}</p>
+              <p className="text-lg font-extrabold text-[#120b40]">{it.title}</p>
+              <p className="text-[11px] leading-tight text-[#47464f]">{it.sub}</p>
             </div>
           </div>
         ))}
       </div>
+      {SHOW_PLACEHOLDER_TRUSTBAR_STATS && (
+        <p className="mx-auto mt-4 max-w-6xl px-5 text-center text-[10px] uppercase tracking-wider text-[#787680]/60">
+          * Cifras de muestra — pendientes de validar con datos reales
+        </p>
+      )}
     </section>
   );
 }
@@ -250,6 +269,7 @@ export default function LandingContent() {
       <BeforeAfter />
       <FeaturesGrid />
       <OperationSection />
+      <Testimonials />
       <Pricing />
       <FAQ />
       <FinalCTA />

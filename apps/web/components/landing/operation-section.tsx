@@ -4,6 +4,9 @@ import Image from "next/image";
 import { motion, type Variants } from "motion/react";
 import { Brain, LineChart, ShieldCheck, Sparkles } from "lucide-react";
 
+// Cuando tengamos número real de agencias activas, cambiar a false o ajustar.
+const SHOW_PLACEHOLDER_AGENCIES_STAT = true;
+
 const BULLETS = [
   {
     icon: LineChart,
@@ -104,6 +107,21 @@ export function OperationSection() {
               </motion.li>
             ))}
           </motion.ul>
+
+          {SHOW_PLACEHOLDER_AGENCIES_STAT && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.5, ease: EASE } }}
+              viewport={{ once: true }}
+              className="mt-8 flex items-baseline gap-3"
+            >
+              <span className="text-5xl font-extrabold text-[#aaf52b]">300+</span>
+              <span className="text-sm text-[#47464f]">
+                agencias<br />
+                y creciendo cada día más
+              </span>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </section>
