@@ -8,7 +8,6 @@ import {
   ArrowRight,
   CheckCircle2,
   ClipboardList,
-  DollarSign,
   Plane,
   Sparkles,
   TrendingUp,
@@ -33,16 +32,6 @@ const bgIn: Variants = {
     opacity: 1,
     scale: 1,
     transition: { duration: 1.2, ease: EASE },
-  },
-};
-
-const mockupIn: Variants = {
-  hidden: { opacity: 0, y: 40, scale: 0.95 },
-  show: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.95, delay: 0.5, ease: EASE },
   },
 };
 
@@ -115,7 +104,6 @@ export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollY } = useScroll();
   const photoY = useTransform(scrollY, [0, 600], [0, -25]);
-  const mockupY = useTransform(scrollY, [0, 600], [0, -55]);
 
   return (
     <section
@@ -332,58 +320,8 @@ export function Hero() {
             }}
           />
 
-          {/* Mockup centrado abajo */}
-          <motion.div
-            variants={mockupIn}
-            initial="hidden"
-            animate="show"
-            style={{ y: mockupY }}
-            className="absolute inset-x-0 bottom-4 z-20 mx-auto w-[110%] -translate-x-[5%]"
-          >
-            <Image
-              src="/landing-v2/images/mockup-laptop-mobile.png"
-              alt="Turistea CRM en laptop y mobile"
-              width={1448}
-              height={900}
-              priority
-              className="h-auto w-full drop-shadow-[0_24px_48px_rgba(31,50,67,0.18)]"
-            />
-          </motion.div>
-
-          {/* KPI INGRESOS — esquina inf. derecha, sobre el mockup */}
-          <KpiFloating
-            label="Ingresos (mes)"
-            value="$98,540"
-            trend="+22%"
-            icon={DollarSign}
-            iconBg="bg-[#aaf52b]/30"
-            className="bottom-2 right-0 z-30 sm:right-4"
-            entryDelay={0.48}
-            anim={{
-              duration: 5.3,
-              delay: 1.7,
-              yKey: [-1, -6, -2, -8, -1],
-              xKey: [0, 1, -2, 0.5, 0],
-              rotKey: [0, -0.5, 0.8, -0.3, 0],
-            }}
-          />
         </div>
       </div>
-
-      {/* Banner IA centrado al pie */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.7, delay: 1.4, ease: EASE } }}
-        className="relative z-30 mx-auto mt-8 flex w-fit max-w-2xl items-center gap-3 rounded-2xl border border-[#272255]/15 bg-[#272255] px-5 py-3 text-white shadow-[0_16px_40px_rgba(31,50,67,0.18)]"
-      >
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#aaf52b]">
-          <Sparkles className="h-4 w-4 text-[#120b40]" />
-        </div>
-        <p className="text-sm font-semibold">
-          <span className="font-bold uppercase tracking-wider text-[#aaf52b]">IA</span>{" "}
-          Recomienda el mejor siguiente paso para cada cliente.
-        </p>
-      </motion.div>
     </section>
   );
 }
