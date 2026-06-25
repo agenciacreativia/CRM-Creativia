@@ -85,10 +85,14 @@ export function OportunidadesTable({
           {rows.length === 0 && (
             <tr><td colSpan={colCount} className="py-8 text-center text-gray-500">No hay oportunidades con esos filtros.</td></tr>
           )}
-          {rows.map((o) => {
+          {rows.map((o, i) => {
             const tags = etiquetasMap[o.id] ?? [];
             return (
-              <tr key={o.id} className="border-t border-gray-100 hover:bg-gray-50">
+              <tr
+                key={o.id}
+                style={{ "--row-index": i } as React.CSSProperties}
+                className="tr-fade-in border-t border-gray-100 hover:bg-gray-50"
+              >
                 <td className="px-3 py-2.5">
                   <BulkRowCheckbox id={o.id} scope="oportunidades" />
                 </td>

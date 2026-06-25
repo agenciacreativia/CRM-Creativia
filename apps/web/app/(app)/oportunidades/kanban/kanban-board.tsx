@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { motion } from "motion/react";
 import {
   DndContext,
   type DragEndEvent,
@@ -269,6 +270,11 @@ function initials(name?: string | null) {
 
 function Card({ card, isDragging }: { card: KanbanCard; isDragging?: boolean }) {
   return (
+    <motion.div
+      whileHover={isDragging ? undefined : { y: -3, scale: 1.005 }}
+      whileTap={isDragging ? undefined : { scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 380, damping: 26, mass: 0.5 }}
+    >
     <Link
       href={`/oportunidades/${card.id}`}
       onClick={(e) => isDragging && e.preventDefault()}
@@ -282,7 +288,7 @@ function Card({ card, isDragging }: { card: KanbanCard; isDragging?: boolean }) 
       className={cn(
         // Lote UX: indicamos la urgencia con un borde izquierdo de color en
         // lugar del badge de texto ("URGENTE"/"ALERTA"). El tooltip explica.
-        "relative block overflow-hidden rounded-lg border border-gray-200 bg-white p-3 transition-all hover:-translate-y-[1px] hover:border-gray-300 hover:shadow-lift",
+        "relative block overflow-hidden rounded-lg border border-gray-200 bg-white p-3 transition-shadow hover:border-gray-300 hover:shadow-lift",
         URGENT_BORDER[card.color],
         isDragging && "ring-2 ring-brand-navy cursor-grabbing shadow-elevated",
       )}
@@ -313,5 +319,6 @@ function Card({ card, isDragging }: { card: KanbanCard; isDragging?: boolean }) 
         </div>
       </div>
     </Link>
+    </motion.div>
   );
 }

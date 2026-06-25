@@ -131,8 +131,12 @@ export default async function EmpresasPage({ searchParams }: { searchParams: Sea
                 </td>
               </tr>
             )}
-            {rows.map((e) => (
-              <tr key={e.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50`}>
+            {rows.map((e, i) => (
+              <tr
+                key={e.id}
+                style={{ "--row-index": i } as React.CSSProperties}
+                className={`tr-fade-in border-t border-gray-100 transition-colors hover:bg-gray-50`}
+              >
                 {puedeEditarMasivo && (
                   <Td className="text-center"><BulkRowCheckbox id={e.id} scope="empresas" /></Td>
                 )}

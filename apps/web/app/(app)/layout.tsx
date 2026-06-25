@@ -8,6 +8,7 @@ import { listAgencias } from "@/lib/db/agencias";
 import { AppShell } from "@/components/shell/app-shell";
 import { ListaEsperaBanner } from "@/components/lista-espera-banner";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
+import { ToastProvider } from "@/components/ui/toast";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [user, tenant] = await Promise.all([
@@ -37,18 +38,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     : [];
 
   return (
-    <AppShell
-      user={{ id: user.id, nombre: user.nombre, email: user.email, rol: user.rol }}
-      tenant={{ nombre_empresa: tenant.nombre_empresa }}
-      permisos={permisos}
-      esAdmin={es_admin}
-      tools={tools}
-      notificaciones={notificaciones}
-      agencias={agencias}
-    >
-      <ImpersonationBanner />
-      <ListaEsperaBanner />
-      {children}
-    </AppShell>
+    <ToastProvider>
+      <AppShell
+        user={{ id: user.id, nombre: user.nombre, email: user.email, rol: user.rol }}
+        tenant={{ nombre_empresa: tenant.nombre_empresa }}
+        permisos={permisos}
+        esAdmin={es_admin}
+        tools={tools}
+        notificaciones={notificaciones}
+        agencias={agencias}
+      >
+        <ImpersonationBanner />
+        <ListaEsperaBanner />
+        {children}
+      </AppShell>
+    </ToastProvider>
   );
 }

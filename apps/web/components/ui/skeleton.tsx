@@ -3,10 +3,20 @@
  * ruta mientras Next resuelve los datos del Server Component (regla UX
  * "loading-states": dar feedback en operaciones > 300ms en vez de pantalla
  * congelada). La animación respeta `prefers-reduced-motion` (corte global).
+ *
+ * Variante shimmer: gradient diagonal que se desliza, da feedback de "está
+ * cargando" más rico que un pulse plano. CSS puro — sin JS extra.
  */
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded bg-gray-200/70 ${className}`} aria-hidden />;
+  return (
+    <div
+      className={`relative isolate overflow-hidden rounded bg-gray-200/70 ${className}`}
+      aria-hidden
+    >
+      <span className="skeleton-shimmer" />
+    </div>
+  );
 }
 
 /** Skeleton genérico para vistas de lista (toolbar + tabla). */

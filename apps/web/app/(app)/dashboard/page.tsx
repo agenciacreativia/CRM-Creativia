@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getTenantFromHeaders } from "@/lib/tenant";
 import { loadDashboard } from "@/lib/db/dashboard";
 import { Greeting } from "./greeting";
+import { KpiCard } from "@/components/ui/kpi-card";
 import {
   OrigenChart,
   EtapaChart,
@@ -45,20 +46,24 @@ export default async function DashboardPage() {
       {/* ---------- KPIs ---------- */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <KpiCard
+          index={0}
           label="Valor en embudo"
           value={fmtCurrency(dash.kpis.valor_pipeline, dash.kpis.moneda_pipeline)}
         />
         <KpiCard
+          index={1}
           label="Oportunidades activas"
           value={dash.kpis.oportunidades_activas.toString()}
           href="/oportunidades/tabla?estado=activo"
         />
         <KpiCard
+          index={2}
           label="Tasa de cierre"
           value={dash.kpis.win_rate != null ? `${dash.kpis.win_rate}%` : "—"}
           hint={dash.kpis.win_rate == null ? "Sin oportunidades cerradas" : "ganadas / decididas"}
         />
         <KpiCard
+          index={3}
           label="Actividades pendientes"
           value={dash.kpis.actividades_pendientes.toString()}
           href="#actividades-pendientes"
@@ -256,29 +261,6 @@ export default async function DashboardPage() {
       )}
     </div>
   );
-}
-
-function KpiCard({
-  label,
-  value,
-  hint,
-  href,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  href?: string;
-}) {
-  const inner = (
-    <>
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>
-      <p className="mt-3 text-4xl font-bold tracking-tight text-gray-900">{value}</p>
-      {hint && <p className="mt-2 text-xs text-gray-500">{hint}</p>}
-    </>
-  );
-  const base = "block rounded-lg border border-gray-200 bg-white p-5 transition hover:-translate-y-[2px] hover:border-gray-300 hover:shadow-lift";
-  if (href) return <Link href={href} className={base + " cursor-pointer"}>{inner}</Link>;
-  return <div className={base}>{inner}</div>;
 }
 
 function ForecastKpi({ label, value, sub }: { label: string; value: string; sub: string }) {

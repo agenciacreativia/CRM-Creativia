@@ -109,8 +109,12 @@ export default async function ContactosPage({ searchParams }: { searchParams: Se
                 </td>
               </tr>
             )}
-            {rows.map((c) => (
-              <tr key={c.id} className={`border-t border-gray-100 transition-colors hover:bg-gray-50`}>
+            {rows.map((c, i) => (
+              <tr
+                key={c.id}
+                style={{ "--row-index": i } as React.CSSProperties}
+                className={`tr-fade-in border-t border-gray-100 transition-colors hover:bg-gray-50`}
+              >
                 {puedeEditarMasivo && (
                   <Td className="text-center"><BulkRowCheckbox id={c.id} scope="contactos" /></Td>
                 )}
