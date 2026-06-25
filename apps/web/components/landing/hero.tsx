@@ -26,38 +26,36 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
 };
 
-const mockup: Variants = {
-  hidden: { opacity: 0, y: 32, scale: 0.96 },
+const photoIn: Variants = {
+  hidden: { opacity: 0, scale: 1.05 },
   show: {
     opacity: 1,
-    y: 0,
     scale: 1,
-    transition: { duration: 0.9, delay: 0.35, ease: EASE },
+    transition: { duration: 1.1, delay: 0.1, ease: EASE },
   },
 };
 
-// KPI flotantes: cada uno aparece con leve delay distinto
-const kpiVariants = (delay: number): Variants => ({
-  hidden: { opacity: 0, scale: 0.85, y: 12 },
+const mockupIn: Variants = {
+  hidden: { opacity: 0, y: 40, scale: 0.94 },
   show: {
     opacity: 1,
-    scale: 1,
     y: 0,
-    transition: { duration: 0.55, delay: 0.6 + delay, ease: EASE },
+    scale: 1,
+    transition: { duration: 0.9, delay: 0.5, ease: EASE },
   },
-});
+};
 
-function KpiCard({
-  label,
-  value,
-  trend,
-  icon: Icon,
-  iconBg,
-  trendColor = "text-emerald-600",
-  className = "",
-  delay = 0,
-  floatDelay = 0,
-}: {
+/* KPI float — cada card tiene su propio "ritmo" para evitar lo robótico.
+   x/y/rotate con valores asimétricos, duración random, delay distinto. */
+type KpiAnim = {
+  duration: number;
+  delay: number;
+  yKey: number[];
+  xKey: number[];
+  rotKey: number[];
+};
+
+type KpiProps = {
   label: string;
   value: string;
   trend?: string;
@@ -65,39 +63,53 @@ function KpiCard({
   iconBg: string;
   trendColor?: string;
   className?: string;
-  delay?: number;
-  floatDelay?: number;
-}) {
+  entryDelay?: number;
+  anim: KpiAnim;
+};
+
+function KpiFloating(props: KpiProps) {
+  const { className, entryDelay = 0, anim } = props;
   return (
     <motion.div
-      variants={kpiVariants(delay)}
-      initial="hidden"
-      animate="show"
-      // Float infinito suave después de la entrada
-      whileInView={{
-        y: [0, -6, 0],
-        transition: {
-          duration: 4 + floatDelay,
-          repeat: Infinity,
-          ease: EASE,
-          delay: 1.5 + floatDelay,
-        },
+      initial={{ opacity: 0, scale: 0.85, y: 12 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        transition: { duration: 0.55, delay: 0.6 + entryDelay, ease: EASE },
       }}
       className={
-        "absolute z-20 flex items-center gap-3 rounded-2xl bg-white/95 p-3 shadow-[0_12px_32px_rgba(31,50,67,0.12)] backdrop-blur-sm ring-1 ring-black/5 " +
-        className
+        "absolute z-20 " + (className ?? "")
       }
     >
-      <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconBg}`}>
-        <Icon className="h-4 w-4 text-[#120b40]" />
-      </div>
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-[#47464f]">{label}</p>
-        <p className="text-base font-extrabold leading-none text-[#120b40]">{value}</p>
-        {trend && (
-          <p className={`mt-0.5 text-[10px] font-bold ${trendColor}`}>{trend}</p>
-        )}
-      </div>
+      <motion.div
+        animate={{
+          y: anim.yKey,
+          x: anim.xKey,
+          rotate: anim.rotKey,
+        }}
+        transition={{
+          duration: anim.duration,
+          delay: 1.5 + anim.delay,
+          repeat: Infinity,
+          repeatType: "mirror",
+          ease: EASE,
+        }}
+        className="flex items-center gap-3 rounded-2xl bg-white/95 p-3 shadow-[0_12px_32px_rgba(31,50,67,0.15)] backdrop-blur-sm ring-1 ring-black/5"
+      >
+        <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${props.iconBg}`}>
+          <props.icon className="h-4 w-4 text-[#120b40]" />
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[#47464f]">{props.label}</p>
+          <p className="text-base font-extrabold leading-none text-[#120b40]">{props.value}</p>
+          {props.trend && (
+            <p className={`mt-0.5 text-[10px] font-bold ${props.trendColor ?? "text-emerald-600"}`}>
+              {props.trend}
+            </p>
+          )}
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -105,40 +117,29 @@ function KpiCard({
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollY } = useScroll();
-  const mockupY = useTransform(scrollY, [0, 600], [0, -60]);
-  const personaY = useTransform(scrollY, [0, 600], [0, -30]);
+  const photoY = useTransform(scrollY, [0, 600], [0, -30]);
+  const mockupY = useTransform(scrollY, [0, 600], [0, -50]);
 
   return (
     <section
       ref={sectionRef}
       className="relative overflow-hidden bg-gradient-to-b from-[#f7f9ff] via-[#edf4ff] to-white pb-24 pt-12 lg:pb-32"
     >
-      {/* Lineas decorativas de aviones */}
+      {/* Avión decorativo arriba derecha */}
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute right-8 top-20 text-[#272255]/15"
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1, transition: { duration: 1.2, delay: 0.3 } }}
-      >
-        <svg width="120" height="60" viewBox="0 0 120 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 50 Q 40 10, 80 30 T 118 8" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 4" fill="none" />
-        </svg>
-      </motion.div>
-
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute right-20 top-24 text-[#ea6a30]/40"
+        className="pointer-events-none absolute right-24 top-12 text-[#ea6a30]/35"
         animate={{
-          x: [0, 8, 0],
+          x: [0, 12, 0],
           y: [0, -4, 0],
-          rotate: [-12, -8, -12],
-          transition: { duration: 5, repeat: Infinity, ease: EASE },
+          rotate: [-10, -6, -10],
         }}
+        transition={{ duration: 5.8, repeat: Infinity, ease: EASE }}
       >
         <Plane className="h-7 w-7" />
       </motion.div>
 
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 lg:grid-cols-[1.05fr_1fr]">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 lg:grid-cols-[1fr_1.1fr]">
         {/* IZQUIERDA: copy + CTAs */}
         <motion.div variants={container} initial="hidden" animate="show" className="relative z-10">
           <motion.div variants={item}>
@@ -150,7 +151,7 @@ export function Hero() {
 
           <motion.h1
             variants={item}
-            className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-[#120b40] sm:text-5xl lg:text-[64px]"
+            className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-[#120b40] sm:text-5xl lg:text-[60px]"
           >
             El CRM visual<br />
             para agencias<br />
@@ -203,46 +204,100 @@ export function Hero() {
           </motion.div>
         </motion.div>
 
-        {/* DERECHA: persona + mockup + KPIs flotantes */}
-        <div className="relative">
-          {/* KPI top-left: VENTAS */}
-          <KpiCard
+        {/* DERECHA: foto persona + mockup pequeño abajo + KPIs flotantes */}
+        <div className="relative min-h-[560px]">
+          {/* Foto principal (ocupa el área entera del lado derecho) */}
+          <motion.div
+            variants={photoIn}
+            initial="hidden"
+            animate="show"
+            style={{ y: photoY }}
+            className="relative z-0 mx-auto overflow-hidden rounded-3xl shadow-[0_20px_60px_rgba(31,50,67,0.18)]"
+          >
+            <Image
+              src="/landing-v2/images/hero-person.png"
+              alt="Profesional de turismo usando Turistea CRM"
+              width={1488}
+              height={1116}
+              priority
+              className="h-[480px] w-full object-cover sm:h-[520px] lg:h-[560px]"
+            />
+          </motion.div>
+
+          {/* Mockup laptop+phone — pequeño, esquina inferior izquierda, no tapa la cara */}
+          <motion.div
+            variants={mockupIn}
+            initial="hidden"
+            animate="show"
+            style={{ y: mockupY }}
+            className="absolute -bottom-8 -left-6 z-10 w-[55%] sm:w-[48%]"
+          >
+            <Image
+              src="/landing-v2/images/mockup-laptop-mobile.png"
+              alt="Turistea CRM"
+              width={1448}
+              height={900}
+              priority
+              className="h-auto w-full drop-shadow-[0_20px_40px_rgba(31,50,67,0.25)]"
+            />
+          </motion.div>
+
+          {/* KPI: VENTAS — esquina sup. izq. */}
+          <KpiFloating
             label="Ventas (mes)"
             value="$47,250"
             trend="+12%"
             icon={TrendingUp}
             iconBg="bg-[#aaf52b]/30"
             className="-left-2 top-4 sm:left-0"
-            delay={0}
-            floatDelay={0}
+            entryDelay={0}
+            anim={{
+              duration: 4.3,
+              delay: 0,
+              yKey: [-2, -10, -3, -7, -2],
+              xKey: [0, 2, -1, 1, 0],
+              rotKey: [0, -1.2, 0.5, -0.6, 0],
+            }}
           />
 
-          {/* KPI top-right: NUEVOS CLIENTES */}
-          <KpiCard
+          {/* KPI: NUEVOS CLIENTES — esquina sup. der. */}
+          <KpiFloating
             label="Nuevos clientes"
             value="36"
             trend="+12%"
             icon={Users}
             iconBg="bg-[#85c2f6]/30"
             className="right-2 top-2 sm:right-6"
-            delay={0.1}
-            floatDelay={0.5}
+            entryDelay={0.12}
+            anim={{
+              duration: 5.7,
+              delay: 0.4,
+              yKey: [-1, -8, -2, -6, -1],
+              xKey: [0, -2, 1, -1, 0],
+              rotKey: [0, 1, -0.4, 0.7, 0],
+            }}
           />
 
-          {/* KPI mid-left: RESERVAS */}
-          <KpiCard
+          {/* KPI: RESERVAS — mid izq. */}
+          <KpiFloating
             label="Reservas"
             value="128"
             trend="+10%"
             icon={Plane}
             iconBg="bg-[#272255]/15"
-            className="-left-4 top-1/2 sm:left-2"
-            delay={0.2}
-            floatDelay={1}
+            className="left-4 top-1/2 -translate-y-1/2"
+            entryDelay={0.24}
+            anim={{
+              duration: 5.1,
+              delay: 0.9,
+              yKey: [-3, -9, -1, -7, -3],
+              xKey: [0, 1.5, -1.5, 1, 0],
+              rotKey: [0, -0.8, 1, -0.5, 0],
+            }}
           />
 
-          {/* KPI bot-right: TAREAS */}
-          <KpiCard
+          {/* KPI: TAREAS — esquina inf. der. */}
+          <KpiFloating
             label="Tareas pendientes"
             value="14"
             trend="Prioridad alta"
@@ -250,52 +305,23 @@ export function Hero() {
             icon={ClipboardList}
             iconBg="bg-[#ea6a30]/20"
             className="bottom-12 right-0 sm:right-4"
-            delay={0.3}
-            floatDelay={1.5}
+            entryDelay={0.36}
+            anim={{
+              duration: 4.7,
+              delay: 1.3,
+              yKey: [-2, -7, -3, -8, -2],
+              xKey: [0, -1, 1.5, -0.5, 0],
+              rotKey: [0, 0.6, -1, 0.4, 0],
+            }}
           />
-
-          {/* Persona Tea/Nea (background con parallax) */}
-          <motion.div
-            style={{ y: personaY }}
-            initial={{ opacity: 0, scale: 1.04 }}
-            animate={{ opacity: 1, scale: 1, transition: { duration: 1, delay: 0.2, ease: EASE } }}
-            className="relative z-0 mx-auto h-[440px] w-full max-w-md"
-          >
-            <Image
-              src="/landing-v2/images/tea-nea-transparente.png"
-              alt="Profesional usando Turistea CRM"
-              width={800}
-              height={1000}
-              priority
-              className="h-full w-full object-contain"
-            />
-          </motion.div>
-
-          {/* Mockup laptop+phone superpuesto */}
-          <motion.div
-            variants={mockup}
-            initial="hidden"
-            animate="show"
-            style={{ y: mockupY }}
-            className="absolute inset-x-0 bottom-0 z-10 mx-auto"
-          >
-            <Image
-              src="/landing-v2/images/mockup-laptop-mobile.png"
-              alt="Turistea CRM en laptop y mobile"
-              width={1448}
-              height={900}
-              priority
-              className="h-auto w-full drop-shadow-[0_24px_48px_rgba(31,50,67,0.18)]"
-            />
-          </motion.div>
         </div>
       </div>
 
-      {/* Banner AI inferior */}
+      {/* Banner IA inferior — centrado */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0, transition: { duration: 0.7, delay: 1.4, ease: EASE } }}
-        className="relative z-10 mx-auto mt-12 flex w-fit max-w-2xl items-center gap-3 rounded-2xl border border-[#272255]/15 bg-white px-5 py-3 shadow-[0_12px_32px_rgba(31,50,67,0.08)]"
+        className="relative z-10 mx-auto mt-16 flex w-fit max-w-2xl items-center gap-3 rounded-2xl border border-[#272255]/15 bg-white px-5 py-3 shadow-[0_12px_32px_rgba(31,50,67,0.08)]"
       >
         <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#aaf52b]">
           <Sparkles className="h-4 w-4 text-[#120b40]" />
