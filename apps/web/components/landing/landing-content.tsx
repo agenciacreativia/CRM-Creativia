@@ -1,579 +1,599 @@
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
-  Bell,
   Building2,
   CalendarClock,
+  Check,
   CheckCircle2,
+  ChevronDown,
   Clock,
-  Frown,
-  Layers,
-  LineChart,
+  Facebook,
+  HeadphonesIcon,
+  Instagram,
+  Linkedin,
   Mail,
   MapPin,
   Phone,
   PiggyBank,
   Plane,
-  Repeat,
   ShieldCheck,
-  Smile,
   Sparkles,
-  Star,
   Target,
-  TrendingUp,
   Users,
   Workflow,
-  XCircle,
-  Zap,
+  X,
 } from "lucide-react";
 
-/* ------------------------------------------------------------------ */
-/*  DATA                                                               */
-/* ------------------------------------------------------------------ */
+/* ---------------- DATA ---------------- */
+
+const TRUST_BADGES = [
+  { title: "14 días gratis", sub: "Sin tarjeta de crédito" },
+  { title: "Setup rápido", sub: "Onboarding guiado" },
+  { title: "Soporte LATAM", sub: "Asistencia humana" },
+];
+
+const ANTES = [
+  { title: "Excel disperso", text: "Datos en archivos, versiones y copias." },
+  { title: "Leads olvidados", text: "Seguimiento manual y oportunidades perdidas." },
+  { title: "No sabés el forecast", text: "Sin visibilidad real de tu embudo." },
+  { title: "Seguimiento manual", text: "Tareas, recordatorios y notas en todos lados." },
+];
+
+const DESPUES = [
+  { title: "Todo centralizado", text: "Clientes, cotizaciones, salidas y comisiones en un lugar." },
+  { title: "Recordatorios automáticos", text: "Alertas por tiempo, tareas y próximos hitos." },
+  { title: "Dashboard en vivo", text: "Pipeline, ventas y objetivos siempre actualizados." },
+  { title: "Seguimiento ordenado", text: "Actividades, notas y comunicaciones en contexto." },
+];
 
 const FEATURES = [
-  {
-    icon: Workflow,
-    title: "Pipeline de ventas visual",
-    text: "Arrastra cada cotización por sus etapas (No cotizado → Cotizado → Reserva → Ganada). Nunca más una oportunidad olvidada en un chat.",
-  },
-  {
-    icon: Users,
-    title: "Clientes y contactos centralizados",
-    text: "Todo el historial de cada pasajero y agencia en una ficha: viajes previos, preferencias, comunicaciones y documentos.",
-  },
-  {
-    icon: CalendarClock,
-    title: "Salidas y hitos automáticos",
-    text: "Controla los días previos por aerolínea, fechas límite de pago y check-list de cada salida. Recordatorios que evitan multas y cancelaciones.",
-  },
-  {
-    icon: Plane,
-    title: "Maestros del negocio turístico",
-    text: "Aerolíneas, operadores, destinos, zonas y categorías ya pensados para turismo. No adaptes un CRM genérico: este ya habla tu idioma.",
-  },
-  {
-    icon: PiggyBank,
-    title: "Comisiones y metas",
-    text: "Calcula comisiones por counter, vendedor externo y gerente. Mide cumplimiento de meta y sobre-comisión sin planillas manuales.",
-  },
-  {
-    icon: Target,
-    title: "Segmentación RFM (Oro / Plata / Bronce)",
-    text: "El sistema clasifica solo a tus agencias y clientes por valor real. Sabes a quién atender primero y dónde está tu dinero.",
-  },
-  {
-    icon: BarChart3,
-    title: "Dashboards y forecast",
-    text: "KPIs en vivo, embudo de conversión y proyección de ventas. Decisiones con datos, no con corazonadas.",
-  },
-  {
-    icon: Building2,
-    title: "Multi-sucursal y multi-equipo",
-    text: "Gestiona varias sucursales, asesores responsables y territorios desde una sola cuenta, con permisos por rol.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Datos seguros y aislados",
-    text: "Cada agencia con su propio espacio cifrado y aislado. Tu información nunca se mezcla con la de nadie más.",
-  },
+  { icon: Workflow, title: "Pipeline visual", text: "Gestioná oportunidades en un embudo claro con hitos y alertas." },
+  { icon: Users, title: "Clientes 360°", text: "Historial completo de contacto, viajes, pagos y preferencias." },
+  { icon: CalendarClock, title: "Salidas automáticas", text: "Creá salidas con cupos, precios y estados en segundos." },
+  { icon: Plane, title: "Maestros turismo", text: "Catálogo de destinos, proveedores y productos siempre actualizado." },
+  { icon: PiggyBank, title: "Comisiones", text: "Calculá y liquidá comisiones de vendedores y aliados fácilmente." },
+  { icon: Target, title: "Segmentación RFM", text: "Clasificá clientes por Recencia, Frecuencia y Monto." },
+  { icon: BarChart3, title: "Dashboards", text: "Indicadores y gráficos en tiempo real para decidir mejor." },
+  { icon: Building2, title: "Multi-sucursal", text: "Operá varias oficinas y equipos desde una sola cuenta." },
+  { icon: ShieldCheck, title: "Datos seguros", text: "Información respaldada y protegida con altos estándares." },
 ];
 
-const PAINS = [
-  {
-    sin: "Clientes y cotizaciones regados entre WhatsApp, Excel y correos.",
-    con: "Todo centralizado en una sola plataforma accesible desde cualquier lugar.",
-  },
-  {
-    sin: "Oportunidades que se enfrían y se pierden por falta de seguimiento.",
-    con: "Recordatorios automáticos y pipeline que te dice a quién contactar hoy.",
-  },
-  {
-    sin: "No sabes cuánto vas a vender este mes ni quién es tu mejor cliente.",
-    con: "Forecast y segmentación RFM que te muestran el dinero en tiempo real.",
-  },
-  {
-    sin: "Comisiones calculadas a mano: errores, reclamos y horas perdidas.",
-    con: "Comisiones y metas calculadas solas por counter y vendedor.",
-  },
-  {
-    sin: "Se te pasan fechas de pago y hitos de salida → multas y clientes molestos.",
-    con: "Alertas de días previos por aerolínea y check-list de cada salida.",
-  },
-  {
-    sin: "Si un asesor renuncia, se lleva la cartera en su celular.",
-    con: "La cartera vive en la agencia, no en el teléfono de nadie.",
-  },
-];
-
-const STATS = [
-  { icon: TrendingUp, value: "+30%", label: "más cierres con seguimiento ordenado" },
-  { icon: Clock, value: "10 h", label: "ahorradas por semana en tareas manuales" },
-  { icon: Repeat, value: "x3", label: "más recompra al conocer a tu cliente" },
-  { icon: XCircle, value: "0", label: "oportunidades olvidadas en un chat" },
+const OPERATION_BULLETS = [
+  "Pipeline por etapas con alertas",
+  "KPIs de ventas y cotizaciones",
+  "Top destinos y productos",
+  "Actividades y tareas del equipo",
 ];
 
 const PLANS = [
   {
-    name: "Lite",
-    tagline: "Para arrancar a ordenar tu agencia",
-    price: "29",
-    badge: null as string | null,
-    cta: "Empezar con Lite",
+    name: "Free",
+    tagline: "Para empezar a organizarte",
+    price: "$0",
+    priceUnit: "COP/mes",
+    priceNote: "Siempre gratis",
+    cta: "Comenzar gratis",
+    ctaStyle: "outline" as const,
     highlight: false,
     features: [
-      "Hasta 3 usuarios",
-      "Pipeline de ventas visual",
-      "Clientes y contactos ilimitados",
-      "Gestión de cotizaciones y oportunidades",
-      "Maestros de turismo (aerolíneas, destinos, operadores)",
-      "App accesible desde cualquier dispositivo",
-      "Soporte por correo",
+      "Hasta 2 usuarios",
+      "Hasta 100 contactos",
+      "Pipeline básico",
+      "Cotizaciones ilimitadas",
+      "Soporte por email",
     ],
-    notIncluded: ["Dashboards avanzados", "Comisiones automáticas", "Multi-sucursal"],
   },
   {
-    name: "Premium",
-    tagline: "El favorito de las agencias que quieren crecer",
-    price: "69",
+    name: "Pro",
+    tagline: "Para agencias en crecimiento",
     badge: "Más popular",
-    cta: "Quiero Premium",
+    price: "$159.000",
+    priceUnit: "COP/mes",
+    priceNote: "por usuario",
+    cta: "Probar gratis 14 días",
+    ctaStyle: "lime" as const,
     highlight: true,
     features: [
-      "Hasta 10 usuarios",
-      "Todo lo de Lite, y además:",
-      "Salidas, hitos y alertas por aerolínea",
-      "Comisiones y metas automáticas",
-      "Dashboards, KPIs y forecast de ventas",
-      "Segmentación RFM (Oro / Plata / Bronce)",
-      "Multi-sucursal y permisos por rol",
-      "Soporte prioritario por chat",
+      "Usuarios ilimitados",
+      "Contactos ilimitados",
+      "Pipeline avanzado con alertas",
+      "Salidas, maestros y comisiones",
+      "Dashboards y reportes",
+      "Soporte prioritario",
     ],
-    notIncluded: ["Integraciones a medida", "Onboarding dedicado"],
   },
   {
-    name: "Ultimate",
-    tagline: "Para redes y mayoristas que escalan en serio",
-    price: "129",
-    badge: "Todo incluido",
-    cta: "Hablar de Ultimate",
+    name: "Enterprise",
+    tagline: "Para agencias consolidadas",
+    price: "A medida",
+    priceUnit: "",
+    priceNote: "Hablemos de tu operación",
+    cta: "Contactar ventas",
+    ctaStyle: "outline" as const,
     highlight: false,
     features: [
-      "Usuarios ilimitados",
-      "Todo lo de Premium, y además:",
-      "Reportes y tableros personalizados",
-      "Integraciones a medida (correo, WhatsApp, BI)",
-      "Onboarding y migración de datos dedicada",
-      "Capacitación del equipo en vivo",
-      "Gerente de cuenta asignado",
-      "Soporte 24/7 con SLA",
+      "Todo lo del plan Pro",
+      "Multi-sucursal y roles avanzados",
+      "Integraciones y API",
+      "Onboarding dedicado",
+      "Soporte dedicado",
     ],
-    notIncluded: [],
   },
-];
-
-const BENEFITS = [
-  { icon: Zap, title: "Vende más rápido", text: "Cotiza, da seguimiento y cierra sin saltar entre 5 herramientas." },
-  { icon: Smile, title: "Clientes más felices", text: "Atención personalizada con todo su historial a un clic." },
-  { icon: LineChart, title: "Controlas el negocio", text: "Sabes qué vendes, quién vende y qué viene el próximo mes." },
-  { icon: Layers, title: "Equipo alineado", text: "Todos trabajan sobre la misma información, sin islas de Excel." },
-  { icon: Bell, title: "Nada se te escapa", text: "Alertas de pagos, hitos y seguimientos en el momento justo." },
-  { icon: Sparkles, title: "Crece sin caos", text: "Suma sucursales y asesores sin perder el control." },
 ];
 
 const FAQS = [
   {
-    q: "¿Necesito conocimientos técnicos para usarlo?",
-    a: "No. Turistea CRM está pensado para counters y asesores de viaje. Si usas WhatsApp y Excel, lo vas a dominar en una tarde.",
+    q: "¿Puedo importar mis datos desde Excel?",
+    a: "Sí. Soportamos importación directa de Excel y CSV para contactos, empresas y oportunidades. En planes superiores la migración es asistida por nuestro equipo.",
   },
   {
-    q: "¿Puedo migrar mis clientes actuales?",
-    a: "Sí. Importamos tus clientes, cotizaciones e historial desde Excel u otros CRM. En el plan Ultimate la migración es dedicada y la hacemos nosotros.",
+    q: "¿Cuánto tiempo toma implementar Turistea CRM?",
+    a: "La mayoría de agencias está operando en uno o dos días. El onboarding guiado cubre la configuración inicial, importación de datos y entrenamiento del equipo.",
   },
   {
-    q: "¿Mis datos están seguros?",
-    a: "Cada agencia tiene su espacio cifrado y aislado. Nadie fuera de tu equipo puede ver tu información, ni siquiera otras agencias.",
+    q: "¿Qué métodos de pago aceptan?",
+    a: "Aceptamos tarjeta de crédito, débito automático bancario en Colombia y transferencias para planes anuales. Para clientes Enterprise emitimos factura corporativa.",
   },
   {
-    q: "¿Puedo cambiar de plan después?",
-    a: "Cuando quieras. Empieza con Lite y sube a Premium o Ultimate a medida que tu agencia crece. Sin penalizaciones.",
+    q: "¿Puedo cancelar mi plan cuando quiera?",
+    a: "Cuando quieras y sin penalizaciones. La suscripción es mes a mes; cancelás y mantenés el acceso hasta el final del período facturado.",
   },
 ];
 
-/* ------------------------------------------------------------------ */
-/*  PAGE                                                               */
-/* ------------------------------------------------------------------ */
+/* ---------------- COMPONENTS ---------------- */
 
-export default function LandingContent() {
+function NavBar() {
   return (
-    <main className="min-h-screen overflow-x-hidden bg-white text-[var(--brand-navy)]">
-      {/* ---------------- NAV ---------------- */}
-      <header className="sticky top-0 z-30 border-b border-[var(--glass-border)] bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
-          <Image src="/turistea-crm.svg" alt="Turistea CRM" width={1677} height={451} priority className="h-10 w-auto" />
-          <nav className="hidden items-center gap-8 text-sm font-medium text-[var(--ink-soft)] md:flex">
-            <a href="#beneficios" className="transition hover:text-[var(--brand-navy)]">Beneficios</a>
-            <a href="#comparativa" className="transition hover:text-[var(--brand-navy)]">Con vs. sin CRM</a>
-            <a href="#caracteristicas" className="transition hover:text-[var(--brand-navy)]">Características</a>
-            <a href="#precios" className="transition hover:text-[var(--brand-navy)]">Precios</a>
-          </nav>
-          <a
-            href="/login"
-            className="rounded-full bg-[var(--brand-navy)] px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--brand-navy-deep)]"
-          >
-            Iniciar sesión
-          </a>
-        </div>
-      </header>
-
-      {/* ---------------- HERO (2 columnas) ---------------- */}
-      <section className="relative overflow-hidden">
-        {/* fondo sutil */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[640px] bg-gradient-to-b from-[#f6f8fc] to-white" />
-        <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-24 pt-16 lg:grid-cols-2 lg:gap-10 lg:pb-28 lg:pt-24">
-          {/* IZQUIERDA — copy */}
-          <div className="text-center lg:text-left">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-4 py-1.5 text-xs font-semibold text-[var(--brand-navy)] shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-[var(--brand-orange)]" />
-              El CRM hecho a medida para agencias de viajes
-            </span>
-
-            <h1 className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-[var(--brand-navy)] sm:text-5xl lg:text-[56px]">
-              Deja de perder ventas entre{" "}
-              <span className="relative whitespace-nowrap">
-                <span className="relative z-10">WhatsApp y Excel</span>
-                <span className="absolute bottom-1.5 left-0 z-0 h-3.5 w-full bg-[var(--brand-green)] opacity-60" />
-              </span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[var(--ink-soft)] lg:mx-0 lg:text-xl">
-              Centraliza clientes, cotizaciones, salidas y comisiones en un solo lugar.
-              Tu agencia vende más, da mejor servicio y crece sin caos —{" "}
-              <strong className="text-[var(--brand-navy)]">desde el primer día</strong>.
-            </p>
-
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
-              <a
-                href="#precios"
-                className="group inline-flex items-center gap-2 rounded-full bg-[var(--brand-navy)] px-7 py-3.5 text-base font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[var(--brand-navy-deep)]"
-              >
-                Ver planes y precios
-                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-              </a>
-              <a
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-white px-7 py-3.5 text-base font-semibold text-[var(--brand-navy)] transition hover:-translate-y-0.5 hover:border-[var(--brand-navy)]"
-              >
-                Iniciar sesión
-              </a>
-            </div>
-
-            <p className="mt-5 text-sm text-[var(--ink-faint)]">
-              Sin tarjeta para empezar · Migramos tus datos · Cancela cuando quieras
-            </p>
-          </div>
-
-          {/* DERECHA — mockup del producto (MacBook + iPhone) */}
-          <div className="relative lg:-mr-6">
-            <Image
-              src="/landing/images/mockup-laptop-phone.png"
-              alt="Turistea CRM en MacBook y iPhone — tablero de oportunidades"
-              width={1448}
-              height={1086}
-              priority
-              className="h-auto w-full"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------- STATS ---------------- */}
-      <section className="border-y border-[var(--glass-border)] bg-[#fafafb]">
-        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-px overflow-hidden px-5 py-4 md:grid-cols-4">
-          {STATS.map((s) => (
-            <div key={s.label} className="px-4 py-6 text-center">
-              <s.icon className="mx-auto h-6 w-6 text-[var(--brand-green-deep)]" />
-              <div className="mt-3 text-3xl font-extrabold text-[var(--brand-navy)] md:text-4xl">{s.value}</div>
-              <div className="mt-1 text-xs leading-snug text-[var(--ink-soft)]">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------- BENEFITS ---------------- */}
-      <section id="beneficios" className="mx-auto max-w-6xl px-5 py-24">
-        <SectionHeading
-          eyebrow="Por qué tu agencia lo va a amar"
-          title="Todo lo que ganas con Turistea CRM"
-          subtitle="No es una herramienta más: es la que reemplaza a todas las otras."
-        />
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {BENEFITS.map((b) => (
-            <div
-              key={b.title}
-              className="rounded-2xl border border-[var(--glass-border)] bg-white p-6 transition hover:-translate-y-1 hover:shadow-lg"
-            >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--brand-navy)] text-white">
-                <b.icon className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-lg font-bold text-[var(--brand-navy)]">{b.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">{b.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------- COMPARATIVA SIN / CON ---------------- */}
-      <section id="comparativa" className="border-y border-[var(--glass-border)] bg-[#fafafb]">
-        <div className="mx-auto max-w-6xl px-5 py-24">
-          <SectionHeading
-            eyebrow="La diferencia es brutal"
-            title="Agencias sin CRM vs. agencias con Turistea"
-            subtitle="Estos son los dolores que escuchamos todos los días… y cómo desaparecen."
+    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/landing/images/logo-turistea-crm.png"
+            alt="Turistea CRM"
+            width={560}
+            height={120}
+            className="h-9 w-auto"
+            priority
           />
-          <div className="mt-14 grid gap-6 md:grid-cols-2">
-            {/* SIN */}
-            <div className="rounded-3xl border border-[rgba(240,112,138,0.3)] bg-[rgba(240,112,138,0.07)] p-8">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--red-soft)] text-white">
-                  <Frown className="h-5 w-5" />
+        </Link>
+        <nav className="hidden items-center gap-8 text-sm font-semibold text-[#081d2d] md:flex">
+          <a href="#producto" className="hover:text-[#272255]">Producto</a>
+          <a href="#precios" className="hover:text-[#272255]">Precios</a>
+          <a href="#recursos" className="hover:text-[#272255]">Recursos</a>
+        </nav>
+        <Link
+          href="/login"
+          className="rounded-full bg-[#aaf52b] px-5 py-2.5 text-sm font-bold text-[#120b40] shadow-[0_4px_12px_rgba(170,245,43,0.4)] transition hover:-translate-y-0.5 hover:bg-[#9be022]"
+        >
+          Probar gratis
+        </Link>
+      </div>
+    </header>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="relative overflow-hidden bg-[#120b40] text-[#e8f2ff]">
+      {/* decoración: avión SVG sutil */}
+      <Plane
+        aria-hidden
+        className="pointer-events-none absolute left-6 bottom-8 h-10 w-10 -rotate-12 text-[#85c2f6]/30"
+      />
+      <Plane
+        aria-hidden
+        className="pointer-events-none absolute right-12 top-12 h-6 w-6 rotate-12 text-[#aaf52b]/40"
+      />
+
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-16 lg:grid-cols-[1fr_1.1fr] lg:gap-10 lg:pb-28 lg:pt-20">
+        <div>
+          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-[56px]">
+            El CRM hecho para<br />
+            <span className="text-white">agencias de viajes</span>
+          </h1>
+          <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/80">
+            Centralizá clientes, cotizaciones, salidas y comisiones en un solo lugar.
+          </p>
+          <p className="mt-3 max-w-lg text-base text-white/65">
+            Maestros del sector turístico, salidas con hitos, RFM y comisiones.
+          </p>
+
+          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-7 py-3.5 text-base font-bold text-[#120b40] shadow-[0_4px_16px_rgba(170,245,43,0.45)] transition hover:-translate-y-0.5 hover:bg-[#9be022]"
+            >
+              Probar gratis 14 días
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href="#producto"
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
+            >
+              Ver demo
+            </a>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {TRUST_BADGES.map((b) => (
+              <div key={b.title} className="flex items-start gap-2.5">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#aaf52b]" />
+                <div>
+                  <p className="text-sm font-bold text-white">{b.title}</p>
+                  <p className="text-xs text-white/60">{b.sub}</p>
                 </div>
-                <h3 className="text-xl font-bold text-[var(--brand-navy)]">Hoy, sin CRM</h3>
               </div>
-              <ul className="space-y-3.5">
-                {PAINS.map((p) => (
-                  <li key={p.sin} className="flex gap-3 text-sm text-[var(--ink-soft)]">
-                    <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--red-soft)]" />
-                    <span>{p.sin}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {/* CON */}
-            <div className="card-featured p-8">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-green)] text-[var(--brand-navy)]">
-                  <Smile className="h-5 w-5" />
-                </div>
-                <h3 className="text-xl font-bold text-white">Con Turistea CRM</h3>
-              </div>
-              <ul className="space-y-3.5">
-                {PAINS.map((p) => (
-                  <li key={p.con} className="flex gap-3 text-sm text-white/90">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--brand-green)]" />
-                    <span>{p.con}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            ))}
           </div>
         </div>
-      </section>
 
-      {/* ---------------- CARACTERÍSTICAS ---------------- */}
-      <section id="caracteristicas" className="mx-auto max-w-6xl px-5 py-24">
-        <SectionHeading
-          eyebrow="Hecho para turismo, no genérico"
-          title="Características que de verdad usas"
-          subtitle="Cada función nació de cómo trabaja realmente una agencia de viajes."
-        />
+        <div className="relative">
+          <Image
+            src="/landing/images/mockup-laptop-phone.png"
+            alt="Turistea CRM en MacBook y iPhone"
+            width={1448}
+            height={1086}
+            priority
+            className="h-auto w-full drop-shadow-2xl"
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SocialProofBand() {
+  // No metemos números falsos. Cuando tengas data real (clientes pagos +
+  // viajes vendidos verificables) volvemos a activar este bloque.
+  return null;
+}
+
+function BeforeAfter() {
+  return (
+    <section id="producto" className="bg-[#f7f9ff] py-20">
+      <div className="mx-auto max-w-6xl px-5">
+        <h2 className="text-center text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl">
+          Del caos al control
+        </h2>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {/* ANTES */}
+          <div className="rounded-2xl border border-[#ea6a30]/25 bg-[#fff5f0] p-7">
+            <h3 className="mb-5 text-sm font-bold uppercase tracking-wider text-[#ea6a30]">
+              Antes: así trabajabas
+            </h3>
+            <ul className="space-y-4">
+              {ANTES.map((it) => (
+                <li key={it.title} className="flex gap-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#ea6a30] text-white">
+                    <X className="h-3 w-3" strokeWidth={3} />
+                  </span>
+                  <div>
+                    <p className="font-bold text-[#120b40]">{it.title}</p>
+                    <p className="text-sm text-[#47464f]">{it.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* DESPUÉS */}
+          <div className="rounded-2xl border border-[#aaf52b]/40 bg-[#f4fce6] p-7">
+            <h3 className="mb-5 text-sm font-bold uppercase tracking-wider text-[#446900]">
+              Después: así crecés
+            </h3>
+            <ul className="space-y-4">
+              {DESPUES.map((it) => (
+                <li key={it.title} className="flex gap-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#446900] text-white">
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                  </span>
+                  <div>
+                    <p className="font-bold text-[#120b40]">{it.title}</p>
+                    <p className="text-sm text-[#47464f]">{it.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeaturesGrid() {
+  return (
+    <section className="bg-white py-20">
+      <div className="mx-auto max-w-6xl px-5">
+        <h2 className="text-center text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl">
+          Todo lo que tu agencia necesita, en un solo lugar
+        </h2>
+
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="rounded-2xl border border-[var(--glass-border)] bg-white p-6 transition hover:-translate-y-1 hover:shadow-lg"
+              className="rounded-2xl border border-black/5 bg-white p-6 transition hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(31,50,67,0.08)]"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[rgba(149,222,0,0.15)] text-[var(--brand-green-deep)]">
-                <f.icon className="h-5 w-5" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#272255]/5 text-[#272255]">
+                <f.icon className="h-5 w-5" strokeWidth={1.75} />
               </div>
-              <h3 className="mt-4 text-base font-bold text-[var(--brand-navy)]">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--ink-soft)]">{f.text}</p>
+              <h3 className="mt-4 text-base font-bold text-[#120b40]">{f.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[#47464f]">{f.text}</p>
             </div>
           ))}
         </div>
-      </section>
-
-      {/* ---------------- PRECIOS ---------------- */}
-      <section id="precios" className="border-y border-[var(--glass-border)] bg-[#fafafb]">
-        <div className="mx-auto max-w-6xl px-5 py-24">
-          <SectionHeading
-            eyebrow="Planes para cada tamaño de agencia"
-            title="Elige el plan que crece contigo"
-            subtitle="Precios en USD / mes. Empieza chico y sube cuando lo necesites. Sin contratos atados."
-          />
-
-          <div className="mt-14 grid items-start gap-6 lg:grid-cols-3">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={
-                  plan.highlight
-                    ? "card-featured relative p-8 lg:-mt-4 lg:scale-[1.03]"
-                    : "relative rounded-3xl border border-[var(--glass-border)] bg-white p-8"
-                }
-              >
-                {plan.badge && (
-                  <span
-                    className={
-                      "absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-xs font-bold " +
-                      (plan.highlight
-                        ? "bg-[var(--brand-green)] text-[var(--brand-navy)]"
-                        : "bg-[var(--brand-navy)] text-white")
-                    }
-                  >
-                    {plan.badge}
-                  </span>
-                )}
-
-                <h3 className={`text-2xl font-extrabold ${plan.highlight ? "text-white" : "text-[var(--brand-navy)]"}`}>
-                  {plan.name}
-                </h3>
-                <p className={`mt-1 text-sm ${plan.highlight ? "text-white/80" : "text-[var(--ink-soft)]"}`}>
-                  {plan.tagline}
-                </p>
-
-                <div className="mt-6 flex items-end gap-1">
-                  <span className={`text-sm font-semibold ${plan.highlight ? "text-white/70" : "text-[var(--ink-faint)]"}`}>$</span>
-                  <span className={`text-5xl font-extrabold ${plan.highlight ? "text-white" : "text-[var(--brand-navy)]"}`}>
-                    {plan.price}
-                  </span>
-                  <span className={`mb-1.5 text-sm ${plan.highlight ? "text-white/70" : "text-[var(--ink-faint)]"}`}>
-                    /mes
-                  </span>
-                </div>
-
-                <a
-                  href="/login"
-                  className={
-                    "mt-6 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition hover:-translate-y-0.5 " +
-                    (plan.highlight
-                      ? "bg-[var(--brand-green)] text-[var(--brand-navy)] hover:bg-[var(--brand-green-deep)]"
-                      : "bg-[var(--brand-navy)] text-white hover:bg-[var(--brand-navy-deep)]")
-                  }
-                >
-                  {plan.cta}
-                  <ArrowRight className="h-4 w-4" />
-                </a>
-
-                <ul className="mt-7 space-y-3">
-                  {plan.features.map((feat) => (
-                    <li
-                      key={feat}
-                      className={`flex gap-2.5 text-sm ${plan.highlight ? "text-white/90" : "text-[var(--ink-soft)]"}`}
-                    >
-                      <CheckCircle2
-                        className={`mt-0.5 h-4 w-4 flex-shrink-0 ${plan.highlight ? "text-[var(--brand-green)]" : "text-[var(--brand-green-deep)]"}`}
-                      />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                  {plan.notIncluded.map((feat) => (
-                    <li key={feat} className="flex gap-2.5 text-sm text-[var(--ink-faint)] line-through">
-                      <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 opacity-60" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-8 text-center text-sm text-[var(--ink-faint)]">
-            ¿Eres una red o mayorista con necesidades especiales?{" "}
-            <a href="#contacto" className="font-semibold text-[var(--brand-navy)] underline">
-              Armamos un plan a tu medida.
-            </a>
-          </p>
-        </div>
-      </section>
-
-      {/* ---------------- FAQ ---------------- */}
-      <section className="mx-auto max-w-4xl px-5 py-24">
-        <SectionHeading eyebrow="Antes de decidir" title="Preguntas frecuentes" subtitle={null} />
-        <div className="mt-12 space-y-4">
-          {FAQS.map((f) => (
-            <div key={f.q} className="rounded-2xl border border-[var(--glass-border)] bg-white p-6">
-              <h3 className="flex items-start gap-2 text-base font-bold text-[var(--brand-navy)]">
-                <Star className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--brand-orange)]" />
-                {f.q}
-              </h3>
-              <p className="mt-2 pl-6 text-sm leading-relaxed text-[var(--ink-soft)]">{f.a}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------- FINAL CTA ---------------- */}
-      <section id="contacto" className="mx-auto max-w-6xl px-5 pb-24">
-        <div className="card-featured px-6 py-16 text-center md:px-16">
-          <h2 className="mx-auto max-w-2xl text-3xl font-extrabold leading-tight text-white md:text-4xl">
-            Tu próxima venta ya está en tu base de clientes. <br className="hidden md:block" />
-            Empieza a aprovecharla hoy.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-white/85">
-            Únete a las agencias que dejaron el caos del Excel y hoy venden con orden,
-            datos y seguimiento. Te acompañamos en la migración.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-green)] px-8 py-3.5 text-base font-bold text-[var(--brand-navy)] transition hover:-translate-y-0.5 hover:bg-[var(--brand-green-deep)]"
-            >
-              Iniciar sesión
-              <ArrowRight className="h-4 w-4" />
-            </a>
-            <a
-              href="mailto:hola@agenciacreativia.com"
-              className="inline-flex items-center gap-2 rounded-full border border-white/30 px-8 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
-            >
-              <Mail className="h-4 w-4" />
-              Hablar con ventas
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------- FOOTER ---------------- */}
-      <footer className="border-t border-[var(--glass-border)]">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-5 py-10 md:flex-row">
-          <Image src="/turistea-crm.svg" alt="Turistea CRM" width={1677} height={451} className="h-11 w-auto" />
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--ink-soft)]">
-            <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" /> LATAM</span>
-            <span className="inline-flex items-center gap-1.5"><Mail className="h-4 w-4" /> hola@agenciacreativia.com</span>
-            <span className="inline-flex items-center gap-1.5"><Phone className="h-4 w-4" /> +51 999 999 999</span>
-          </div>
-          <p className="text-xs text-[var(--ink-faint)]">
-            © 2026 Turistea CRM · por Agencia Creativia
-          </p>
-        </div>
-      </footer>
-    </main>
+      </div>
+    </section>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  HELPERS                                                            */
-/* ------------------------------------------------------------------ */
-
-function SectionHeading({
-  eyebrow,
-  title,
-  subtitle,
-}: {
-  eyebrow: string;
-  title: string;
-  subtitle: string | null;
-}) {
+function OperationSection() {
   return (
-    <div className="mx-auto max-w-2xl text-center">
-      <span className="text-xs font-bold uppercase tracking-wider text-[var(--brand-green-deep)]">
-        {eyebrow}
-      </span>
-      <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--brand-navy)] md:text-[40px] md:leading-tight">
-        {title}
-      </h2>
-      {subtitle && <p className="mt-4 text-base text-[var(--ink-soft)] md:text-lg">{subtitle}</p>}
-    </div>
+    <section className="bg-[#f7f9ff] py-20">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 lg:grid-cols-[1fr_1.3fr]">
+        <div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-[#120b40] md:text-[40px] md:leading-tight">
+            Tu operación bajo control, en tiempo real
+          </h2>
+          <p className="mt-4 text-base text-[#47464f]">
+            Visualizá tu pipeline, ventas y objetivos en un dashboard diseñado para
+            agencias de viajes.
+          </p>
+          <ul className="mt-6 space-y-3">
+            {OPERATION_BULLETS.map((b) => (
+              <li key={b} className="flex items-center gap-2.5 text-sm text-[#081d2d]">
+                <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-[#aaf52b]" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-[0_24px_64px_rgba(31,50,67,0.12)]">
+          <Image
+            src="/landing/images/screenshot-kanban-desktop.png"
+            alt="Dashboard de Turistea CRM"
+            width={1912}
+            height={908}
+            className="h-auto w-full"
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Pricing() {
+  return (
+    <section id="precios" className="bg-white py-20">
+      <div className="mx-auto max-w-6xl px-5">
+        <h2 className="text-center text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl">
+          Planes simples para agencias que quieren crecer
+        </h2>
+
+        <div className="mt-14 grid items-start gap-6 lg:grid-cols-3">
+          {PLANS.map((p) => (
+            <div
+              key={p.name}
+              className={
+                p.highlight
+                  ? "relative rounded-3xl bg-[#272255] p-8 text-white shadow-[0_24px_64px_rgba(39,34,85,0.25)] lg:-mt-4 lg:scale-[1.03]"
+                  : "relative rounded-3xl border border-black/8 bg-white p-8"
+              }
+            >
+              {p.badge && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#aaf52b] px-4 py-1 text-xs font-bold text-[#120b40]">
+                  {p.badge}
+                </span>
+              )}
+
+              <h3 className={`text-xl font-bold ${p.highlight ? "text-white" : "text-[#120b40]"}`}>
+                {p.name}
+              </h3>
+              <p className={`mt-1 text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
+                {p.tagline}
+              </p>
+
+              <div className="mt-6 flex items-baseline gap-1">
+                <span className={`text-4xl font-extrabold ${p.highlight ? "text-white" : "text-[#120b40]"}`}>
+                  {p.price}
+                </span>
+                {p.priceUnit && (
+                  <span className={`text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
+                    {p.priceUnit}
+                  </span>
+                )}
+              </div>
+              <p className={`mt-1 text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
+                {p.priceNote}
+              </p>
+
+              <ul className="mt-7 space-y-3">
+                {p.features.map((feat) => (
+                  <li
+                    key={feat}
+                    className={`flex gap-2.5 text-sm ${p.highlight ? "text-white/90" : "text-[#47464f]"}`}
+                  >
+                    <Check
+                      className={`mt-0.5 h-4 w-4 flex-shrink-0 ${p.highlight ? "text-[#aaf52b]" : "text-[#446900]"}`}
+                      strokeWidth={3}
+                    />
+                    <span>{feat}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                href={p.ctaStyle === "outline" ? "/login" : "/login"}
+                className={
+                  "mt-8 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition hover:-translate-y-0.5 " +
+                  (p.ctaStyle === "lime"
+                    ? "bg-[#aaf52b] text-[#120b40] hover:bg-[#9be022]"
+                    : p.highlight
+                    ? "border border-white/40 text-white hover:bg-white/10"
+                    : "border border-[#272255]/20 text-[#272255] hover:border-[#272255]")
+                }
+              >
+                {p.cta}
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FAQ() {
+  return (
+    <section id="recursos" className="bg-[#f7f9ff] py-20">
+      <div className="mx-auto max-w-3xl px-5">
+        <h2 className="text-center text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl">
+          Preguntas frecuentes
+        </h2>
+
+        <div className="mt-10 space-y-3">
+          {FAQS.map((f) => (
+            <details
+              key={f.q}
+              className="group rounded-2xl border border-black/5 bg-white p-5 transition open:shadow-[0_8px_24px_rgba(31,50,67,0.08)]"
+            >
+              <summary className="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-[#120b40] [&::-webkit-details-marker]:hidden">
+                <span>{f.q}</span>
+                <ChevronDown className="h-5 w-5 flex-shrink-0 text-[#272255] transition group-open:rotate-180" />
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-[#47464f]">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCTA() {
+  return (
+    <section className="relative overflow-hidden bg-[#120b40] py-16 text-white">
+      <Plane
+        aria-hidden
+        className="pointer-events-none absolute right-10 top-8 h-7 w-7 rotate-12 text-[#aaf52b]/30"
+      />
+      <div className="mx-auto max-w-4xl px-5 text-center">
+        <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+          Dejá el caos atrás y vendé con más control
+        </h2>
+        <p className="mt-4 text-white/75">
+          Probá Turistea CRM gratis por 14 días. Sin tarjeta de crédito.
+        </p>
+        <Link
+          href="/login"
+          className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-8 py-3.5 text-base font-bold text-[#120b40] shadow-[0_8px_24px_rgba(170,245,43,0.4)] transition hover:-translate-y-0.5 hover:bg-[#9be022]"
+        >
+          Probar gratis 14 días
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+        <p className="mt-5 text-sm text-white/60">
+          Setup rápido · Soporte humano · Cancelá cuando quieras
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="bg-[#000417] text-[#e8f2ff]">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <Image
+            src="/landing/images/logo-turistea-crm.png"
+            alt="Turistea CRM"
+            width={560}
+            height={120}
+            className="h-10 w-auto brightness-0 invert"
+          />
+          <p className="mt-4 text-sm leading-relaxed text-white/60">
+            El CRM diseñado para mayoristas y agencias de viajes en LATAM.
+          </p>
+          <div className="mt-5 flex gap-3">
+            <a aria-label="LinkedIn" href="#" className="text-white/60 transition hover:text-white">
+              <Linkedin className="h-5 w-5" />
+            </a>
+            <a aria-label="Instagram" href="#" className="text-white/60 transition hover:text-white">
+              <Instagram className="h-5 w-5" />
+            </a>
+            <a aria-label="Facebook" href="#" className="text-white/60 transition hover:text-white">
+              <Facebook className="h-5 w-5" />
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">Producto</h4>
+          <ul className="space-y-2.5 text-sm text-white/70">
+            <li><a href="#producto" className="hover:text-white">Funcionalidades</a></li>
+            <li><a href="#precios" className="hover:text-white">Precios</a></li>
+            <li><Link href="/login" className="hover:text-white">Iniciar sesión</Link></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">Empresa</h4>
+          <ul className="space-y-2.5 text-sm text-white/70">
+            <li><a href="#" className="hover:text-white">Nosotros</a></li>
+            <li><a href="#" className="hover:text-white">Clientes</a></li>
+            <li><a href="#recursos" className="hover:text-white">Recursos</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">¿Hablamos?</h4>
+          <ul className="space-y-3 text-sm text-white/70">
+            <li className="flex items-center gap-2">
+              <Mail className="h-4 w-4 flex-shrink-0 text-[#aaf52b]" />
+              <a href="mailto:hola@turisteacrm.com" className="hover:text-white">hola@turisteacrm.com</a>
+            </li>
+            <li className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 flex-shrink-0 text-[#aaf52b]" />
+              <span>Bogotá, Colombia</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 py-5 sm:flex-row">
+          <p className="text-xs text-white/40">
+            © 2026 Turistea CRM by Creativia. Todos los derechos reservados.
+          </p>
+          <div className="flex gap-4 text-xs text-white/40">
+            <a href="#" className="hover:text-white">Términos y condiciones</a>
+            <a href="#" className="hover:text-white">Política de privacidad</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ---------------- PAGE ---------------- */
+
+export default function LandingContent() {
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-white text-[#081d2d]">
+      <NavBar />
+      <Hero />
+      <SocialProofBand />
+      <BeforeAfter />
+      <FeaturesGrid />
+      <OperationSection />
+      <Pricing />
+      <FAQ />
+      <FinalCTA />
+      <Footer />
+    </main>
   );
 }
