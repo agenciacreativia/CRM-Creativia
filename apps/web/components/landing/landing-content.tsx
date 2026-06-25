@@ -1,29 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
-  CheckCircle2,
   ChevronDown,
   Facebook,
   Instagram,
   Linkedin,
   Mail,
   MapPin,
-  Plane,
 } from "lucide-react";
 import { Hero } from "./hero";
 import { BeforeAfter } from "./before-after";
 import { FeaturesGrid } from "./features-grid";
+import { OperationSection } from "./operation-section";
 import { Pricing } from "./pricing";
+import { FinalCTA } from "./final-cta";
 
 /* ---------------- DATA ---------------- */
-
-const OPERATION_BULLETS = [
-  "Pipeline por etapas con alertas",
-  "KPIs de ventas y cotizaciones",
-  "Top destinos y productos",
-  "Actividades y tareas del equipo",
-];
 
 const FAQS = [
   {
@@ -82,41 +74,6 @@ function SocialProofBand() {
   return null;
 }
 
-function OperationSection() {
-  return (
-    <section className="bg-[#f7f9ff] py-20">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 lg:grid-cols-[1fr_1.3fr]">
-        <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-[#120b40] md:text-[40px] md:leading-tight">
-            Tu operación bajo control, en tiempo real
-          </h2>
-          <p className="mt-4 text-base text-[#47464f]">
-            Visualizá tu pipeline, ventas y objetivos en un dashboard diseñado para
-            agencias de viajes.
-          </p>
-          <ul className="mt-6 space-y-3">
-            {OPERATION_BULLETS.map((b) => (
-              <li key={b} className="flex items-center gap-2.5 text-sm text-[#081d2d]">
-                <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-[#aaf52b]" />
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-[0_24px_64px_rgba(31,50,67,0.12)]">
-          <Image
-            src="/landing/images/screenshot-kanban-desktop.png"
-            alt="Dashboard de Turistea CRM"
-            width={1912}
-            height={908}
-            className="h-auto w-full"
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function FAQ() {
   return (
     <section id="recursos" className="bg-[#f7f9ff] py-20">
@@ -139,35 +96,6 @@ function FAQ() {
             </details>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-function FinalCTA() {
-  return (
-    <section className="relative overflow-hidden bg-[#120b40] py-16 text-white">
-      <Plane
-        aria-hidden
-        className="pointer-events-none absolute right-10 top-8 h-7 w-7 rotate-12 text-[#aaf52b]/30"
-      />
-      <div className="mx-auto max-w-4xl px-5 text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
-          Dejá el caos atrás y vendé con más control
-        </h2>
-        <p className="mt-4 text-white/75">
-          Probá Turistea CRM gratis por 14 días. Sin tarjeta de crédito.
-        </p>
-        <Link
-          href="/login"
-          className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-8 py-3.5 text-base font-bold text-[#120b40] shadow-[0_8px_24px_rgba(170,245,43,0.4)] transition hover:-translate-y-0.5 hover:bg-[#9be022]"
-        >
-          Probar gratis 14 días
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-        <p className="mt-5 text-sm text-white/60">
-          Setup rápido · Soporte humano · Cancelá cuando quieras
-        </p>
       </div>
     </section>
   );
