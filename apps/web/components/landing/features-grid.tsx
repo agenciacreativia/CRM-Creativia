@@ -3,13 +3,13 @@
 import { motion, type Variants } from "motion/react";
 import {
   BarChart3,
-  CalendarClock,
-  ClipboardList,
+  Bell,
   FileText,
   Globe2,
   HeadphonesIcon,
+  ListChecks,
   PiggyBank,
-  Sparkles,
+  Plug,
   Target,
   Workflow,
 } from "lucide-react";
@@ -21,9 +21,9 @@ const FEATURES = [
     text: "Organiza oportunidades en etapas y no pierdas ninguna venta.",
   },
   {
-    icon: Sparkles,
-    title: "IA Turistea",
-    text: "Asistente inteligente que te recomienda acciones para vender más.",
+    icon: ListChecks,
+    title: "Panel de seguimiento",
+    text: "Visualiza las próximas actividades de tus leads.",
   },
   {
     icon: Globe2,
@@ -32,13 +32,13 @@ const FEATURES = [
   },
   {
     icon: FileText,
-    title: "Pólizas y Docs",
-    text: "Almacena y comparte pólizas, contratos y vouchers fácilmente.",
+    title: "Cotizaciones",
+    text: "Envía cotizaciones y calcula presupuestos con pocos clics.",
   },
   {
-    icon: CalendarClock,
-    title: "Recordatorios & IA",
-    text: "Nunca olvides dar seguimiento con automatizaciones inteligentes.",
+    icon: Bell,
+    title: "Recordatorios",
+    text: "Recibe en tu correo el desglose de tus tareas pendientes.",
   },
   {
     icon: BarChart3,
@@ -46,9 +46,9 @@ const FEATURES = [
     text: "Ventas, ingresos y desempeño de tu agencia al instante.",
   },
   {
-    icon: ClipboardList,
-    title: "Integraciones clave",
-    text: "Conecta con proveedores, pasarelas y más.",
+    icon: Plug,
+    title: "Integraciones API",
+    text: "Conecta tu CRM con sitios web, redes sociales y más plataformas con nuestra API.",
   },
   {
     icon: PiggyBank,

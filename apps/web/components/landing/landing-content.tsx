@@ -22,7 +22,7 @@ import { FinalCTA } from "./final-cta";
    FLAGS DE PLACEHOLDERS (datos ficticios pendientes de respaldar).
    Cuando tengas data real → cambiar a false para ocultar el bloque.
    ========================================================================= */
-const SHOW_PLACEHOLDER_TRUSTBAR_STATS = true; // "300+ agencias", "$2.4M", "99% satisfacción"
+const SHOW_PLACEHOLDER_TRUSTBAR_STATS = false; // "300+ agencias", "$2.4M", "99% satisfacción"
 
 /* ------------------- DATA ------------------- */
 
@@ -179,7 +179,7 @@ function Footer() {
             className="h-10 w-auto brightness-0 invert"
           />
           <p className="mt-4 text-sm leading-relaxed text-white/60">
-            El CRM visual #1 para agencias de viajes que quieren vender mejor.
+            El CRM #1 para agencias de viajes que quieren vender mejor.
           </p>
           <div className="mt-5 flex gap-3">
             <a aria-label="Facebook" href="#" className="text-white/60 transition hover:text-white">
@@ -204,7 +204,6 @@ function Footer() {
           <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-white">Producto</h4>
           <ul className="space-y-2.5 text-sm text-white/70">
             <li><a href="#producto" className="hover:text-white">Funciones</a></li>
-            <li><a href="#producto" className="hover:text-white">IA Turistea</a></li>
             <li><a href="#precios" className="hover:text-white">Precios</a></li>
             <li><a href="#producto" className="hover:text-white">Integraciones</a></li>
             <li><a href="#" className="hover:text-white">Actualizaciones</a></li>
@@ -238,7 +237,7 @@ function Footer() {
             </li>
             <li className="flex items-center gap-2">
               <MapPin className="h-4 w-4 flex-shrink-0 text-[#aaf52b]" />
-              <span>México · LATAM</span>
+              <span>Medellín, Colombia</span>
             </li>
           </ul>
         </div>
@@ -250,7 +249,7 @@ function Footer() {
             © 2026 Turistea CRM by Creativia. Todos los derechos reservados.
           </p>
           <p className="text-xs text-white/40">
-            Hecho con <span className="text-[#ea6a30]">❤</span> en México
+            Desarrollado con <span className="text-[#ea6a30]">❤</span> en Medellín, Colombia
           </p>
         </div>
       </div>

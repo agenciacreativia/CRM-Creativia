@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion, type Variants } from "motion/react";
-import { Brain, LineChart, ShieldCheck, Sparkles } from "lucide-react";
+import { LineChart, ShieldCheck, Sparkles } from "lucide-react";
 
 // Cuando tengamos número real de agencias activas, cambiar a false o ajustar.
 const SHOW_PLACEHOLDER_AGENCIES_STAT = true;
@@ -12,11 +12,6 @@ const BULLETS = [
     icon: LineChart,
     title: "Diseñado para agencias de viajes",
     text: "de todos los tamaños.",
-  },
-  {
-    icon: Brain,
-    title: "Usa la IA de Turistea",
-    text: "para vender más y mejor.",
   },
   {
     icon: Sparkles,
@@ -59,7 +54,7 @@ const mockup: Variants = {
 
 export function OperationSection() {
   return (
-    <section className="bg-[#f7f9ff] py-20">
+    <section className="bg-[#f3f3f3] py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 lg:grid-cols-[1.3fr_1fr]">
         {/* IZQUIERDA: mockup laptop + phone */}
         <motion.div

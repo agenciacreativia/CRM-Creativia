@@ -25,7 +25,7 @@ const TESTIMONIALS = [
     name: "Nora López García",
     role: "Gerente de Ventas",
     company: "Destinos Mágicos",
-    text: "Ahora tenemos todo bajo control, nuestros seguimientos son automáticos y la IA nos ayuda a vender más.",
+    text: "Ahora tenemos todo bajo control, los seguimientos son claros y todo el equipo trabaja sobre la misma información.",
     accent: "#85c2f6",
   },
   {

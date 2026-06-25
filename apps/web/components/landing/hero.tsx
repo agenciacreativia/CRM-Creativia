@@ -6,7 +6,6 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform, type Variants } from "motion/react";
 import {
   ArrowRight,
-  CheckCircle2,
   ClipboardList,
   Plane,
   Sparkles,
@@ -189,9 +188,9 @@ export function Hero() {
 
           <motion.h1
             variants={item}
-            className="mt-6 text-5xl font-extrabold leading-[1.02] tracking-tight text-[#120b40] sm:text-6xl lg:text-[68px]"
+            className="mt-6 text-5xl font-extrabold leading-[1.02] tracking-tight text-[#120b40] sm:text-6xl lg:text-[64px]"
           >
-            El CRM visual<br />
+            El CRM hecho<br />
             para agencias<br />
             de{" "}
             <span className="relative whitespace-nowrap">
@@ -204,8 +203,8 @@ export function Hero() {
             variants={item}
             className="mt-6 max-w-md text-base leading-relaxed text-[#47464f]"
           >
-            Más que paneles y reportes, Turistea es tu compañero de ventas, impulsado por
-            IA, que te ayuda a vender más.
+            Más que paneles y reportes, Turistea es tu compañero de ventas,
+            que te ayuda a vender más.
           </motion.p>
 
           <motion.div variants={item} className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
@@ -229,32 +228,22 @@ export function Hero() {
               Ver demo
             </a>
           </motion.div>
-
-          <motion.div
-            variants={item}
-            className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
-          >
-            <span className="inline-flex items-center gap-1.5 text-[#47464f]">
-              <CheckCircle2 className="h-4 w-4 text-[#446900]" />
-              No se requiere tarjeta
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-[#47464f]">
-              <CheckCircle2 className="h-4 w-4 text-[#446900]" />
-              Soporte en español
-            </span>
-          </motion.div>
         </motion.div>
 
         {/* DERECHA: zona donde se ven KPIs flotantes + mockup */}
         <div className="relative h-[560px] lg:h-[640px]">
-          {/* KPI VENTAS */}
+          {/* KPIs orbitando alrededor de Tea — más concentrados sobre la persona
+              (sup-izq cerca del hombro / sup-der cerca de la oreja / mid-izq al
+              costado del torso / inf-der cerca del laptop). */}
+
+          {/* KPI VENTAS — arriba a la izquierda, junto al hombro de Tea */}
           <KpiFloating
             label="Ventas (mes)"
             value="$47,250"
             trend="+12%"
             icon={TrendingUp}
             iconBg="bg-[#aaf52b]/30"
-            className="left-0 top-4 sm:left-2"
+            className="left-4 top-12 sm:left-8"
             entryDelay={0}
             anim={{
               duration: 4.3,
@@ -265,14 +254,14 @@ export function Hero() {
             }}
           />
 
-          {/* KPI NUEVOS CLIENTES */}
+          {/* KPI NUEVOS CLIENTES — arriba derecha */}
           <KpiFloating
             label="Nuevos clientes"
             value="36"
             trend="+12%"
             icon={Users}
             iconBg="bg-[#85c2f6]/30"
-            className="right-0 top-2 sm:right-4"
+            className="right-6 top-6 sm:right-10"
             entryDelay={0.12}
             anim={{
               duration: 5.7,
@@ -283,14 +272,14 @@ export function Hero() {
             }}
           />
 
-          {/* KPI RESERVAS */}
+          {/* KPI RESERVAS — costado izquierdo, a media altura */}
           <KpiFloating
             label="Reservas"
             value="128"
             trend="+10%"
             icon={Plane}
             iconBg="bg-[#272255]/15"
-            className="left-2 top-1/2 -translate-y-1/2"
+            className="left-0 top-[58%] -translate-y-1/2 sm:left-2"
             entryDelay={0.24}
             anim={{
               duration: 5.1,
@@ -301,7 +290,7 @@ export function Hero() {
             }}
           />
 
-          {/* KPI TAREAS */}
+          {/* KPI TAREAS — abajo derecha, cerca del laptop */}
           <KpiFloating
             label="Tareas pendientes"
             value="14"
@@ -309,7 +298,7 @@ export function Hero() {
             trendColor="text-[#ea6a30]"
             icon={ClipboardList}
             iconBg="bg-[#ea6a30]/20"
-            className="right-2 top-[42%] -translate-y-1/2"
+            className="bottom-16 right-4 sm:right-8"
             entryDelay={0.36}
             anim={{
               duration: 4.7,

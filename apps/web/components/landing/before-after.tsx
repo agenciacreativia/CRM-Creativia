@@ -13,7 +13,7 @@ const ANTES = [
 
 const DESPUES = [
   { strong: "Historial 360°", text: "de cada viajero" },
-  { strong: "Recordatorios y seguimientos", text: "automáticos con IA" },
+  { strong: "Panel de actividades", text: "y seguimientos" },
   { strong: "Cotiza, convierte y vende", text: "más" },
   { strong: "Equipos alineados", text: "y productivos" },
   { strong: "Dashboards", text: "en tiempo real" },
