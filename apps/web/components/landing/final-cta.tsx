@@ -13,9 +13,8 @@ const content: Variants = {
 
 export function FinalCTA() {
   return (
-    <section className="relative overflow-hidden bg-[#120b40] py-16 text-white">
-      {/* Gradient sweep: una banda de luz que cruza el fondo cada ~6s.
-          Posicionada en absoluto y rotada -20° para que cruce diagonalmente. */}
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#120b40] via-[#1a1357] to-[#272255] py-20 text-white">
+      {/* Gradient sweep */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/2 rotate-[-20deg]"
@@ -23,29 +22,37 @@ export function FinalCTA() {
           background:
             "linear-gradient(90deg, transparent 0%, rgba(170,245,43,0.08) 35%, rgba(170,245,43,0.18) 50%, rgba(170,245,43,0.08) 65%, transparent 100%)",
         }}
-        animate={{
-          x: ["0%", "260%"],
-        }}
-        transition={{
-          duration: 5.5,
-          repeat: Infinity,
-          ease: EASE,
-          repeatDelay: 1.5,
-        }}
+        animate={{ x: ["0%", "260%"] }}
+        transition={{ duration: 5.5, repeat: Infinity, ease: EASE, repeatDelay: 1.5 }}
       />
 
-      {/* Avión decorativo */}
+      {/* Avión que cruza la sección */}
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute right-10 top-8 text-[#aaf52b]/30"
-        initial={{ y: 0, rotate: 12 }}
+        className="pointer-events-none absolute left-10 top-12 text-[#aaf52b]/35"
+        initial={{ x: -100, y: 20, rotate: -10 }}
+        whileInView={{
+          x: 60,
+          y: -10,
+          rotate: -5,
+          transition: { duration: 4, ease: EASE, repeat: Infinity, repeatType: "reverse" },
+        }}
+        viewport={{ once: false }}
+      >
+        <Plane className="h-10 w-10" />
+      </motion.div>
+
+      {/* Avión decorativo derecha */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute right-12 bottom-10 text-[#85c2f6]/30"
         animate={{
           y: [0, -8, 0],
           rotate: [12, 16, 12],
-          transition: { duration: 6.5, repeat: Infinity, ease: EASE },
+          transition: { duration: 6, repeat: Infinity, ease: EASE },
         }}
       >
-        <Plane className="h-7 w-7" />
+        <Plane className="h-8 w-8" />
       </motion.div>
 
       <motion.div
@@ -55,37 +62,27 @@ export function FinalCTA() {
         viewport={{ once: true, amount: 0.4 }}
         className="relative mx-auto max-w-4xl px-5 text-center"
       >
-        <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
-          Dejá el caos atrás y vendé con más control
+        <h2 className="text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
+          Impulsa tu agencia<br />al próximo destino
         </h2>
-        <p className="mt-4 text-white/75">
-          Probá Turistea CRM gratis por 14 días. Sin tarjeta de crédito.
+        <p className="mt-4 text-white/75 md:text-lg">
+          Con Turistea, vender más es más simple.
         </p>
 
-        {/* CTA con bounce sutil + hover */}
         <motion.div
-          className="mt-7 inline-block"
+          className="mt-8 inline-block"
           animate={{ scale: [1, 1.03, 1] }}
-          transition={{
-            duration: 2.8,
-            repeat: Infinity,
-            ease: EASE,
-            delay: 0.5,
-          }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: EASE, delay: 0.5 }}
           whileHover={{ scale: 1.05 }}
         >
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-8 py-3.5 text-base font-bold text-[#120b40] shadow-[0_8px_24px_rgba(170,245,43,0.4)] transition hover:bg-[#9be022]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-8 py-4 text-base font-bold text-[#120b40] shadow-[0_12px_32px_rgba(170,245,43,0.45)] transition hover:bg-[#9be022]"
           >
-            Probar gratis 14 días
+            Empieza gratis ahora
             <ArrowRight className="h-4 w-4" />
           </Link>
         </motion.div>
-
-        <p className="mt-5 text-sm text-white/60">
-          Setup rápido · Soporte humano · Cancelá cuando quieras
-        </p>
       </motion.div>
     </section>
   );

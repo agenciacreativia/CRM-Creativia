@@ -19,98 +19,90 @@ type Plan = {
 
 const PLANS: Plan[] = [
   {
-    name: "Free",
-    tagline: "Para empezar a organizarte",
-    price: "$0",
-    priceUnit: "COP/mes",
-    priceNote: "Siempre gratis",
-    cta: "Comenzar gratis",
+    name: "Pro",
+    tagline: "Perfecto para agencias pequeñas",
+    price: "$29",
+    priceUnit: "/mes",
+    priceNote: "por usuario",
+    cta: "Prueba gratis",
     ctaStyle: "outline",
     highlight: false,
     features: [
-      "Hasta 2 usuarios",
-      "Hasta 100 contactos",
-      "Pipeline básico",
-      "Cotizaciones ilimitadas",
-      "Soporte por email",
+      "Todo lo esencial",
+      "IA Turistea",
+      "Pipeline visual",
+      "Reportes básicos",
     ],
   },
   {
-    name: "Pro",
+    name: "Pro+",
     tagline: "Para agencias en crecimiento",
     badge: "Más popular",
-    price: "$159.000",
-    priceUnit: "COP/mes",
+    price: "$59",
+    priceUnit: "/mes",
     priceNote: "por usuario",
-    cta: "Probar gratis 14 días",
+    cta: "Prueba gratis",
     ctaStyle: "lime",
     highlight: true,
     features: [
-      "Usuarios ilimitados",
-      "Contactos ilimitados",
-      "Pipeline avanzado con alertas",
-      "Salidas, maestros y comisiones",
-      "Dashboards y reportes",
+      "Automatizaciones",
+      "Reportes avanzados",
+      "Integraciones",
+      "Metas y comisiones",
       "Soporte prioritario",
     ],
   },
   {
     name: "Enterprise",
-    tagline: "Para agencias consolidadas",
-    price: "A medida",
-    priceUnit: "",
-    priceNote: "Hablemos de tu operación",
-    cta: "Contactar ventas",
+    tagline: "Para agencias y grupos",
+    price: "$99",
+    priceUnit: "/mes",
+    priceNote: "por usuario",
+    cta: "Contacto ventas",
     ctaStyle: "outline",
     highlight: false,
     features: [
-      "Todo lo del plan Pro",
-      "Multi-sucursal y roles avanzados",
-      "Integraciones y API",
+      "Funciones avanzadas",
+      "Personalización",
+      "Seguridad avanzada",
       "Onboarding dedicado",
-      "Soporte dedicado",
+      "Soporte 24/7",
     ],
   },
 ];
 
+const EASE = [0.21, 0.47, 0.32, 0.98] as const;
+
 const titleVariant: Variants = {
   hidden: { opacity: 0, y: 16 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, ease: [0.21, 0.47, 0.32, 0.98] as const },
-  },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
 };
 
 const container: Variants = {
   hidden: {},
-  show: {
-    transition: { staggerChildren: 0.12, delayChildren: 0.15 },
-  },
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } },
 };
 
-const cardVariant: Variants = {
+const cardV: Variants = {
   hidden: { opacity: 0, y: 24 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, ease: [0.21, 0.47, 0.32, 0.98] as const },
-  },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
 };
 
 export function Pricing() {
   return (
     <section id="precios" className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-5">
-        <motion.h2
+        <motion.div
           variants={titleVariant}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.6 }}
-          className="text-center text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl"
+          className="text-center"
         >
-          Planes simples para agencias que quieren crecer
-        </motion.h2>
+          <h2 className="text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl">
+            Planes que se adaptan a tu agencia
+          </h2>
+        </motion.div>
 
         <motion.div
           variants={container}
@@ -123,19 +115,9 @@ export function Pricing() {
           {PLANS.map((p) => (
             <motion.div
               key={p.name}
-              variants={cardVariant}
-              whileHover={{
-                y: -10,
-                rotateX: 2,
-                rotateY: 0,
-                scale: 1.01,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 280,
-                damping: 22,
-                mass: 0.6,
-              }}
+              variants={cardV}
+              whileHover={{ y: -10, rotateX: 2, scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 280, damping: 22, mass: 0.6 }}
               style={{ transformStyle: "preserve-3d" }}
               className={
                 p.highlight
@@ -157,16 +139,14 @@ export function Pricing() {
               </p>
 
               <div className="mt-6 flex items-baseline gap-1">
-                <span className={`text-4xl font-extrabold ${p.highlight ? "text-white" : "text-[#120b40]"}`}>
+                <span className={`text-5xl font-extrabold ${p.highlight ? "text-white" : "text-[#120b40]"}`}>
                   {p.price}
                 </span>
-                {p.priceUnit && (
-                  <span className={`text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
-                    {p.priceUnit}
-                  </span>
-                )}
+                <span className={`text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
+                  {p.priceUnit}
+                </span>
               </div>
-              <p className={`mt-1 text-sm ${p.highlight ? "text-white/70" : "text-[#47464f]"}`}>
+              <p className={`mt-1 text-xs ${p.highlight ? "text-white/65" : "text-[#787680]"}`}>
                 {p.priceNote}
               </p>
 
@@ -174,7 +154,7 @@ export function Pricing() {
                 {p.features.map((feat) => (
                   <li
                     key={feat}
-                    className={`flex gap-2.5 text-sm ${p.highlight ? "text-white/90" : "text-[#47464f]"}`}
+                    className={`flex items-start gap-2.5 text-sm ${p.highlight ? "text-white/90" : "text-[#47464f]"}`}
                   >
                     <Check
                       className={`mt-0.5 h-4 w-4 flex-shrink-0 ${p.highlight ? "text-[#aaf52b]" : "text-[#446900]"}`}
@@ -188,7 +168,7 @@ export function Pricing() {
               <Link
                 href="/login"
                 className={
-                  "mt-8 flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition hover:-translate-y-0.5 " +
+                  "mt-8 flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-bold transition hover:-translate-y-0.5 " +
                   (p.ctaStyle === "lime"
                     ? "bg-[#aaf52b] text-[#120b40] hover:bg-[#9be022]"
                     : p.highlight
@@ -201,6 +181,10 @@ export function Pricing() {
             </motion.div>
           ))}
         </motion.div>
+
+        <p className="mt-8 text-center text-xs text-[#787680]">
+          Todos los planes incluyen capacitación y soporte en español.
+        </p>
       </div>
     </section>
   );
