@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion, type Variants } from "motion/react";
+import { useRef } from "react";
+import { motion, useScroll, useTransform, type Variants } from "motion/react";
 import { ArrowRight, CheckCircle2, Plane } from "lucide-react";
 
 const TRUST_BADGES = [
@@ -11,7 +12,8 @@ const TRUST_BADGES = [
   { title: "Soporte LATAM", sub: "Asistencia humana" },
 ];
 
-// Container: orquesta el stagger entre hijos.
+const EASE = [0.21, 0.47, 0.32, 0.98] as const;
+
 const container: Variants = {
   hidden: {},
   show: {
@@ -22,7 +24,6 @@ const container: Variants = {
   },
 };
 
-// Cada hijo: fade-in + slide-up suave.
 const item: Variants = {
   hidden: { opacity: 0, y: 24 },
   show: {
@@ -30,12 +31,11 @@ const item: Variants = {
     y: 0,
     transition: {
       duration: 0.55,
-      ease: [0.21, 0.47, 0.32, 0.98],
+      ease: EASE,
     },
   },
 };
 
-// Imagen del mockup: entra desde la derecha con un poco más de delay.
 const mockup: Variants = {
   hidden: { opacity: 0, x: 32 },
   show: {
@@ -44,33 +44,35 @@ const mockup: Variants = {
     transition: {
       duration: 0.85,
       delay: 0.35,
-      ease: [0.21, 0.47, 0.32, 0.98],
-    },
-  },
-};
-
-// Aviones decorativos: float infinito sutil.
-const planeFloat = {
-  initial: { y: 0, rotate: -12 },
-  animate: {
-    y: [0, -10, 0],
-    rotate: [-12, -8, -12],
-    transition: {
-      duration: 6,
-      repeat: Infinity,
-      ease: [0.42, 0, 0.58, 1] as const,
+      ease: EASE,
     },
   },
 };
 
 export function Hero() {
+  // Parallax: el mockup se mueve un poco más despacio que el resto al scrollear.
+  // useScroll devuelve el scrollY global; useTransform lo mapea a translateY.
+  const sectionRef = useRef<HTMLElement>(null);
+  const { scrollY } = useScroll();
+  // Mientras el usuario scrollea 0 → 600px, el mockup se mueve 0 → -70px (sutil).
+  const mockupY = useTransform(scrollY, [0, 600], [0, -70]);
+
   return (
-    <section className="relative overflow-hidden bg-[#120b40] text-[#e8f2ff]">
+    <section ref={sectionRef} className="relative overflow-hidden bg-[#120b40] text-[#e8f2ff]">
+      {/* aviones decorativos con float infinito */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute left-6 bottom-8 text-[#85c2f6]/30"
-        initial={planeFloat.initial}
-        animate={planeFloat.animate}
+        initial={{ y: 0, rotate: -12 }}
+        animate={{
+          y: [0, -10, 0],
+          rotate: [-12, -8, -12],
+          transition: {
+            duration: 6,
+            repeat: Infinity,
+            ease: EASE,
+          },
+        }}
       >
         <Plane className="h-10 w-10" />
       </motion.div>
@@ -81,18 +83,19 @@ export function Hero() {
         animate={{
           y: [0, 8, 0],
           rotate: [12, 16, 12],
-          transition: { duration: 7, repeat: Infinity, ease: [0.42, 0, 0.58, 1] as const, delay: 0.6 },
+          transition: {
+            duration: 7,
+            repeat: Infinity,
+            ease: EASE,
+            delay: 0.6,
+          },
         }}
       >
         <Plane className="h-6 w-6" />
       </motion.div>
 
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-16 lg:grid-cols-[1fr_1.1fr] lg:gap-10 lg:pb-28 lg:pt-20">
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
+        <motion.div variants={container} initial="hidden" animate="show">
           <motion.h1
             variants={item}
             className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-[56px]"
@@ -119,13 +122,27 @@ export function Hero() {
             variants={item}
             className="mt-8 flex flex-col items-start gap-3 sm:flex-row"
           >
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-7 py-3.5 text-base font-bold text-[#120b40] shadow-[0_4px_16px_rgba(170,245,43,0.45)] transition hover:-translate-y-0.5 hover:bg-[#9be022]"
+            {/* CTA principal con bounce loop sutil — el botón "latido" invita al click */}
+            <motion.div
+              animate={{
+                scale: [1, 1.035, 1],
+              }}
+              transition={{
+                duration: 2.6,
+                repeat: Infinity,
+                ease: EASE,
+                delay: 1.2, // espera a que termine la animación inicial del hero
+              }}
+              whileHover={{ scale: 1.05 }}
             >
-              Probar gratis 14 días
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-7 py-3.5 text-base font-bold text-[#120b40] shadow-[0_4px_16px_rgba(170,245,43,0.45)] transition hover:bg-[#9be022]"
+              >
+                Probar gratis 14 días
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </motion.div>
             <a
               href="#producto"
               className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/10"
@@ -150,10 +167,12 @@ export function Hero() {
           </motion.div>
         </motion.div>
 
+        {/* Mockup: combina la entrada inicial (variants) con parallax (style.y) */}
         <motion.div
           variants={mockup}
           initial="hidden"
           animate="show"
+          style={{ y: mockupY }}
           className="relative"
         >
           <Image

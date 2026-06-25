@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
   CheckCircle2,
   ChevronDown,
   Facebook,
@@ -11,27 +10,13 @@ import {
   Mail,
   MapPin,
   Plane,
-  X,
 } from "lucide-react";
 import { Hero } from "./hero";
+import { BeforeAfter } from "./before-after";
 import { FeaturesGrid } from "./features-grid";
 import { Pricing } from "./pricing";
 
 /* ---------------- DATA ---------------- */
-
-const ANTES = [
-  { title: "Excel disperso", text: "Datos en archivos, versiones y copias." },
-  { title: "Leads olvidados", text: "Seguimiento manual y oportunidades perdidas." },
-  { title: "No sabés el forecast", text: "Sin visibilidad real de tu embudo." },
-  { title: "Seguimiento manual", text: "Tareas, recordatorios y notas en todos lados." },
-];
-
-const DESPUES = [
-  { title: "Todo centralizado", text: "Clientes, cotizaciones, salidas y comisiones en un lugar." },
-  { title: "Recordatorios automáticos", text: "Alertas por tiempo, tareas y próximos hitos." },
-  { title: "Dashboard en vivo", text: "Pipeline, ventas y objetivos siempre actualizados." },
-  { title: "Seguimiento ordenado", text: "Actividades, notas y comunicaciones en contexto." },
-];
 
 const OPERATION_BULLETS = [
   "Pipeline por etapas con alertas",
@@ -95,60 +80,6 @@ function SocialProofBand() {
   // No metemos números falsos. Cuando tengas data real (clientes pagos +
   // viajes vendidos verificables) volvemos a activar este bloque.
   return null;
-}
-
-function BeforeAfter() {
-  return (
-    <section id="producto" className="bg-[#f7f9ff] py-20">
-      <div className="mx-auto max-w-6xl px-5">
-        <h2 className="text-center text-3xl font-extrabold tracking-tight text-[#120b40] md:text-4xl">
-          Del caos al control
-        </h2>
-
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
-          {/* ANTES */}
-          <div className="rounded-2xl border border-[#ea6a30]/25 bg-[#fff5f0] p-7">
-            <h3 className="mb-5 text-sm font-bold uppercase tracking-wider text-[#ea6a30]">
-              Antes: así trabajabas
-            </h3>
-            <ul className="space-y-4">
-              {ANTES.map((it) => (
-                <li key={it.title} className="flex gap-3">
-                  <span className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#ea6a30] text-white">
-                    <X className="h-3 w-3" strokeWidth={3} />
-                  </span>
-                  <div>
-                    <p className="font-bold text-[#120b40]">{it.title}</p>
-                    <p className="text-sm text-[#47464f]">{it.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* DESPUÉS */}
-          <div className="rounded-2xl border border-[#aaf52b]/40 bg-[#f4fce6] p-7">
-            <h3 className="mb-5 text-sm font-bold uppercase tracking-wider text-[#446900]">
-              Después: así crecés
-            </h3>
-            <ul className="space-y-4">
-              {DESPUES.map((it) => (
-                <li key={it.title} className="flex gap-3">
-                  <span className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#446900] text-white">
-                    <Check className="h-3 w-3" strokeWidth={3} />
-                  </span>
-                  <div>
-                    <p className="font-bold text-[#120b40]">{it.title}</p>
-                    <p className="text-sm text-[#47464f]">{it.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
 }
 
 function OperationSection() {
