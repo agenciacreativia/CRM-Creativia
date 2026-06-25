@@ -32,12 +32,14 @@ export async function middleware(request: NextRequest) {
   const subdomain = extractSubdomain(host);
 
   // -- Step 1: No subdomain → landing
+  // Root "/" y "/landing" pasan derecho al page.tsx (ambas renderizan la
+  // landing pública). El resto de paths sin subdominio redirige a "/".
   if (!subdomain) {
-    if (pathname === "/landing" || isPublic(pathname)) {
+    if (pathname === "/" || pathname === "/landing" || isPublic(pathname)) {
       return NextResponse.next();
     }
     const url = request.nextUrl.clone();
-    url.pathname = "/landing";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
