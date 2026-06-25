@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { motion, useScroll, useTransform, type Variants } from "motion/react";
@@ -23,15 +22,6 @@ const container: Variants = {
 const item: Variants = {
   hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
-};
-
-const bgIn: Variants = {
-  hidden: { opacity: 0, scale: 1.04 },
-  show: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 1.2, ease: EASE },
-  },
 };
 
 type KpiAnim = {
@@ -107,117 +97,50 @@ export function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative isolate overflow-hidden bg-[#f0f1f2] pb-32 pt-12 lg:pb-40"
+      className="relative isolate overflow-hidden bg-[#f0f1f2]"
     >
-      {/* Imagen como FONDO del hero: ocupa la mitad derecha y se difumina
-          hacia la izquierda con un gradient overlay sólido (más confiable
-          que mask-image cross-browser). Sin rounded, sin shadow → no parece
-          un recuadro, parece pintada en la pared del hero.
-          Ancho responsive con max-w para que no crezca infinito en monitores
-          grandes (27"+). */}
-      <motion.div
-        aria-hidden
-        variants={bgIn}
-        initial="hidden"
-        animate="show"
-        style={{ y: photoY }}
-        className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[92%] max-w-[820px] sm:w-[72%] lg:w-[60%] xl:w-[52%]"
-      >
-        <Image
-          src="/landing-v2/images/hero-person.png"
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 640px) 92vw, (max-width: 1024px) 72vw, (max-width: 1280px) 60vw, 820px"
-          className="object-cover object-bottom"
-        />
-        {/* Overlay gradient: cubre el lado izquierdo de la imagen con el mismo
-            color del hero, para fundirla con el fondo sin borde visible. */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to right, #f0f1f2 0%, #f0f1f2 22%, rgba(240,241,242,0.92) 32%, rgba(240,241,242,0.55) 44%, rgba(240,241,242,0) 60%)",
-          }}
-        />
-        {/* Overlay vertical en el borde superior para fundir con la sticky
-            navbar y el borde inferior para fundir con la siguiente sección */}
-        <div
-          className="absolute inset-x-0 top-0 h-24"
-          style={{
-            background:
-              "linear-gradient(to bottom, #f0f1f2 0%, rgba(240,241,242,0) 100%)",
-          }}
-        />
-        <div
-          className="absolute inset-x-0 bottom-0 h-24"
-          style={{
-            background:
-              "linear-gradient(to top, #f0f1f2 0%, rgba(240,241,242,0) 100%)",
-          }}
-        />
-      </motion.div>
-
-      {/* Avión decorativo arriba */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute right-16 top-10 z-10 text-[#ea6a30]/40"
-        animate={{
-          x: [0, 14, 0],
-          y: [0, -5, 0],
-          rotate: [-10, -6, -10],
-        }}
-        transition={{ duration: 5.8, repeat: Infinity, ease: EASE }}
-      >
-        <Plane className="h-8 w-8" />
-      </motion.div>
-
-      {/* Contenido principal */}
-      <div className="relative z-20 mx-auto grid max-w-6xl items-start gap-6 px-5 pt-4 lg:grid-cols-[1.05fr_1fr]">
-        {/* IZQUIERDA: copy + CTAs (sobre el fondo difuminado) */}
+      {/* =========================================================
+          MOBILE LAYOUT (<lg): copy ARRIBA, foto ABAJO ocupando todo
+          el ancho. KPIs Ventas + Reservas en horizontal sobre la foto.
+          ========================================================= */}
+      <div className="lg:hidden">
         <motion.div
           variants={container}
           initial="hidden"
           animate="show"
-          className="relative z-30 max-w-xl"
+          className="relative z-10 mx-auto max-w-2xl px-5 pt-10 text-center sm:pt-12"
         >
           <motion.div variants={item}>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#272255]/15 bg-white/90 px-3 py-1.5 text-xs font-bold text-[#272255] shadow-sm backdrop-blur-sm">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#272255]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#272255] shadow-sm">
               <Sparkles className="h-3 w-3 text-[#ea6a30]" />
               El CRM #1 para Agencias de Viajes
             </span>
           </motion.div>
-
           <motion.h1
             variants={item}
-            className="mt-6 text-5xl font-extrabold leading-[1.02] tracking-tight text-[#120b40] sm:text-6xl lg:text-[64px]"
+            className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-[#120b40] sm:text-5xl"
           >
-            El CRM hecho<br />
-            para agencias<br />
-            de{" "}
+            El CRM hecho para agencias de{" "}
             <span className="relative whitespace-nowrap">
               <span className="relative z-10">viajes</span>
-              <span className="absolute bottom-1.5 left-0 z-0 h-4 w-full bg-[#aaf52b] opacity-70" />
+              <span className="absolute bottom-1 left-0 z-0 h-3.5 w-full bg-[#aaf52b] opacity-70" />
             </span>
           </motion.h1>
-
           <motion.p
             variants={item}
-            className="mt-6 max-w-md text-base leading-relaxed text-[#47464f]"
+            className="mx-auto mt-5 max-w-md text-base leading-relaxed text-[#47464f]"
           >
-            Más que paneles y reportes, Turistea es tu compañero de ventas,
-            que te ayuda a vender más.
+            Más que paneles y reportes, Turistea es tu compañero de ventas, que te
+            ayuda a vender más.
           </motion.p>
-
-          <motion.div variants={item} className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+          <motion.div variants={item} className="mt-7 flex flex-col items-stretch gap-3 sm:items-center">
             <motion.div
               animate={{ scale: [1, 1.035, 1] }}
               transition={{ duration: 2.6, repeat: Infinity, ease: EASE, delay: 1.2 }}
-              whileHover={{ scale: 1.05 }}
             >
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-7 py-3.5 text-base font-bold text-[#120b40] shadow-[0_8px_24px_rgba(170,245,43,0.45)] transition hover:bg-[#9be022]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#aaf52b] px-7 py-4 text-base font-bold text-[#120b40] shadow-[0_8px_24px_rgba(170,245,43,0.45)] transition hover:bg-[#9be022]"
               >
                 Empieza gratis
                 <ArrowRight className="h-4 w-4" />
@@ -225,96 +148,225 @@ export function Hero() {
             </motion.div>
             <a
               href="#producto"
-              className="inline-flex items-center gap-2 rounded-full border border-[#272255]/20 bg-white px-7 py-3.5 text-base font-semibold text-[#272255] transition hover:border-[#272255]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#272255]/20 bg-white px-7 py-4 text-base font-semibold text-[#272255] transition hover:border-[#272255]"
             >
               Ver demo
             </a>
           </motion.div>
         </motion.div>
 
-        {/* Reserva la altura del hero en el grid sin renderizar nada — los
-            KPIs viven fuera, anclados al área de la foto */}
-        <div className="hidden h-[560px] lg:block lg:h-[640px]" aria-hidden />
+        {/* Foto mobile + KPIs sobre la base */}
+        <div className="relative mt-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 1, ease: EASE } }}
+            style={{ y: photoY }}
+            className="relative"
+          >
+            <picture>
+              <source media="(min-width: 640px)" srcSet="/landing-v2/images/hero-tablet.png" />
+              <img
+                src="/landing-v2/images/hero-mobile.png"
+                alt=""
+                aria-hidden
+                className="block h-auto w-full"
+              />
+            </picture>
+          </motion.div>
+
+          {/* KPIs sobre la base de la foto */}
+          <div className="absolute inset-x-0 bottom-4 flex justify-center gap-3 px-4 sm:bottom-8">
+            <KpiFloating
+              label="Ventas (mes)"
+              value="$47,250"
+              trend="+12%"
+              icon={TrendingUp}
+              iconBg="bg-[#aaf52b]/30"
+              className="relative !static"
+              entryDelay={0.3}
+              anim={{
+                duration: 4.3,
+                delay: 0.5,
+                yKey: [-2, -8, -3, -6, -2],
+                xKey: [0, 1, -1, 0, 0],
+                rotKey: [0, -0.8, 0.4, -0.4, 0],
+              }}
+            />
+            <KpiFloating
+              label="Reservas"
+              value="128"
+              trend="+10%"
+              icon={Plane}
+              iconBg="bg-[#272255]/15"
+              className="relative !static"
+              entryDelay={0.45}
+              anim={{
+                duration: 5.1,
+                delay: 1,
+                yKey: [-2, -7, -3, -8, -2],
+                xKey: [0, -1, 1, 0, 0],
+                rotKey: [0, 0.5, -0.7, 0.3, 0],
+              }}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* KPIs anclados al ÁREA DE LA FOTO (mismo width/maxWidth que la imagen)
-          para que orbiten siempre alrededor de Tea, sin importar el ancho del
-          viewport — y no floten sobre el fondo gris fuera de la persona.
-          Sólo se muestran desde lg: en mobile/tablet la foto y el copy ya
-          comparten espacio y los KPIs se superponen al texto. */}
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-30 hidden lg:block lg:w-[60%] xl:w-[52%] xl:max-w-[820px]">
-        {/* KPI VENTAS — sup-izq de la foto */}
-        <KpiFloating
-          label="Ventas (mes)"
-          value="$47,250"
-          trend="+12%"
-          icon={TrendingUp}
-          iconBg="bg-[#aaf52b]/30"
-          className="left-2 top-10 sm:left-6"
-          entryDelay={0}
-          anim={{
-            duration: 4.3,
-            delay: 0,
-            yKey: [-2, -10, -3, -7, -2],
-            xKey: [0, 2, -1, 1, 0],
-            rotKey: [0, -1.2, 0.5, -0.6, 0],
-          }}
-        />
+      {/* =========================================================
+          DESKTOP LAYOUT (≥lg): copy IZQ, foto DER en su proporción
+          natural. KPIs absolute alrededor de Tea.
+          ========================================================= */}
+      <div className="relative hidden lg:block">
+        <div className="relative mx-auto max-w-7xl px-5 pt-12 lg:pt-16 xl:max-w-[1480px]">
+          <div className="grid items-center gap-6 lg:grid-cols-[0.85fr_1.15fr] xl:gap-12 xl:grid-cols-[0.75fr_1.25fr]">
+            {/* COPY izquierda */}
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="relative z-20 max-w-xl"
+            >
+              <motion.div variants={item}>
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#272255]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#272255] shadow-sm">
+                  <Sparkles className="h-3 w-3 text-[#ea6a30]" />
+                  El CRM #1 para Agencias de Viajes
+                </span>
+              </motion.div>
 
-        {/* KPI NUEVOS CLIENTES — sup-der */}
-        <KpiFloating
-          label="Nuevos clientes"
-          value="36"
-          trend="+12%"
-          icon={Users}
-          iconBg="bg-[#85c2f6]/30"
-          className="right-4 top-6 sm:right-8"
-          entryDelay={0.12}
-          anim={{
-            duration: 5.7,
-            delay: 0.4,
-            yKey: [-1, -8, -2, -6, -1],
-            xKey: [0, -2, 1, -1, 0],
-            rotKey: [0, 1, -0.4, 0.7, 0],
-          }}
-        />
+              <motion.h1
+                variants={item}
+                className="mt-6 text-5xl font-extrabold leading-[1.02] tracking-tight text-[#120b40] xl:text-[68px]"
+              >
+                El CRM hecho<br />
+                para agencias<br />
+                de{" "}
+                <span className="relative whitespace-nowrap">
+                  <span className="relative z-10">viajes</span>
+                  <span className="absolute bottom-1.5 left-0 z-0 h-4 w-full bg-[#aaf52b] opacity-70" />
+                </span>
+              </motion.h1>
 
-        {/* KPI RESERVAS — costado izq de la foto, altura del torso */}
-        <KpiFloating
-          label="Reservas"
-          value="128"
-          trend="+10%"
-          icon={Plane}
-          iconBg="bg-[#272255]/15"
-          className="left-0 top-[55%] -translate-y-1/2 sm:left-2"
-          entryDelay={0.24}
-          anim={{
-            duration: 5.1,
-            delay: 0.9,
-            yKey: [-3, -9, -1, -7, -3],
-            xKey: [0, 1.5, -1.5, 1, 0],
-            rotKey: [0, -0.8, 1, -0.5, 0],
-          }}
-        />
+              <motion.p
+                variants={item}
+                className="mt-6 max-w-md text-base leading-relaxed text-[#47464f]"
+              >
+                Más que paneles y reportes, Turistea es tu compañero de ventas,
+                que te ayuda a vender más.
+              </motion.p>
 
-        {/* KPI TAREAS — inf-der (cerca del laptop de la foto) */}
-        <KpiFloating
-          label="Tareas pendientes"
-          value="14"
-          trend="Prioridad alta"
-          trendColor="text-[#ea6a30]"
-          icon={ClipboardList}
-          iconBg="bg-[#ea6a30]/20"
-          className="bottom-20 right-2 sm:right-6"
-          entryDelay={0.36}
-          anim={{
-            duration: 4.7,
-            delay: 1.3,
-            yKey: [-2, -7, -3, -8, -2],
-            xKey: [0, -1, 1.5, -0.5, 0],
-            rotKey: [0, 0.6, -1, 0.4, 0],
-          }}
-        />
+              <motion.div variants={item} className="mt-8 flex items-start gap-3">
+                <motion.div
+                  animate={{ scale: [1, 1.035, 1] }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: EASE, delay: 1.2 }}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-7 py-3.5 text-base font-bold text-[#120b40] shadow-[0_8px_24px_rgba(170,245,43,0.45)] transition hover:bg-[#9be022]"
+                  >
+                    Empieza gratis
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </motion.div>
+                <a
+                  href="#producto"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#272255]/20 bg-white px-7 py-3.5 text-base font-semibold text-[#272255] transition hover:border-[#272255]"
+                >
+                  Ver demo
+                </a>
+              </motion.div>
+            </motion.div>
+
+            {/* FOTO derecha — altura natural según ratio de la imagen */}
+            <motion.div
+              initial={{ opacity: 0, scale: 1.03 }}
+              animate={{ opacity: 1, scale: 1, transition: { duration: 1.1, ease: EASE } }}
+              style={{ y: photoY }}
+              className="relative"
+            >
+              {/* hero-desktop.png (1672x941, ratio 1.78:1) sirve para todo lg+.
+                  hero-wide.png queda de respaldo pero NO se usa en este flow
+                  porque su ratio 2.33:1 lo hace muy bajo en pantallas grandes */}
+              <img
+                src="/landing-v2/images/hero-desktop.png"
+                alt=""
+                aria-hidden
+                className="block h-auto w-full"
+              />
+
+              {/* KPIs absolute respecto a la foto */}
+              <KpiFloating
+                label="Ventas (mes)"
+                value="$47,250"
+                trend="+12%"
+                icon={TrendingUp}
+                iconBg="bg-[#aaf52b]/30"
+                className="left-[6%] top-[8%]"
+                entryDelay={0}
+                anim={{
+                  duration: 4.3,
+                  delay: 0,
+                  yKey: [-2, -10, -3, -7, -2],
+                  xKey: [0, 2, -1, 1, 0],
+                  rotKey: [0, -1.2, 0.5, -0.6, 0],
+                }}
+              />
+
+              <KpiFloating
+                label="Nuevos clientes"
+                value="36"
+                trend="+12%"
+                icon={Users}
+                iconBg="bg-[#85c2f6]/30"
+                className="-right-4 top-[18%] xl:-right-10"
+                entryDelay={0.12}
+                anim={{
+                  duration: 5.7,
+                  delay: 0.4,
+                  yKey: [-1, -8, -2, -6, -1],
+                  xKey: [0, -2, 1, -1, 0],
+                  rotKey: [0, 1, -0.4, 0.7, 0],
+                }}
+              />
+
+              <KpiFloating
+                label="Reservas"
+                value="128"
+                trend="+10%"
+                icon={Plane}
+                iconBg="bg-[#272255]/15"
+                className="left-[10%] top-[52%]"
+                entryDelay={0.24}
+                anim={{
+                  duration: 5.1,
+                  delay: 0.9,
+                  yKey: [-3, -9, -1, -7, -3],
+                  xKey: [0, 1.5, -1.5, 1, 0],
+                  rotKey: [0, -0.8, 1, -0.5, 0],
+                }}
+              />
+
+              <KpiFloating
+                label="Tareas pendientes"
+                value="14"
+                trend="Prioridad alta"
+                trendColor="text-[#ea6a30]"
+                icon={ClipboardList}
+                iconBg="bg-[#ea6a30]/20"
+                className="-right-2 bottom-[8%] xl:-right-8"
+                entryDelay={0.36}
+                anim={{
+                  duration: 4.7,
+                  delay: 1.3,
+                  yKey: [-2, -7, -3, -8, -2],
+                  xKey: [0, -1, 1.5, -0.5, 0],
+                  rotKey: [0, 0.6, -1, 0.4, 0],
+                }}
+              />
+            </motion.div>
+          </div>
+          <div className="pb-12 lg:pb-16" />
+        </div>
       </div>
     </section>
   );
