@@ -112,22 +112,24 @@ export function Hero() {
       {/* Imagen como FONDO del hero: ocupa la mitad derecha y se difumina
           hacia la izquierda con un gradient overlay sólido (más confiable
           que mask-image cross-browser). Sin rounded, sin shadow → no parece
-          un recuadro, parece pintada en la pared del hero. */}
+          un recuadro, parece pintada en la pared del hero.
+          Ancho responsive con max-w para que no crezca infinito en monitores
+          grandes (27"+). */}
       <motion.div
         aria-hidden
         variants={bgIn}
         initial="hidden"
         animate="show"
         style={{ y: photoY }}
-        className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[88%] sm:w-[78%] lg:w-[72%]"
+        className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[92%] max-w-[820px] sm:w-[72%] lg:w-[60%] xl:w-[52%]"
       >
         <Image
           src="/landing-v2/images/hero-person.png"
           alt=""
           fill
           priority
-          sizes="(max-width: 1024px) 78vw, 72vw"
-          className="object-cover object-right-bottom"
+          sizes="(max-width: 640px) 92vw, (max-width: 1024px) 72vw, (max-width: 1280px) 60vw, 820px"
+          className="object-cover object-bottom"
         />
         {/* Overlay gradient: cubre el lado izquierdo de la imagen con el mismo
             color del hero, para fundirla con el fondo sin borde visible. */}
@@ -230,86 +232,89 @@ export function Hero() {
           </motion.div>
         </motion.div>
 
-        {/* DERECHA: zona donde se ven KPIs flotantes + mockup */}
-        <div className="relative h-[560px] lg:h-[640px]">
-          {/* KPIs orbitando alrededor de Tea — más concentrados sobre la persona
-              (sup-izq cerca del hombro / sup-der cerca de la oreja / mid-izq al
-              costado del torso / inf-der cerca del laptop). */}
+        {/* Reserva la altura del hero en el grid sin renderizar nada — los
+            KPIs viven fuera, anclados al área de la foto */}
+        <div className="hidden h-[560px] lg:block lg:h-[640px]" aria-hidden />
+      </div>
 
-          {/* KPI VENTAS — arriba a la izquierda, junto al hombro de Tea */}
-          <KpiFloating
-            label="Ventas (mes)"
-            value="$47,250"
-            trend="+12%"
-            icon={TrendingUp}
-            iconBg="bg-[#aaf52b]/30"
-            className="left-4 top-12 sm:left-8"
-            entryDelay={0}
-            anim={{
-              duration: 4.3,
-              delay: 0,
-              yKey: [-2, -10, -3, -7, -2],
-              xKey: [0, 2, -1, 1, 0],
-              rotKey: [0, -1.2, 0.5, -0.6, 0],
-            }}
-          />
+      {/* KPIs anclados al ÁREA DE LA FOTO (mismo width/maxWidth que la imagen)
+          para que orbiten siempre alrededor de Tea, sin importar el ancho del
+          viewport — y no floten sobre el fondo gris fuera de la persona.
+          Sólo se muestran desde lg: en mobile/tablet la foto y el copy ya
+          comparten espacio y los KPIs se superponen al texto. */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-30 hidden lg:block lg:w-[60%] xl:w-[52%] xl:max-w-[820px]">
+        {/* KPI VENTAS — sup-izq de la foto */}
+        <KpiFloating
+          label="Ventas (mes)"
+          value="$47,250"
+          trend="+12%"
+          icon={TrendingUp}
+          iconBg="bg-[#aaf52b]/30"
+          className="left-2 top-10 sm:left-6"
+          entryDelay={0}
+          anim={{
+            duration: 4.3,
+            delay: 0,
+            yKey: [-2, -10, -3, -7, -2],
+            xKey: [0, 2, -1, 1, 0],
+            rotKey: [0, -1.2, 0.5, -0.6, 0],
+          }}
+        />
 
-          {/* KPI NUEVOS CLIENTES — arriba derecha */}
-          <KpiFloating
-            label="Nuevos clientes"
-            value="36"
-            trend="+12%"
-            icon={Users}
-            iconBg="bg-[#85c2f6]/30"
-            className="right-6 top-6 sm:right-10"
-            entryDelay={0.12}
-            anim={{
-              duration: 5.7,
-              delay: 0.4,
-              yKey: [-1, -8, -2, -6, -1],
-              xKey: [0, -2, 1, -1, 0],
-              rotKey: [0, 1, -0.4, 0.7, 0],
-            }}
-          />
+        {/* KPI NUEVOS CLIENTES — sup-der */}
+        <KpiFloating
+          label="Nuevos clientes"
+          value="36"
+          trend="+12%"
+          icon={Users}
+          iconBg="bg-[#85c2f6]/30"
+          className="right-4 top-6 sm:right-8"
+          entryDelay={0.12}
+          anim={{
+            duration: 5.7,
+            delay: 0.4,
+            yKey: [-1, -8, -2, -6, -1],
+            xKey: [0, -2, 1, -1, 0],
+            rotKey: [0, 1, -0.4, 0.7, 0],
+          }}
+        />
 
-          {/* KPI RESERVAS — costado izquierdo, a media altura */}
-          <KpiFloating
-            label="Reservas"
-            value="128"
-            trend="+10%"
-            icon={Plane}
-            iconBg="bg-[#272255]/15"
-            className="left-0 top-[58%] -translate-y-1/2 sm:left-2"
-            entryDelay={0.24}
-            anim={{
-              duration: 5.1,
-              delay: 0.9,
-              yKey: [-3, -9, -1, -7, -3],
-              xKey: [0, 1.5, -1.5, 1, 0],
-              rotKey: [0, -0.8, 1, -0.5, 0],
-            }}
-          />
+        {/* KPI RESERVAS — costado izq de la foto, altura del torso */}
+        <KpiFloating
+          label="Reservas"
+          value="128"
+          trend="+10%"
+          icon={Plane}
+          iconBg="bg-[#272255]/15"
+          className="left-0 top-[55%] -translate-y-1/2 sm:left-2"
+          entryDelay={0.24}
+          anim={{
+            duration: 5.1,
+            delay: 0.9,
+            yKey: [-3, -9, -1, -7, -3],
+            xKey: [0, 1.5, -1.5, 1, 0],
+            rotKey: [0, -0.8, 1, -0.5, 0],
+          }}
+        />
 
-          {/* KPI TAREAS — abajo derecha, cerca del laptop */}
-          <KpiFloating
-            label="Tareas pendientes"
-            value="14"
-            trend="Prioridad alta"
-            trendColor="text-[#ea6a30]"
-            icon={ClipboardList}
-            iconBg="bg-[#ea6a30]/20"
-            className="bottom-16 right-4 sm:right-8"
-            entryDelay={0.36}
-            anim={{
-              duration: 4.7,
-              delay: 1.3,
-              yKey: [-2, -7, -3, -8, -2],
-              xKey: [0, -1, 1.5, -0.5, 0],
-              rotKey: [0, 0.6, -1, 0.4, 0],
-            }}
-          />
-
-        </div>
+        {/* KPI TAREAS — inf-der (cerca del laptop de la foto) */}
+        <KpiFloating
+          label="Tareas pendientes"
+          value="14"
+          trend="Prioridad alta"
+          trendColor="text-[#ea6a30]"
+          icon={ClipboardList}
+          iconBg="bg-[#ea6a30]/20"
+          className="bottom-20 right-2 sm:right-6"
+          entryDelay={0.36}
+          anim={{
+            duration: 4.7,
+            delay: 1.3,
+            yKey: [-2, -7, -3, -8, -2],
+            xKey: [0, -1, 1.5, -0.5, 0],
+            rotKey: [0, 0.6, -1, 0.4, 0],
+          }}
+        />
       </div>
     </section>
   );
