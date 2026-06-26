@@ -1,216 +1,180 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
-import { motion, useScroll, useTransform, type Variants } from "motion/react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
- * Hero del landing. Las imágenes ahora ya incluyen los KPIs flotantes
- * dibujados como parte del PNG/JPG, así que el componente solo necesita:
- *  - copy + CTAs a la izquierda
- *  - imagen como background absolute al lado derecho (desktop) o full
- *    width abajo (mobile/tablet)
+ * Hero slider — 3 slides con autoplay y navegación por flechas.
+ * Cada slide es un click directo al login.
  *
- * Imágenes responsive (mismo fondo, distinto recorte por viewport):
- *  - hero-mobile.jpg   941×1672  (vertical, móvil)
- *  - hero-tablet.jpg  1122×1402  (vertical, tablet)
- *  - hero-desktop.jpg 1672×941   (horizontal, lg+)
- *  - hero-wide.jpg    1916×821   (panorámica, 2xl)
+ * Imágenes responsive vía <picture> + media queries — el browser elige una
+ * sola por viewport y descarga sólo esa:
+ *  - mobile-N.png    ( 941×1672 vertical)  <640px
+ *  - tablet-N.png   (1122×1402 vertical)  640–1023px
+ *  - desktop-N.png  (1672× 941 horizontal) 1024–1535px
+ *  - wide-N.png     (1916× 821 panorámica) ≥1536px
+ *
+ * UX:
+ *  - autoplay 5.5s por slide, pausa al hover (desktop) o cuando la tab
+ *    pierde el foco
+ *  - swipe gestures en touch (drag horizontal)
+ *  - flechas (◀ ▶) visibles, dots como indicador del slide actual
+ *  - prefers-reduced-motion: sin slide animation y sin autoplay
+ *  - cada slide es un Link → /login (CTA principal del landing)
  */
+
+const SLIDES = [1, 2, 3] as const;
+const AUTOPLAY_MS = 5500;
 const EASE = [0.21, 0.47, 0.32, 0.98] as const;
 
-const container: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1, delayChildren: 0.15 } },
-};
-
-const item: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+// Animación de slide: el nuevo entra desde la derecha o izquierda según
+// la dirección, el viejo sale al lado opuesto.
+const variants = {
+  enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0.6 }),
+  center: { x: "0%", opacity: 1 },
+  exit: (dir: number) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0.6 }),
 };
 
 export function Hero() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const { scrollY } = useScroll();
-  const photoY = useTransform(scrollY, [0, 600], [0, -25]);
+  const reduce = useReducedMotion();
+  const [[index, dir], setIndex] = useState<[number, number]>([0, 1]);
+  const [paused, setPaused] = useState(false);
+
+  const go = useCallback(
+    (delta: number) =>
+      setIndex(([i]) => {
+        const next = ((i + delta) % SLIDES.length + SLIDES.length) % SLIDES.length;
+        return [next, delta];
+      }),
+    [],
+  );
+  const goTo = useCallback(
+    (target: number) =>
+      setIndex(([i]) => [target, target > i ? 1 : target < i ? -1 : 1]),
+    [],
+  );
+
+  // Autoplay
+  useEffect(() => {
+    if (reduce || paused) return;
+    const t = setInterval(() => go(1), AUTOPLAY_MS);
+    return () => clearInterval(t);
+  }, [go, reduce, paused]);
+
+  // Pausar cuando la tab pierde foco
+  useEffect(() => {
+    const onVis = () => setPaused(document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  // Teclado: flechas ← →
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") go(-1);
+      else if (e.key === "ArrowRight") go(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [go]);
+
+  const slideNumber = SLIDES[index];
 
   return (
     <section
-      ref={sectionRef}
       className="relative isolate overflow-hidden bg-[#f0f1f2]"
+      aria-label="Carrusel principal — Turistea CRM"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
     >
-      {/* =========================================================
-          MOBILE / TABLET LAYOUT (<lg): copy ARRIBA, foto ABAJO con
-          el ancho completo. La imagen ya trae los KPIs integrados.
-          ========================================================= */}
-      <div className="lg:hidden">
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="relative z-10 mx-auto max-w-2xl px-5 pt-10 text-center sm:pt-12"
-        >
-          <motion.div variants={item}>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#272255]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#272255] shadow-sm">
-              <Sparkles className="h-3 w-3 text-[#ea6a30]" />
-              El CRM #1 para Agencias de Viajes
-            </span>
-          </motion.div>
-
-          <motion.h1
-            variants={item}
-            className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight text-[#120b40] sm:text-5xl"
-          >
-            El CRM hecho para agencias de{" "}
-            <span className="relative whitespace-nowrap">
-              <span className="relative z-10">viajes</span>
-              <span className="absolute bottom-1 left-0 z-0 h-3.5 w-full bg-[#aaf52b] opacity-70" />
-            </span>
-          </motion.h1>
-
-          <motion.p
-            variants={item}
-            className="mx-auto mt-5 max-w-md text-base leading-relaxed text-[#47464f]"
-          >
-            Más que paneles y reportes, Turistea es tu compañero de ventas, que te
-            ayuda a vender más.
-          </motion.p>
-
-          <motion.div variants={item} className="mt-7 flex flex-col items-stretch gap-3 sm:items-center">
-            <motion.div
-              animate={{ scale: [1, 1.035, 1] }}
-              transition={{ duration: 2.6, repeat: Infinity, ease: EASE, delay: 1.2 }}
-            >
-              <Link
-                href="/login"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#aaf52b] px-7 py-4 text-base font-bold text-[#120b40] shadow-[0_8px_24px_rgba(170,245,43,0.45)] transition hover:bg-[#9be022]"
-              >
-                Empieza gratis
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </motion.div>
-            <a
-              href="#producto"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#272255]/20 bg-white px-7 py-4 text-base font-semibold text-[#272255] transition hover:border-[#272255]"
-            >
-              Ver demo
-            </a>
-          </motion.div>
-        </motion.div>
-
-        {/* Foto mobile: la imagen viene con KPIs dibujados */}
-        <motion.div
-          initial={{ opacity: 0, scale: 1.03 }}
-          animate={{ opacity: 1, scale: 1, transition: { duration: 1, ease: EASE } }}
-          style={{ y: photoY }}
-          className="relative mt-6"
-        >
-          <picture>
-            <source media="(min-width: 640px)" srcSet="/landing-v2/images/hero-tablet.jpg" />
-            <img
-              src="/landing-v2/images/hero-mobile.jpg"
-              alt=""
-              aria-hidden
-              className="block h-auto w-full"
-            />
-          </picture>
-        </motion.div>
-      </div>
-
-      {/* =========================================================
-          DESKTOP LAYOUT (≥lg): foto como BACKGROUND del section,
-          ocupando el lado derecho. Copy a la izquierda.
-          ========================================================= */}
-      <div className="relative hidden min-h-[640px] lg:block xl:min-h-[760px]">
-        {/* Imagen de fondo: absolute al lado derecho del section.
-            En ≥1536px sirve la versión panorámica (hero-wide.jpg). */}
-        <motion.div
-          aria-hidden
-          initial={{ opacity: 0, scale: 1.03 }}
-          animate={{ opacity: 1, scale: 1, transition: { duration: 1.1, ease: EASE } }}
-          style={{ y: photoY }}
-          className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[62%] xl:w-[58%] 2xl:w-[55%]"
-        >
-          <picture>
-            <source media="(min-width: 1536px)" srcSet="/landing-v2/images/hero-wide.jpg" />
-            <img
-              src="/landing-v2/images/hero-desktop.jpg"
-              alt=""
-              aria-hidden
-              className="absolute inset-0 h-full w-full object-cover object-right-bottom"
-            />
-          </picture>
-          {/* Fade gradient para fundir el lado izquierdo de la imagen con
-              el bg del section (mismo color). */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to right, #f0f1f2 0%, rgba(240,241,242,0.92) 10%, rgba(240,241,242,0.55) 22%, rgba(240,241,242,0.18) 32%, rgba(240,241,242,0) 42%)",
-            }}
-          />
-        </motion.div>
-
-        {/* COPY izquierda */}
-        <div className="relative z-10 mx-auto max-w-7xl px-5 pt-16 lg:pt-20 xl:max-w-[1480px] xl:pt-24">
+      <div className="relative aspect-[941/1672] sm:aspect-[1122/1402] lg:aspect-[1672/941] 2xl:aspect-[1916/821]">
+        <AnimatePresence initial={false} custom={dir} mode="sync">
           <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="max-w-xl"
+            key={slideNumber}
+            className="absolute inset-0 z-10"
+            custom={dir}
+            variants={reduce ? undefined : variants}
+            initial={reduce ? false : "enter"}
+            animate={reduce ? undefined : "center"}
+            exit={reduce ? undefined : "exit"}
+            transition={
+              reduce
+                ? undefined
+                : { duration: 0.7, ease: EASE, opacity: { duration: 0.3 } }
+            }
           >
-            <motion.div variants={item}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#272255]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#272255] shadow-sm">
-                <Sparkles className="h-3 w-3 text-[#ea6a30]" />
-                El CRM #1 para Agencias de Viajes
-              </span>
-            </motion.div>
-
-            <motion.h1
-              variants={item}
-              className="mt-6 text-5xl font-extrabold leading-[1.02] tracking-tight text-[#120b40] xl:text-[68px]"
+            <Link
+              href="/login"
+              className="block h-full w-full focus:outline-none focus-visible:ring-4 focus-visible:ring-[#aaf52b]/60"
+              aria-label={`Ir a empezar gratis — diapositiva ${slideNumber} de ${SLIDES.length}`}
+              draggable={false}
             >
-              El CRM hecho<br />
-              para agencias<br />
-              de{" "}
-              <span className="relative whitespace-nowrap">
-                <span className="relative z-10">viajes</span>
-                <span className="absolute bottom-1.5 left-0 z-0 h-4 w-full bg-[#aaf52b] opacity-70" />
-              </span>
-            </motion.h1>
-
-            <motion.p
-              variants={item}
-              className="mt-6 max-w-md text-base leading-relaxed text-[#47464f]"
-            >
-              Más que paneles y reportes, Turistea es tu compañero de ventas,
-              que te ayuda a vender más.
-            </motion.p>
-
-            <motion.div variants={item} className="mt-8 flex items-start gap-3">
-              <motion.div
-                animate={{ scale: [1, 1.035, 1] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: EASE, delay: 1.2 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 rounded-full bg-[#aaf52b] px-7 py-3.5 text-base font-bold text-[#120b40] shadow-[0_8px_24px_rgba(170,245,43,0.45)] transition hover:bg-[#9be022]"
-                >
-                  Empieza gratis
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </motion.div>
-              <a
-                href="#producto"
-                className="inline-flex items-center gap-2 rounded-full border border-[#272255]/20 bg-white px-7 py-3.5 text-base font-semibold text-[#272255] transition hover:border-[#272255]"
-              >
-                Ver demo
-              </a>
-            </motion.div>
+              <picture>
+                <source
+                  media="(min-width: 1536px)"
+                  srcSet={`/landing-v2/slider/wide-${slideNumber}.png`}
+                />
+                <source
+                  media="(min-width: 1024px)"
+                  srcSet={`/landing-v2/slider/desktop-${slideNumber}.png`}
+                />
+                <source
+                  media="(min-width: 640px)"
+                  srcSet={`/landing-v2/slider/tablet-${slideNumber}.png`}
+                />
+                <img
+                  src={`/landing-v2/slider/mobile-${slideNumber}.png`}
+                  alt={`Diapositiva ${slideNumber} de Turistea CRM`}
+                  className="pointer-events-none block h-full w-full select-none object-cover object-center"
+                  draggable={false}
+                />
+              </picture>
+            </Link>
           </motion.div>
-          <div className="h-20 xl:h-28" />
+        </AnimatePresence>
+
+        {/* Flecha izquierda */}
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          aria-label="Diapositiva anterior"
+          className="group absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/85 p-2 text-[#120b40] shadow-[0_8px_24px_rgba(31,50,67,0.15)] backdrop-blur transition hover:bg-white sm:left-5 sm:p-3"
+        >
+          <ChevronLeft className="h-5 w-5 transition group-active:-translate-x-0.5 sm:h-6 sm:w-6" />
+        </button>
+
+        {/* Flecha derecha */}
+        <button
+          type="button"
+          onClick={() => go(1)}
+          aria-label="Siguiente diapositiva"
+          className="group absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white/85 p-2 text-[#120b40] shadow-[0_8px_24px_rgba(31,50,67,0.15)] backdrop-blur transition hover:bg-white sm:right-5 sm:p-3"
+        >
+          <ChevronRight className="h-5 w-5 transition group-active:translate-x-0.5 sm:h-6 sm:w-6" />
+        </button>
+
+        {/* Dots */}
+        <div className="absolute inset-x-0 bottom-4 z-20 flex justify-center gap-2 sm:bottom-6">
+          {SLIDES.map((n, i) => {
+            const active = i === index;
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Ir a diapositiva ${n}`}
+                aria-current={active}
+                className={
+                  "h-2 rounded-full transition-all duration-300 " +
+                  (active
+                    ? "w-8 bg-[#120b40]"
+                    : "w-2 bg-white/70 hover:bg-white")
+                }
+              />
+            );
+          })}
         </div>
       </div>
     </section>
